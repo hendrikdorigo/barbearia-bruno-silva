@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Bebas Neue", "Oswald", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0b0b0c;
+  color: #f2ede1;
+}
+
+::selection {
+  background-color: #c9a227;
+  color: #0b0b0c;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #e4c767 0%, #c9a227 50%, #8f7418 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.divider-razor {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #c9a227, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
