@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AgendamentoClienteAcoes from "@/components/AgendamentoClienteAcoes";
+import PreferenciaNotificacao from "@/components/PreferenciaNotificacao";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
@@ -36,11 +38,22 @@ export default async function PainelClientePage() {
     .eq("cliente_id", user.id)
     .order("data_hora", { ascending: false });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("notif_whatsapp_comunidade")
+    .eq("id", user.id)
+    .single();
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <h1 className="font-display text-5xl tracking-wide text-neutral-50">
         Meus agendamentos
       </h1>
+
+      <PreferenciaNotificacao
+        profileId={user.id}
+        ativoInicial={profile?.notif_whatsapp_comunidade ?? false}
+      />
 
       {cliente?.exige_pagamento_antecipado && (
         <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
@@ -68,6 +81,7 @@ export default async function PainelClientePage() {
                 R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")} ·{" "}
                 {a.pagamento_antecipado ? "Pago antecipado" : "Pagamento no local"}
               </p>
+              <AgendamentoClienteAcoes agendamento={a} />
             </div>
           ))
         ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +11,13 @@ const STATUS_LABEL: Record<string, string> = {
   cancelado: "Cancelado",
   no_show: "No-show",
   concluido: "Concluído",
+};
+
+const PAGAMENTO_LABEL: Record<string, string> = {
+  credito: "Cartão de crédito",
+  debito: "Cartão de débito",
+  dinheiro: "Dinheiro",
+  pix: "Pix",
 };
 
 export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }) {
@@ -50,34 +58,48 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
               <p className="text-xs uppercase tracking-widest text-gold">
                 {STATUS_LABEL[a.status]}
               </p>
+              {a.forma_pagamento && (
+                <p className="mt-1 text-xs text-neutral-500">
+                  Pagamento: {PAGAMENTO_LABEL[a.forma_pagamento] ?? a.forma_pagamento}{" "}
+                  {a.pagamento_antecipado ? "(antecipado, já pago)" : "(vai pagar no local)"}
+                </p>
+              )}
             </div>
-            {(a.status === "pendente" || a.status === "confirmado") && (
-              <div className="flex gap-2">
-                {a.status === "pendente" && (
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/painel/barbeiro/comanda/${a.id}`}
+                className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold text-neutral-300 hover:border-gold hover:text-gold"
+              >
+                Ver comanda
+              </Link>
+              {(a.status === "pendente" || a.status === "confirmado") && (
+                <>
+                  {a.status === "pendente" && (
+                    <button
+                      disabled={loadingId === a.id}
+                      onClick={() => atualizarStatus(a.id, "confirmado")}
+                      className="rounded-full border border-green-500/40 px-3 py-1.5 text-xs font-bold text-green-400 hover:bg-green-500/10"
+                    >
+                      Confirmar
+                    </button>
+                  )}
                   <button
                     disabled={loadingId === a.id}
-                    onClick={() => atualizarStatus(a.id, "confirmado")}
-                    className="rounded-full border border-green-500/40 px-3 py-1.5 text-xs font-bold text-green-400 hover:bg-green-500/10"
+                    onClick={() => atualizarStatus(a.id, "concluido")}
+                    className="rounded-full border border-gold/40 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold/10"
                   >
-                    Confirmar
+                    Concluir atendimento
                   </button>
-                )}
-                <button
-                  disabled={loadingId === a.id}
-                  onClick={() => atualizarStatus(a.id, "concluido")}
-                  className="rounded-full border border-gold/40 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold/10"
-                >
-                  Concluir
-                </button>
-                <button
-                  disabled={loadingId === a.id}
-                  onClick={() => marcarNoShow(a.id)}
-                  className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/10"
-                >
-                  Marcar atraso (no-show)
-                </button>
-              </div>
-            )}
+                  <button
+                    disabled={loadingId === a.id}
+                    onClick={() => marcarNoShow(a.id)}
+                    className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/10"
+                  >
+                    Cliente não veio (no-show)
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       ))}
