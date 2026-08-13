@@ -53,6 +53,18 @@ export default async function PainelBarbeiroPage() {
             Meus horários
           </Link>
           <Link
+            href="/painel/barbeiro/servicos"
+            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+          >
+            Meus serviços
+          </Link>
+          <Link
+            href="/painel/barbeiro/fidelidade"
+            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+          >
+            Fidelidade
+          </Link>
+          <Link
             href="/painel/barbeiro/comunidade"
             className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
           >

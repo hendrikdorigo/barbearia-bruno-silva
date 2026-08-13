@@ -24,6 +24,16 @@ export function gerarSlots(inicio: string, fim: string): string[] {
   return slots;
 }
 
+/** Verifica se um slot (HH:MM) cai dentro de algum bloqueio (almoço, compromisso etc). */
+export function slotBloqueado(
+  slot: string,
+  bloqueios: { hora_inicio: string; hora_fim: string }[]
+): boolean {
+  return bloqueios.some(
+    (b) => slot >= b.hora_inicio.slice(0, 5) && slot < b.hora_fim.slice(0, 5)
+  );
+}
+
 export const FORMAS_PAGAMENTO = [
   { id: "credito", label: "Cartão de Crédito" },
   { id: "debito", label: "Cartão de Débito" },

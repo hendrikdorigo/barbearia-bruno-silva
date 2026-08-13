@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HorariosEditor from "@/components/HorariosEditor";
 import ExcecoesEditor from "@/components/ExcecoesEditor";
+import BloqueiosEditor from "@/components/BloqueiosEditor";
 
 export default async function HorariosBarbeiroPage() {
   const supabase = await createClient();
@@ -32,6 +33,12 @@ export default async function HorariosBarbeiroPage() {
     .gte("data", hoje)
     .order("data");
 
+  const { data: bloqueios } = await supabase
+    .from("barbeiro_bloqueios")
+    .select("*")
+    .eq("barbeiro_id", user.id)
+    .or(`data.is.null,data.gte.${hoje}`);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
       <h1 className="font-display text-5xl tracking-wide text-neutral-50">
@@ -52,6 +59,16 @@ export default async function HorariosBarbeiroPage() {
         aqui — isso tem prioridade sobre o horário padrão da semana.
       </p>
       <ExcecoesEditor barbeiroId={user.id} excecoesIniciais={excecoes ?? []} />
+
+      <h2 className="mt-14 font-display text-3xl tracking-wide text-neutral-50">
+        Almoço e compromissos
+      </h2>
+      <p className="mt-2 text-neutral-400">
+        Bloqueie uma janela de horário toda semana (ex: almoço 12h–13h) ou em
+        uma data específica (ex: dentista às 15h). Esses horários somem da
+        agenda automaticamente, sem precisar desligar o dia inteiro.
+      </p>
+      <BloqueiosEditor barbeiroId={user.id} bloqueiosIniciais={bloqueios ?? []} />
     </div>
   );
 }

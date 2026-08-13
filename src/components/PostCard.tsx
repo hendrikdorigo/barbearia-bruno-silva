@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { extrairMencoes } from "@/lib/mentions";
 
 export default function PostCard({ post, usuarioId }: { post: any; usuarioId: string | null }) {
   const [comentario, setComentario] = useState("");
@@ -33,10 +34,12 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
     if (!usuarioId) return router.push("/login");
     if (!comentario.trim()) return;
     setEnviando(true);
+    const mencoes = await extrairMencoes(supabase, comentario);
     await supabase.from("post_comentarios").insert({
       post_id: post.id,
       cliente_id: usuarioId,
       comentario,
+      mencoes,
     });
     setComentario("");
     setEnviando(false);

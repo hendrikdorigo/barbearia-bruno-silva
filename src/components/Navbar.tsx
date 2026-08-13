@@ -86,6 +86,9 @@ export default function Navbar() {
           <Link href="/servicos" className="hover:text-gold transition-colors">
             Serviços
           </Link>
+          <Link href="/loja" className="hover:text-gold transition-colors">
+            Loja
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -152,6 +155,9 @@ export default function Navbar() {
           <Link href="/servicos" onClick={() => setOpen(false)}>
             Serviços
           </Link>
+          <Link href="/loja" onClick={() => setOpen(false)}>
+            Loja
+          </Link>
           {profile && (
             <Link
               href={painelHref}
@@ -168,6 +174,12 @@ export default function Navbar() {
               </Link>
               <Link href="/painel/barbeiro/horarios" onClick={() => setOpen(false)}>
                 Meus horários
+              </Link>
+              <Link href="/painel/barbeiro/servicos" onClick={() => setOpen(false)}>
+                Meus serviços
+              </Link>
+              <Link href="/painel/barbeiro/fidelidade" onClick={() => setOpen(false)}>
+                Fidelidade
               </Link>
               <Link href="/painel/barbeiro/comunidade" onClick={() => setOpen(false)}>
                 Meus posts

@@ -3,6 +3,7 @@ import { Bebas_Neue, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PopupDisplay from "@/components/PopupDisplay";
 
 const display = Bebas_Neue({
   weight: "400",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
+        <PopupDisplay />
       </body>
     </html>
   );

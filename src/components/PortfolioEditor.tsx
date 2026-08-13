@@ -10,11 +10,28 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
     (barbeiro.especialidades ?? []).join(", ")
   );
   const [imagens, setImagens] = useState<string[]>(barbeiro.portfolio_imagens ?? []);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(barbeiro.banner_url ?? null);
+  const [novoBanner, setNovoBanner] = useState<File | null>(null);
   const [novaImagem, setNovaImagem] = useState<File | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  async function adicionarBanner() {
+    if (!novoBanner) return;
+    const path = `${barbeiro.profile_id}/banner-${Date.now()}-${novoBanner.name}`;
+    const { error } = await supabase.storage
+      .from("portfolio")
+      .upload(path, novoBanner, { upsert: true });
+    if (error) {
+      setMensagem(error.message);
+      return;
+    }
+    const url = supabase.storage.from("portfolio").getPublicUrl(path).data.publicUrl;
+    setBannerUrl(url);
+    setNovoBanner(null);
+  }
 
   async function adicionarImagem() {
     if (!novaImagem) return;
@@ -47,6 +64,7 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           .map((e) => e.trim())
           .filter(Boolean),
         portfolio_imagens: imagens,
+        banner_url: bannerUrl,
       })
       .eq("profile_id", barbeiro.profile_id);
     setSalvando(false);
@@ -61,6 +79,35 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
   return (
     <div className="mt-8 flex flex-col gap-4">
       <label className="text-xs uppercase tracking-widest text-neutral-500">
+        Banner do perfil (imagem larga, estilo capa)
+      </label>
+      {bannerUrl && (
+        <div className="relative h-32 w-full overflow-hidden rounded-lg">
+          <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+          <button
+            onClick={() => setBannerUrl(null)}
+            className="absolute right-2 top-2 rounded-full bg-red-500/80 px-2 text-xs text-white"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setNovoBanner(e.target.files?.[0] ?? null)}
+          className="flex-1 text-sm text-neutral-400"
+        />
+        <button
+          onClick={adicionarBanner}
+          className="rounded-lg border border-ink-line px-4 py-2 text-xs font-bold uppercase text-neutral-300 hover:border-gold hover:text-gold"
+        >
+          Enviar banner
+        </button>
+      </div>
+
+      <label className="mt-4 text-xs uppercase tracking-widest text-neutral-500">
         Descrição / bio
       </label>
       <textarea

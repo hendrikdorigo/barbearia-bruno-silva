@@ -55,6 +55,18 @@ export default async function PainelAdminPage() {
           >
             Repasses
           </Link>
+          <Link
+            href="/painel/admin/loja"
+            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+          >
+            Loja
+          </Link>
+          <Link
+            href="/painel/admin/popups"
+            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+          >
+            Pop-ups
+          </Link>
         </div>
       </div>
 
@@ -81,6 +93,18 @@ export default async function PainelAdminPage() {
               className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
             >
               Meus horários
+            </Link>
+            <Link
+              href="/painel/barbeiro/servicos"
+              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
+            >
+              Meus serviços
+            </Link>
+            <Link
+              href="/painel/barbeiro/fidelidade"
+              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
+            >
+              Fidelidade
             </Link>
             <Link
               href="/painel/barbeiro/comunidade"

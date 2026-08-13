@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { extrairMencoes } from "@/lib/mentions";
 
 export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
   const [tipo, setTipo] = useState<"texto" | "imagem" | "video">("texto");
@@ -32,11 +33,14 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
       conteudoUrl = supabase.storage.from("comunidade").getPublicUrl(path).data.publicUrl;
     }
 
+    const mencoes = texto ? await extrairMencoes(supabase, texto) : [];
+
     const { error } = await supabase.from("posts_comunidade").insert({
       barbeiro_id: barbeiroId,
       tipo,
       texto: texto || null,
       conteudo_url: conteudoUrl,
+      mencoes,
     });
 
     setEnviando(false);
@@ -68,7 +72,7 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
       <textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
-        placeholder="Escreva algo para os clientes..."
+        placeholder="Escreva algo para os clientes... (use @Nome para mencionar alguém)"
         rows={3}
         className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 focus:border-gold focus:outline-none"
       />
