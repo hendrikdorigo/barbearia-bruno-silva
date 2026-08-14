@@ -17,6 +17,18 @@ export default async function PortfolioBarbeiroPage() {
 
   if (!barbeiro) redirect("/");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nome, avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  const { data: itensPortfolio } = await supabase
+    .from("portfolio_itens")
+    .select("*")
+    .eq("barbeiro_id", user.id)
+    .order("ordem", { ascending: true });
+
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
@@ -25,7 +37,11 @@ export default async function PortfolioBarbeiroPage() {
       <p className="mt-2 text-muted-foreground">
         Essas informações aparecem na sua página pública para clientes.
       </p>
-      <PortfolioEditor barbeiro={barbeiro} />
+      <PortfolioEditor
+        barbeiro={barbeiro}
+        profile={profile ?? { nome: "Barbeiro", avatar_url: null }}
+        itensPortfolioIniciais={itensPortfolio ?? []}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ShoppingBagIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
@@ -35,9 +36,16 @@ export default async function LojaPage() {
                   key={p.id}
                   className="flex-row items-center justify-between gap-3 border-border bg-ink-soft px-5 py-4"
                 >
-                  <div>
-                    <p className="font-semibold text-foreground">{p.nome}</p>
-                    {p.descricao && <p className="text-xs text-muted-foreground">{p.descricao}</p>}
+                  <div className="flex items-center gap-3">
+                    {p.imagem_url && (
+                      <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-border">
+                        <Image src={p.imagem_url} alt="" fill sizes="56px" className="object-cover" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-foreground">{p.nome}</p>
+                      {p.descricao && <p className="text-xs text-muted-foreground">{p.descricao}</p>}
+                    </div>
                   </div>
                   <p className="font-mono text-xl font-medium text-gold-gradient">
                     R$ {Number(p.preco).toFixed(2).replace(".", ",")}

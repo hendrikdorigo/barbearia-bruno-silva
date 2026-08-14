@@ -35,7 +35,7 @@ export default async function HomePage() {
 
   const { data: barbeiros } = await supabase
     .from("barbeiros")
-    .select("profile_id, bio, especialidades, portfolio_imagens, profiles(nome, avatar_url)")
+    .select("profile_id, bio, especialidades, profiles(nome, avatar_url), portfolio_itens(url, ordem)")
     .eq("ativo", true)
     .limit(3);
 
@@ -169,7 +169,8 @@ export default async function HomePage() {
                 <div className="relative h-64 w-full overflow-hidden">
                   <Image
                     src={
-                      b.portfolio_imagens?.[0] ||
+                      [...(b.portfolio_itens ?? [])].sort((x, y) => x.ordem - y.ordem)[0]?.url ||
+                      b.profiles?.avatar_url ||
                       "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800"
                     }
                     alt={b.profiles?.nome ?? "Barbeiro"}

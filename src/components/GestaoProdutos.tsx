@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ type Produto = {
   categoria: string | null;
   estoque: number | null;
   ativo: boolean;
+  imagem_url: string | null;
 };
 
 export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais: Produto[] }) {
@@ -24,10 +26,20 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
   const [descricao, setDescricao] = useState("");
   const [preco, setPreco] = useState("");
   const [categoria, setCategoria] = useState("bebidas");
+  const [imagem, setImagem] = useState<File | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [trocandoImagemId, setTrocandoImagemId] = useState<string | null>(null);
+  const inputsImagemExistente = useRef<Record<string, HTMLInputElement | null>>({});
   const router = useRouter();
   const supabase = createClient();
+
+  async function enviarImagem(arquivo: File, produtoId: string) {
+    const path = `${produtoId}/${Date.now()}-${arquivo.name}`;
+    const { error } = await supabase.storage.from("produtos").upload(path, arquivo, { upsert: true });
+    if (error) return null;
+    return supabase.storage.from("produtos").getPublicUrl(path).data.publicUrl;
+  }
 
   async function adicionar() {
     setErro(null);
@@ -41,16 +53,39 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
       .insert({ nome, descricao: descricao || null, preco: Number(preco), categoria })
       .select()
       .single();
-    setSalvando(false);
     if (error || !salvo) {
+      setSalvando(false);
       setErro(error?.message ?? "Não foi possível salvar.");
       return;
     }
-    setProdutos((prev) => [...prev, salvo as Produto]);
+
+    let produtoSalvo = salvo as Produto;
+    if (imagem) {
+      const url = await enviarImagem(imagem, produtoSalvo.id);
+      if (url) {
+        await supabase.from("produtos").update({ imagem_url: url }).eq("id", produtoSalvo.id);
+        produtoSalvo = { ...produtoSalvo, imagem_url: url };
+      }
+    }
+
+    setSalvando(false);
+    setProdutos((prev) => [...prev, produtoSalvo]);
     setNome("");
     setDescricao("");
     setPreco("");
+    setImagem(null);
     router.refresh();
+  }
+
+  async function trocarImagemExistente(produtoId: string, arquivo: File) {
+    setTrocandoImagemId(produtoId);
+    const url = await enviarImagem(arquivo, produtoId);
+    if (url) {
+      await supabase.from("produtos").update({ imagem_url: url }).eq("id", produtoId);
+      setProdutos((prev) => prev.map((p) => (p.id === produtoId ? { ...p, imagem_url: url } : p)));
+      router.refresh();
+    }
+    setTrocandoImagemId(null);
   }
 
   async function alternarAtivo(id: string, ativo: boolean) {
@@ -86,6 +121,15 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
             className="bg-background"
           />
         </div>
+        <label className="mt-3 block text-xs uppercase tracking-widest text-muted-foreground">
+          Foto do produto (opcional)
+        </label>
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImagem(e.target.files?.[0] ?? null)}
+          className="mt-1.5 bg-background"
+        />
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
         <Button onClick={adicionar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Salvando..." : "Adicionar produto"}
@@ -101,11 +145,42 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
               !p.ativo && "border-border/40 bg-ink-soft/40"
             )}
           >
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {p.nome} · <span className="font-mono">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">{p.categoria}</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => inputsImagemExistente.current[p.id]?.click()}
+                disabled={trocandoImagemId === p.id}
+                aria-label="Trocar foto do produto"
+                className="group relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background"
+              >
+                {p.imagem_url ? (
+                  <img src={p.imagem_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="size-4 text-muted-foreground" />
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-ink/0 text-transparent transition-colors group-hover:bg-ink/60 group-hover:text-white">
+                  <ImageIcon className="size-4" />
+                </span>
+                <input
+                  ref={(el) => {
+                    inputsImagemExistente.current[p.id] = el;
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const arquivo = e.target.files?.[0];
+                    if (arquivo) trocarImagemExistente(p.id, arquivo);
+                    e.target.value = "";
+                  }}
+                />
+              </button>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {p.nome} · <span className="font-mono">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">{p.categoria}</p>
+              </div>
             </div>
             <button
               onClick={() => alternarAtivo(p.id, p.ativo)}

@@ -1,6 +1,7 @@
 import { UsersIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
+import NovoPostForm from "@/components/NovoPostForm";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
 export default async function ComunidadePage() {
@@ -17,6 +18,16 @@ export default async function ComunidadePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let isBarbeiro = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    isBarbeiro = profile?.role === "barbeiro";
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
@@ -29,6 +40,8 @@ export default async function ComunidadePage() {
         Acompanhe cortes, bastidores e novidades postadas pelos barbeiros.
         Curta e comente se você for cliente cadastrado.
       </p>
+
+      {isBarbeiro && user && <NovoPostForm barbeiroId={user.id} />}
 
       <div className="mt-10 space-y-6">
         {posts?.length ? (

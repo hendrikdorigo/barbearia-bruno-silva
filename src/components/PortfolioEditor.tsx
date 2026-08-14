@@ -7,13 +7,29 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import AvatarUploader from "@/components/AvatarUploader";
+import { cn } from "@/lib/utils";
 
-export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
+const BIO_LIMITE = 280;
+
+type ItemPortfolio = { url: string; legenda: string };
+
+export default function PortfolioEditor({
+  barbeiro,
+  profile,
+  itensPortfolioIniciais,
+}: {
+  barbeiro: any;
+  profile: { nome: string; avatar_url: string | null };
+  itensPortfolioIniciais: { url: string; legenda: string | null }[];
+}) {
   const [bio, setBio] = useState(barbeiro.bio ?? "");
   const [especialidades, setEspecialidades] = useState(
     (barbeiro.especialidades ?? []).join(", ")
   );
-  const [imagens, setImagens] = useState<string[]>(barbeiro.portfolio_imagens ?? []);
+  const [itens, setItens] = useState<ItemPortfolio[]>(
+    itensPortfolioIniciais.map((i) => ({ url: i.url, legenda: i.legenda ?? "" }))
+  );
   const [bannerUrl, setBannerUrl] = useState<string | null>(barbeiro.banner_url ?? null);
   const [novoBanner, setNovoBanner] = useState<File | null>(null);
   const [novaImagem, setNovaImagem] = useState<File | null>(null);
@@ -48,18 +64,23 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
       return;
     }
     const url = supabase.storage.from("portfolio").getPublicUrl(path).data.publicUrl;
-    setImagens((prev) => [...prev, url]);
+    setItens((prev) => [...prev, { url, legenda: "" }]);
     setNovaImagem(null);
   }
 
   function removerImagem(url: string) {
-    setImagens((prev) => prev.filter((i) => i !== url));
+    setItens((prev) => prev.filter((i) => i.url !== url));
+  }
+
+  function atualizarLegenda(url: string, legenda: string) {
+    setItens((prev) => prev.map((i) => (i.url === url ? { ...i, legenda } : i)));
   }
 
   async function salvar() {
     setSalvando(true);
     setMensagem(null);
-    const { error } = await supabase
+
+    const { error: barbeiroError } = await supabase
       .from("barbeiros")
       .update({
         bio,
@@ -67,22 +88,47 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           .split(",")
           .map((e) => e.trim())
           .filter(Boolean),
-        portfolio_imagens: imagens,
         banner_url: bannerUrl,
       })
       .eq("profile_id", barbeiro.profile_id);
-    setSalvando(false);
-    if (error) {
-      setMensagem(error.message);
+    if (barbeiroError) {
+      setMensagem(barbeiroError.message);
+      setSalvando(false);
       return;
     }
+
+    await supabase.from("portfolio_itens").delete().eq("barbeiro_id", barbeiro.profile_id);
+    if (itens.length > 0) {
+      const { error: itensError } = await supabase.from("portfolio_itens").insert(
+        itens.map((item, index) => ({
+          barbeiro_id: barbeiro.profile_id,
+          url: item.url,
+          legenda: item.legenda.trim() || null,
+          ordem: index,
+        }))
+      );
+      if (itensError) {
+        setMensagem(itensError.message);
+        setSalvando(false);
+        return;
+      }
+    }
+
+    setSalvando(false);
     setMensagem("Portfólio atualizado!");
     router.refresh();
   }
 
+  const bioRestante = BIO_LIMITE - bio.length;
+
   return (
     <div className="mt-8 flex flex-col gap-4">
       <label className="text-xs uppercase tracking-widest text-muted-foreground">
+        Foto de perfil
+      </label>
+      <AvatarUploader userId={barbeiro.profile_id} avatarUrl={profile.avatar_url} nome={profile.nome} />
+
+      <label className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">
         Banner do perfil (imagem larga, estilo capa)
       </label>
       {bannerUrl && (
@@ -109,10 +155,32 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
         </Button>
       </div>
 
-      <label className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">
-        Descrição / bio
-      </label>
-      <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="bg-ink-soft" />
+      <div className="mt-4 flex items-baseline justify-between">
+        <label className="text-xs uppercase tracking-widest text-muted-foreground">
+          Descrição / bio
+        </label>
+        <span
+          className={cn(
+            "font-mono text-xs",
+            bioRestante < 0 ? "text-destructive" : "text-muted-foreground"
+          )}
+        >
+          {bio.length}/{BIO_LIMITE}
+        </span>
+      </div>
+      <Textarea
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+        rows={4}
+        className="bg-ink-soft"
+        placeholder="Conte em poucas frases quem você é e seu diferencial como barbeiro."
+      />
+      {bioRestante < 0 && (
+        <p className="text-xs text-muted-foreground">
+          Sua bio está {Math.abs(bioRestante)} caracteres acima do recomendado —
+          considere resumir para um visual mais limpo na sua página.
+        </p>
+      )}
 
       <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Especialidades (separadas por vírgula)
@@ -127,17 +195,25 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
       <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Imagens do portfólio
       </label>
-      <div className="grid grid-cols-3 gap-3">
-        {imagens.map((img) => (
-          <div key={img} className="relative">
-            <img src={img} alt="" className="h-24 w-full rounded-lg object-cover" />
-            <button
-              onClick={() => removerImagem(img)}
-              aria-label="Remover imagem"
-              className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-destructive text-white"
-            >
-              <XIcon className="size-3" />
-            </button>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {itens.map((item) => (
+          <div key={item.url} className="flex flex-col gap-1.5">
+            <div className="relative">
+              <img src={item.url} alt="" className="h-24 w-full rounded-lg object-cover" />
+              <button
+                onClick={() => removerImagem(item.url)}
+                aria-label="Remover imagem"
+                className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-destructive text-white"
+              >
+                <XIcon className="size-3" />
+              </button>
+            </div>
+            <Input
+              value={item.legenda}
+              onChange={(e) => atualizarLegenda(item.url, e.target.value)}
+              placeholder="Legenda (opcional)"
+              className="h-7 bg-ink-soft text-xs"
+            />
           </div>
         ))}
       </div>

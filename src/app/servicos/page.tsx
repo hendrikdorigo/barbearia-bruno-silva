@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ClockIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
@@ -19,7 +20,11 @@ export default async function ServicosPage() {
 
       <Card className="mt-10 divide-y divide-border rounded-2xl border-border bg-ink-soft py-0">
         {servicos?.map((s) => (
-          <div key={s.id} className="flex items-center justify-between px-6 py-5">
+          <Link
+            key={s.id}
+            href={`/barbeiros?servico=${s.id}`}
+            className="flex items-center justify-between px-6 py-5 transition-colors hover:bg-gold/5"
+          >
             <div>
               <p className="font-display text-xl text-foreground">{s.nome}</p>
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -30,10 +35,13 @@ export default async function ServicosPage() {
             <p className="font-mono text-2xl font-medium text-gold-gradient">
               R$ {Number(s.preco).toFixed(2).replace(".", ",")}
             </p>
-          </div>
+          </Link>
         ))}
       </Card>
-      <p className="mt-8 text-sm text-muted-foreground">
+      <p className="mt-6 text-sm text-muted-foreground">
+        Toque em um serviço para escolher o barbeiro e agendar.
+      </p>
+      <p className="mt-2 text-sm text-muted-foreground">
         Formas de pagamento aceitas: Crédito, Débito, Dinheiro e Pix. Você pode
         optar por pagamento antecipado ao agendar.
       </p>

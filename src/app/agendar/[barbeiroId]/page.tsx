@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ClockIcon, ScissorsIcon, CheckIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
@@ -59,6 +59,8 @@ type Passo = "servico" | "horario" | "pagamento" | "confirmado";
 export default function AgendarPage() {
   const { barbeiroId } = useParams<{ barbeiroId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const servicoPreSelecionadoId = searchParams.get("servico");
   const supabase = createClient();
 
   const [passo, setPasso] = useState<Passo>("servico");
@@ -117,6 +119,7 @@ export default function AgendarPage() {
         }))
         .sort((a: any, b: any) => a.preco - b.preco);
 
+      let servicosFinal = listaServicos;
       if (listaServicos.length > 0) {
         setServicos(listaServicos);
       } else {
@@ -126,7 +129,16 @@ export default function AgendarPage() {
           .select("*")
           .eq("ativo", true)
           .order("preco");
-        setServicos(servicosData ?? []);
+        servicosFinal = servicosData ?? [];
+        setServicos(servicosFinal);
+      }
+
+      if (servicoPreSelecionadoId) {
+        const preSelecionado = servicosFinal.find((s: any) => s.id === servicoPreSelecionadoId);
+        if (preSelecionado) {
+          setServicoSelecionado(preSelecionado);
+          setPasso("horario");
+        }
       }
 
       if (user) {

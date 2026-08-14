@@ -12,10 +12,13 @@ import { cn } from "@/lib/utils";
 
 export default async function BarbeiroPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ servico?: string }>;
 }) {
   const { id } = await params;
+  const { servico } = await searchParams;
   const supabase = await createClient();
 
   const { data: barbeiro } = await supabase
@@ -25,6 +28,12 @@ export default async function BarbeiroPage({
     .single();
 
   if (!barbeiro) notFound();
+
+  const { data: itensPortfolio } = await supabase
+    .from("portfolio_itens")
+    .select("*")
+    .eq("barbeiro_id", id)
+    .order("ordem", { ascending: true });
 
   const { data: feedbacks } = await supabase
     .from("feedbacks")
@@ -70,7 +79,7 @@ export default async function BarbeiroPage({
         <Image
           src={
             barbeiro.banner_url ||
-            barbeiro.portfolio_imagens?.[0] ||
+            itensPortfolio?.[0]?.url ||
             "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200"
           }
           alt=""
@@ -86,7 +95,7 @@ export default async function BarbeiroPage({
             <Image
               src={
                 barbeiro.profiles?.avatar_url ||
-                barbeiro.portfolio_imagens?.[0] ||
+                itensPortfolio?.[0]?.url ||
                 "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=300"
               }
               alt={barbeiro.profiles?.nome ?? ""}
@@ -112,7 +121,11 @@ export default async function BarbeiroPage({
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href={`/agendar/${barbeiro.profile_id}`}
+              href={
+                servico
+                  ? `/agendar/${barbeiro.profile_id}?servico=${servico}`
+                  : `/agendar/${barbeiro.profile_id}`
+              }
               className={cn(
                 buttonVariants(),
                 "rounded-full px-6 uppercase tracking-wider"
@@ -134,7 +147,9 @@ export default async function BarbeiroPage({
           </div>
         </div>
 
-        <p className="mt-4 max-w-xl text-muted-foreground">{barbeiro.bio}</p>
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+          {barbeiro.bio}
+        </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {barbeiro.especialidades?.map((e: string) => (
             <Badge key={e} variant="outline" className="text-muted-foreground">
@@ -143,18 +158,20 @@ export default async function BarbeiroPage({
           ))}
         </div>
 
-        {barbeiro.portfolio_imagens && barbeiro.portfolio_imagens.length > 0 && (
+        {itensPortfolio && itensPortfolio.length > 0 && (
           <div className="mt-10">
             <h2 className="font-display text-2xl tracking-wide text-foreground">
               Portfólio
             </h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {barbeiro.portfolio_imagens.map((img: string, i: number) => (
-                <div
-                  key={i}
-                  className="relative h-32 overflow-hidden rounded-xl border border-border"
-                >
-                  <Image src={img} alt="" fill className="object-cover" />
+              {itensPortfolio.map((item) => (
+                <div key={item.id} className="flex flex-col gap-1.5">
+                  <div className="relative h-32 overflow-hidden rounded-xl border border-border">
+                    <Image src={item.url} alt={item.legenda ?? ""} fill className="object-cover" />
+                  </div>
+                  {item.legenda && (
+                    <p className="text-xs text-muted-foreground">{item.legenda}</p>
+                  )}
                 </div>
               ))}
             </div>

@@ -3,14 +3,29 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 
-export default async function BarbeirosPage() {
+export default async function BarbeirosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ servico?: string }>;
+}) {
+  const { servico } = await searchParams;
   const supabase = await createClient();
   const { data: barbeiros } = await supabase
     .from("barbeiros")
     .select(
-      "profile_id, bio, especialidades, portfolio_imagens, is_dono, profiles(nome, avatar_url)"
+      "profile_id, bio, especialidades, is_dono, profiles(nome, avatar_url), portfolio_itens(url, ordem)"
     )
     .eq("ativo", true);
+
+  let servicoNome: string | null = null;
+  if (servico) {
+    const { data: s } = await supabase
+      .from("servicos")
+      .select("nome")
+      .eq("id", servico)
+      .maybeSingle();
+    servicoNome = s?.nome ?? null;
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
@@ -21,21 +36,23 @@ export default async function BarbeirosPage() {
         Nossos barbeiros
       </h1>
       <p className="mt-3 max-w-xl text-muted-foreground">
-        Escolha um profissional para ver o portfólio completo, avaliações de
-        clientes e agendar seu horário.
+        {servicoNome
+          ? `Escolha o barbeiro para agendar "${servicoNome}".`
+          : "Escolha um profissional para ver o portfólio completo, avaliações de clientes e agendar seu horário."}
       </p>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {barbeiros?.map((b: any) => (
           <Link
             key={b.profile_id}
-            href={`/barbeiros/${b.profile_id}`}
+            href={servico ? `/barbeiros/${b.profile_id}?servico=${servico}` : `/barbeiros/${b.profile_id}`}
             className="group overflow-hidden rounded-2xl border border-border bg-ink-soft transition-colors hover:border-gold"
           >
             <div className="relative h-56 w-full overflow-hidden">
               <Image
                 src={
-                  b.portfolio_imagens?.[0] ||
+                  [...(b.portfolio_itens ?? [])].sort((x, y) => x.ordem - y.ordem)[0]?.url ||
+                  b.profiles?.avatar_url ||
                   "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800"
                 }
                 alt={b.profiles?.nome ?? "Barbeiro"}

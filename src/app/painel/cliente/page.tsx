@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AgendamentoClienteAcoes from "@/components/AgendamentoClienteAcoes";
 import PreferenciaNotificacao from "@/components/PreferenciaNotificacao";
+import AvatarUploader from "@/components/AvatarUploader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -46,7 +47,7 @@ export default async function PainelClientePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("notif_whatsapp_comunidade")
+    .select("nome, avatar_url, notif_whatsapp_comunidade")
     .eq("id", user.id)
     .single();
 
@@ -55,6 +56,17 @@ export default async function PainelClientePage() {
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meus agendamentos
       </h1>
+
+      {profile && (
+        <div className="mt-6">
+          <AvatarUploader
+            userId={user.id}
+            avatarUrl={profile.avatar_url}
+            nome={profile.nome}
+            syncClienteFoto
+          />
+        </div>
+      )}
 
       <PreferenciaNotificacao
         profileId={user.id}
