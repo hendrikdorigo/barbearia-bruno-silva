@@ -193,7 +193,9 @@ export default function Navbar() {
                   {profile.nome.split(" ")[0]}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="truncate">{profile.nome}</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="truncate">{profile.nome}</DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem render={<Link href={painelHref} />}>
