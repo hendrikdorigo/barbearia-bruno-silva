@@ -37,7 +37,7 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
       {podeVerComanda && (
         <Link
           href={`/painel/cliente/comanda/${agendamento.id}`}
-          className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold text-neutral-300 hover:border-gold hover:text-gold"
+          className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-gold hover:text-gold"
         >
           Ver comanda
         </Link>
@@ -54,12 +54,12 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
         <button
           onClick={cancelar}
           disabled={cancelando}
-          className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+          className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10 disabled:opacity-50"
         >
           {cancelando ? "Cancelando..." : "Cancelar (até 1h antes)"}
         </button>
       )}
-      {erro && <p className="text-xs text-red-400">{erro}</p>}
+      {erro && <p className="text-xs text-destructive">{erro}</p>}
     </div>
   );
 }

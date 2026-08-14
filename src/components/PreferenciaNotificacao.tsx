@@ -25,7 +25,7 @@ export default function PreferenciaNotificacao({
   }
 
   return (
-    <label className="mt-4 flex items-center gap-3 rounded-xl border border-ink-line bg-ink-soft p-4 text-sm text-neutral-300">
+    <label className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-ink-soft p-4 text-sm text-muted-foreground">
       <input
         type="checkbox"
         checked={ativo}

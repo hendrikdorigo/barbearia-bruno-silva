@@ -54,14 +54,14 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-ink-line bg-ink-soft p-5">
+    <div className="mt-6 rounded-xl border border-border bg-ink-soft p-5">
       <div className="flex gap-2">
         {(["texto", "imagem", "video"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTipo(t)}
             className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase ${
-              tipo === t ? "bg-gold-gradient text-ink" : "border border-ink-line text-neutral-400"
+              tipo === t ? "bg-gold-gradient text-ink" : "border border-border text-muted-foreground"
             }`}
           >
             {t}
@@ -74,7 +74,7 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
         onChange={(e) => setTexto(e.target.value)}
         placeholder="Escreva algo para os clientes... (use @Nome para mencionar alguém)"
         rows={3}
-        className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+        className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
       />
 
       {tipo !== "texto" && (
@@ -82,11 +82,11 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
           type="file"
           accept={tipo === "imagem" ? "image/*" : "video/*"}
           onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-          className="mt-3 text-sm text-neutral-400"
+          className="mt-3 text-sm text-muted-foreground"
         />
       )}
 
-      {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+      {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
       <button
         onClick={publicar}

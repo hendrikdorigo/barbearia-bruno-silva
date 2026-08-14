@@ -36,10 +36,10 @@ export default async function ComandaBarbeiroPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-4xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-4xl tracking-wide text-foreground">
         Comanda de {(comanda as any).clientes?.profiles?.nome}
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Adicione itens da loja e feche a conta quando o atendimento acabar.
       </p>
       <ComandaView

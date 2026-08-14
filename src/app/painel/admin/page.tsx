@@ -39,31 +39,31 @@ export default async function PainelAdminPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+        <h1 className="font-display text-5xl tracking-wide text-foreground">
           Painel do Bruno
         </h1>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/painel/admin/barbeiros"
-            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
           >
             Gerenciar barbeiros
           </Link>
           <Link
             href="/painel/admin/repasses"
-            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
           >
             Repasses
           </Link>
           <Link
             href="/painel/admin/loja"
-            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
           >
             Loja
           </Link>
           <Link
             href="/painel/admin/popups"
-            className="rounded-full border border-ink-line px-4 py-2 text-xs font-bold uppercase tracking-widest text-neutral-300 hover:border-gold hover:text-gold"
+            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
           >
             Pop-ups
           </Link>
@@ -116,7 +116,7 @@ export default async function PainelAdminPage() {
         </div>
       )}
 
-      <h2 className="mt-10 font-display text-3xl text-neutral-50">
+      <h2 className="mt-10 font-display text-3xl text-foreground">
         Todos os agendamentos
       </h2>
       <PainelAdminAgendamentos

@@ -68,10 +68,10 @@ export default function ServicosEditor({
           <div
             key={s.id}
             className={`flex flex-wrap items-center gap-4 rounded-xl border px-4 py-3 ${
-              l.ativo ? "border-ink-line bg-ink-soft" : "border-ink-line/50 bg-ink-soft/40"
+              l.ativo ? "border-border bg-ink-soft" : "border-border/50 bg-ink-soft/40"
             }`}
           >
-            <label className="flex w-44 items-center gap-2 text-sm font-semibold text-neutral-200">
+            <label className="flex w-44 items-center gap-2 text-sm font-semibold text-foreground/90">
               <input
                 type="checkbox"
                 checked={l.ativo}
@@ -82,8 +82,8 @@ export default function ServicosEditor({
             </label>
 
             {l.ativo ? (
-              <div className="flex items-center gap-2 text-sm text-neutral-300">
-                <span className="text-neutral-500">R$</span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="text-muted-foreground">R$</span>
                 <input
                   type="number"
                   step="0.01"
@@ -97,14 +97,14 @@ export default function ServicosEditor({
                       e.target.value === "" ? null : Number(e.target.value)
                     )
                   }
-                  className="w-28 rounded-lg border border-ink-line bg-ink px-2 py-1.5 text-neutral-100 focus:border-gold focus:outline-none"
+                  className="w-28 rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
                 />
-                <span className="text-xs text-neutral-500">
+                <span className="text-xs text-muted-foreground">
                   (padrão R$ {Number(s.preco).toFixed(2).replace(".", ",")})
                 </span>
               </div>
             ) : (
-              <span className="text-sm text-neutral-500">Não oferece este serviço</span>
+              <span className="text-sm text-muted-foreground">Não oferece este serviço</span>
             )}
           </div>
         );

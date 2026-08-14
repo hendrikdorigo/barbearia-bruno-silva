@@ -42,16 +42,16 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
   return (
     <div className="mt-4 space-y-3">
       {agendamentos.length === 0 && (
-        <p className="text-sm text-neutral-500">Nenhum agendamento por enquanto.</p>
+        <p className="text-sm text-muted-foreground">Nenhum agendamento por enquanto.</p>
       )}
       {agendamentos.map((a) => (
-        <div key={a.id} className="rounded-xl border border-ink-line bg-ink-soft p-5">
+        <div key={a.id} className="rounded-xl border border-border bg-ink-soft p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="font-semibold text-neutral-100">
+              <p className="font-semibold text-foreground">
                 {a.clientes?.profiles?.nome} · {a.servicos?.nome}
               </p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 {new Date(a.data_hora).toLocaleString("pt-BR")} ·{" "}
                 {a.clientes?.profiles?.telefone ?? "sem telefone"}
               </p>
@@ -59,7 +59,7 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
                 {STATUS_LABEL[a.status]}
               </p>
               {a.forma_pagamento && (
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Pagamento: {PAGAMENTO_LABEL[a.forma_pagamento] ?? a.forma_pagamento}{" "}
                   {a.pagamento_antecipado ? "(antecipado, já pago)" : "(vai pagar no local)"}
                 </p>
@@ -68,7 +68,7 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
             <div className="flex flex-wrap gap-2">
               <Link
                 href={`/painel/barbeiro/comanda/${a.id}`}
-                className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold text-neutral-300 hover:border-gold hover:text-gold"
+                className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-gold hover:text-gold"
               >
                 Ver comanda
               </Link>
@@ -78,7 +78,7 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
                     <button
                       disabled={loadingId === a.id}
                       onClick={() => atualizarStatus(a.id, "confirmado")}
-                      className="rounded-full border border-green-500/40 px-3 py-1.5 text-xs font-bold text-green-400 hover:bg-green-500/10"
+                      className="rounded-full border border-green-500/40 px-3 py-1.5 text-xs font-bold text-success hover:bg-success/10"
                     >
                       Confirmar
                     </button>
@@ -93,7 +93,7 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
                   <button
                     disabled={loadingId === a.id}
                     onClick={() => marcarNoShow(a.id)}
-                    className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-red-500/10"
+                    className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10"
                   >
                     Cliente não veio (no-show)
                   </button>

@@ -113,7 +113,7 @@ export default function ComandaView({
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-ink-line bg-ink-soft p-6">
+    <div className="mt-6 rounded-2xl border border-border bg-ink-soft p-6">
       <div className="flex items-center justify-between">
         <p className="text-xs font-bold uppercase tracking-widest text-gold">
           Comanda ·{" "}
@@ -125,12 +125,12 @@ export default function ComandaView({
       </div>
 
       <div className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-between text-neutral-300">
+        <div className="flex justify-between text-muted-foreground">
           <span>Serviço</span>
           <span>R$ {Number(comanda.valor_servico).toFixed(2).replace(".", ",")}</span>
         </div>
         {itens.map((i) => (
-          <div key={i.id} className="flex items-center justify-between text-neutral-400">
+          <div key={i.id} className="flex items-center justify-between text-muted-foreground">
             <span>
               {i.quantidade}x {i.produtos?.nome ?? "Produto"}
             </span>
@@ -139,7 +139,7 @@ export default function ComandaView({
               {podeAdicionar && (
                 <button
                   onClick={() => removerItem(i.id)}
-                  className="text-xs text-neutral-600 hover:text-red-400"
+                  className="text-xs text-muted-foreground/70 hover:text-destructive"
                 >
                   remover
                 </button>
@@ -147,7 +147,7 @@ export default function ComandaView({
             </div>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-ink-line pt-2 font-bold text-neutral-50">
+        <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold text-foreground">
           <span>Total</span>
           <span className="text-gold-gradient">R$ {total.toFixed(2).replace(".", ",")}</span>
         </div>
@@ -155,7 +155,7 @@ export default function ComandaView({
 
       {podeAdicionar && produtos.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs uppercase tracking-widest text-neutral-500">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Adicionar da loja
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -164,9 +164,9 @@ export default function ComandaView({
                 key={p.id}
                 onClick={() => adicionarProduto(p)}
                 disabled={adicionando === p.id}
-                className="rounded-lg border border-ink-line px-3 py-2 text-left text-xs text-neutral-300 hover:border-gold disabled:opacity-50"
+                className="rounded-lg border border-border px-3 py-2 text-left text-xs text-muted-foreground hover:border-gold disabled:opacity-50"
               >
-                <p className="font-semibold text-neutral-100">{p.nome}</p>
+                <p className="font-semibold text-foreground">{p.nome}</p>
                 <p className="text-gold">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</p>
               </button>
             ))}
@@ -176,7 +176,7 @@ export default function ComandaView({
 
       {podeAdicionar && (
         <div className="mt-6">
-          <p className="text-xs uppercase tracking-widest text-neutral-500">Forma de pagamento</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {FORMAS_PAGAMENTO.map((f) => (
               <button
@@ -185,7 +185,7 @@ export default function ComandaView({
                 className={`rounded-lg border px-3 py-2 text-xs font-semibold ${
                   formaPagamento === f.id
                     ? "border-gold bg-gold-gradient text-ink"
-                    : "border-ink-line text-neutral-300 hover:border-gold"
+                    : "border-border text-muted-foreground hover:border-gold"
                 }`}
               >
                 {f.label}
@@ -214,7 +214,7 @@ export default function ComandaView({
           )}
 
           {papel === "cliente" && pagoAntecipado && status !== "fechada" && (
-            <p className="mt-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-300">
+            <p className="mt-4 rounded-lg border border-green-500/30 bg-success/10 p-3 text-sm text-green-300">
               Pago pelo app. Aguardando o barbeiro fechar a comanda ao fim do
               atendimento.
             </p>

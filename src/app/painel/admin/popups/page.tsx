@@ -23,10 +23,10 @@ export default async function GestaoPopupsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Pop-ups do app
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Envie avisos, promoções ou vídeos que aparecem quando o cliente ou
         barbeiro abre o app. Marque como &quot;boas-vindas&quot; para exibir
         automaticamente no primeiro acesso de cada novo cliente.

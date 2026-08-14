@@ -37,10 +37,10 @@ export default async function ServicosBarbeiroPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meus serviços e preços
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Escolha quais serviços você oferece e, se quiser, defina um preço
         próprio diferente do padrão da barbearia.
       </p>
@@ -50,10 +50,10 @@ export default async function ServicosBarbeiroPage() {
         barbeiroServicosIniciais={barbeiroServicos ?? []}
       />
 
-      <h2 className="mt-14 font-display text-3xl tracking-wide text-neutral-50">
+      <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
         Acréscimos e descontos
       </h2>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Crie regras automáticas de acréscimo ou desconto para datas
         específicas (ex: feriado) ou para um dia da semana fixo (ex: toda
         sexta 10% off).

@@ -87,8 +87,8 @@ export default function ExcecoesEditor({
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-ink-line bg-ink-soft p-5">
-        <label className="text-xs uppercase tracking-widest text-neutral-500">
+      <div className="rounded-xl border border-border bg-ink-soft p-5">
+        <label className="text-xs uppercase tracking-widest text-muted-foreground">
           Data específica
         </label>
         <input
@@ -96,7 +96,7 @@ export default function ExcecoesEditor({
           value={data}
           min={hoje}
           onChange={(e) => setData(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-ink-line bg-ink px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
+          className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:border-gold focus:outline-none"
         />
 
         <div className="mt-4 flex gap-2">
@@ -105,7 +105,7 @@ export default function ExcecoesEditor({
             className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
               tipo === "folga"
                 ? "border-gold bg-gold-gradient text-ink"
-                : "border-ink-line text-neutral-300 hover:border-gold"
+                : "border-border text-muted-foreground hover:border-gold"
             }`}
           >
             Folga (fechado)
@@ -115,7 +115,7 @@ export default function ExcecoesEditor({
             className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
               tipo === "customizado"
                 ? "border-gold bg-gold-gradient text-ink"
-                : "border-ink-line text-neutral-300 hover:border-gold"
+                : "border-border text-muted-foreground hover:border-gold"
             }`}
           >
             Horário diferente
@@ -123,19 +123,19 @@ export default function ExcecoesEditor({
         </div>
 
         {tipo === "customizado" && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-neutral-300">
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="time"
               value={horaInicio}
               onChange={(e) => setHoraInicio(e.target.value)}
-              className="rounded-lg border border-ink-line bg-ink px-2 py-1.5 text-neutral-100 focus:border-gold focus:outline-none"
+              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
             />
-            <span className="text-neutral-500">até</span>
+            <span className="text-muted-foreground">até</span>
             <input
               type="time"
               value={horaFim}
               onChange={(e) => setHoraFim(e.target.value)}
-              className="rounded-lg border border-ink-line bg-ink px-2 py-1.5 text-neutral-100 focus:border-gold focus:outline-none"
+              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
             />
           </div>
         )}
@@ -144,10 +144,10 @@ export default function ExcecoesEditor({
           value={motivo}
           onChange={(e) => setMotivo(e.target.value)}
           placeholder="Motivo (opcional) — ex: consulta médica, viagem..."
-          className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+          className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
         />
 
-        {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+        {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
         <button
           onClick={adicionar}
@@ -160,7 +160,7 @@ export default function ExcecoesEditor({
 
       <div className="mt-6 space-y-2">
         {futuras.length === 0 && (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             Nenhuma exceção futura cadastrada — sua agenda segue os horários
             padrão de cada dia da semana.
           </p>
@@ -168,10 +168,10 @@ export default function ExcecoesEditor({
         {futuras.map((e) => (
           <div
             key={e.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-line bg-ink-soft px-4 py-3"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-4 py-3"
           >
             <div>
-              <p className="text-sm font-semibold text-neutral-100">
+              <p className="text-sm font-semibold text-foreground">
                 {new Date(`${e.data}T00:00:00`).toLocaleDateString("pt-BR", {
                   day: "2-digit",
                   month: "2-digit",
@@ -179,7 +179,7 @@ export default function ExcecoesEditor({
                   weekday: "short",
                 })}
               </p>
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-muted-foreground">
                 {e.ativo
                   ? `Horário diferente: ${e.hora_inicio?.slice(0, 5)} às ${e.hora_fim?.slice(0, 5)}`
                   : "Folga (fechado o dia todo)"}
@@ -188,7 +188,7 @@ export default function ExcecoesEditor({
             </div>
             <button
               onClick={() => remover(e.id, e.data)}
-              className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold uppercase text-neutral-400 hover:border-red-400 hover:text-red-400"
+              className="rounded-full border border-border px-3 py-1.5 text-xs font-bold uppercase text-muted-foreground hover:border-red-400 hover:text-destructive"
             >
               Remover
             </button>

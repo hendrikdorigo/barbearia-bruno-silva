@@ -57,19 +57,19 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-ink-line bg-ink-soft p-5">
+      <div className="rounded-xl border border-border bg-ink-soft p-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <input
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Nome do produto"
-            className="rounded-lg border border-ink-line bg-ink px-3 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
           />
           <input
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
             placeholder="Categoria (ex: bebidas)"
-            className="rounded-lg border border-ink-line bg-ink px-3 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
           />
           <input
             type="number"
@@ -78,16 +78,16 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
             value={preco}
             onChange={(e) => setPreco(e.target.value)}
             placeholder="Preço"
-            className="rounded-lg border border-ink-line bg-ink px-3 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
           />
           <input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Descrição (opcional)"
-            className="rounded-lg border border-ink-line bg-ink px-3 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
           />
         </div>
-        {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+        {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
         <button
           onClick={adicionar}
           disabled={salvando}
@@ -102,21 +102,21 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
           <div
             key={p.id}
             className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
-              p.ativo ? "border-ink-line bg-ink-soft" : "border-ink-line/40 bg-ink-soft/40"
+              p.ativo ? "border-border bg-ink-soft" : "border-border/40 bg-ink-soft/40"
             }`}
           >
             <div>
-              <p className="text-sm font-semibold text-neutral-100">
+              <p className="text-sm font-semibold text-foreground">
                 {p.nome} · R$ {Number(p.preco).toFixed(2).replace(".", ",")}
               </p>
-              <p className="text-xs text-neutral-500">{p.categoria}</p>
+              <p className="text-xs text-muted-foreground">{p.categoria}</p>
             </div>
             <button
               onClick={() => alternarAtivo(p.id, p.ativo)}
               className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                 p.ativo
-                  ? "border-red-500/40 text-red-400 hover:bg-red-500/10"
-                  : "border-green-500/40 text-green-400 hover:bg-green-500/10"
+                  ? "border-red-500/40 text-destructive hover:bg-destructive/10"
+                  : "border-green-500/40 text-success hover:bg-success/10"
               }`}
             >
               {p.ativo ? "Desativar" : "Ativar"}

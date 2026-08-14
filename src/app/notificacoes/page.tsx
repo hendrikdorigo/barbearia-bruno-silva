@@ -17,7 +17,7 @@ export default async function NotificacoesPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Notificações
       </h1>
       <NotificacoesLista notificacoes={notificacoes ?? []} />

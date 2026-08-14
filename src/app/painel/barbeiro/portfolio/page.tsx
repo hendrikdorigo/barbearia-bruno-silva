@@ -19,10 +19,10 @@ export default async function PortfolioBarbeiroPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meu portfólio
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Essas informações aparecem na sua página pública para clientes.
       </p>
       <PortfolioEditor barbeiro={barbeiro} />

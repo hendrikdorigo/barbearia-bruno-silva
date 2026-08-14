@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import StarRating from "@/components/StarRating";
 
 export default function FeedbackForm({ barbeiroId }: { barbeiroId: string }) {
   const [nota, setNota] = useState(5);
@@ -39,36 +43,27 @@ export default function FeedbackForm({ barbeiroId }: { barbeiroId: string }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-ink-line bg-ink-soft p-5">
-      <p className="text-sm font-semibold text-neutral-200">Deixe sua avaliação</p>
-      <div className="mt-2 flex gap-1">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setNota(n)}
-            className={`text-2xl ${n <= nota ? "text-gold" : "text-neutral-700"}`}
-            aria-label={`${n} estrelas`}
-          >
-            ★
-          </button>
-        ))}
+    <Card className="mt-6 border-border bg-ink-soft p-5">
+      <p className="text-sm font-semibold text-foreground/90">Deixe sua avaliação</p>
+      <div className="mt-2">
+        <StarRating value={nota} onChange={setNota} size="md" />
       </div>
-      <textarea
+      <Textarea
         value={comentario}
         onChange={(e) => setComentario(e.target.value)}
         placeholder="Como foi sua experiência?"
-        className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
+        className="mt-3 bg-background"
         rows={3}
       />
-      {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
-      <button
+      {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
+      <Button
         onClick={enviar}
         disabled={loading}
-        className="mt-3 rounded-full bg-gold-gradient px-5 py-2 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
+        size="sm"
+        className="mt-3 uppercase tracking-widest"
       >
         {loading ? "Enviando..." : "Enviar avaliação"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

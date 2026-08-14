@@ -3,9 +3,54 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ClockIcon, ScissorsIcon, CheckIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
 import { processarPagamentoMock } from "@/lib/payments";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
+
+const PASSOS: { id: Passo; label: string }[] = [
+  { id: "servico", label: "Serviço" },
+  { id: "horario", label: "Horário" },
+  { id: "pagamento", label: "Pagamento" },
+];
+
+function Stepper({ atual }: { atual: Passo }) {
+  if (atual === "confirmado") return null;
+  const indexAtual = PASSOS.findIndex((p) => p.id === atual);
+  return (
+    <div className="mt-6 flex items-center gap-2">
+      {PASSOS.map((p, i) => (
+        <div key={p.id} className="flex flex-1 items-center gap-2">
+          <div
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
+              i < indexAtual && "border-gold bg-gold text-ink",
+              i === indexAtual && "border-gold text-gold",
+              i > indexAtual && "border-border text-muted-foreground"
+            )}
+          >
+            {i < indexAtual ? <CheckIcon className="size-3.5" /> : i + 1}
+          </div>
+          <span
+            className={cn(
+              "hidden text-xs font-medium uppercase tracking-wider sm:inline",
+              i <= indexAtual ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {p.label}
+          </span>
+          {i < PASSOS.length - 1 && (
+            <span className={cn("h-px flex-1", i < indexAtual ? "bg-gold" : "bg-border")} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 
@@ -286,20 +331,20 @@ export default function AgendarPage() {
   }
 
   if (carregando) {
-    return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-neutral-500">Carregando...</div>;
+    return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-muted-foreground">Carregando...</div>;
   }
 
   if (!logado) {
     return (
       <div className="mx-auto max-w-md px-4 py-24 text-center">
-        <h1 className="font-display text-4xl text-neutral-50">Faça login para agendar</h1>
-        <p className="mt-4 text-neutral-400">Você precisa de uma conta de cliente para marcar um horário.</p>
-        <button
+        <h1 className="font-display text-4xl text-foreground">Faça login para agendar</h1>
+        <p className="mt-4 text-muted-foreground">Você precisa de uma conta de cliente para marcar um horário.</p>
+        <Button
           onClick={() => router.push(`/login?next=/agendar/${barbeiroId}`)}
-          className="mt-6 rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink"
+          className="mt-6 uppercase tracking-widest"
         >
           Ir para login
-        </button>
+        </Button>
       </div>
     );
   }
@@ -309,12 +354,14 @@ export default function AgendarPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
         Agendamento com {nomeBarbeiro}
       </p>
-      <h1 className="mt-2 font-display text-4xl tracking-wide text-neutral-50">
+      <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">
         {passo === "servico" && "Escolha o serviço"}
         {passo === "horario" && "Escolha data e horário"}
         {passo === "pagamento" && "Forma de pagamento"}
         {passo === "confirmado" && "Agendamento confirmado!"}
       </h1>
+
+      <Stepper atual={passo} />
 
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">
@@ -325,13 +372,16 @@ export default function AgendarPage() {
                 setServicoSelecionado(s);
                 setPasso("horario");
               }}
-              className="flex items-center justify-between rounded-xl border border-ink-line bg-ink-soft px-5 py-4 text-left hover:border-gold"
+              className="flex items-center justify-between rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
             >
               <div>
-                <p className="font-semibold text-neutral-100">{s.nome}</p>
-                <p className="text-xs text-neutral-500">{s.duracao_minutos} min</p>
+                <p className="font-semibold text-foreground">{s.nome}</p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ClockIcon className="size-3.5" />
+                  {s.duracao_minutos} min
+                </p>
               </div>
-              <p className="font-display text-2xl text-gold-gradient">
+              <p className="font-mono text-2xl font-medium text-gold-gradient">
                 R$ {Number(s.preco).toFixed(2).replace(".", ",")}
               </p>
             </button>
@@ -341,8 +391,8 @@ export default function AgendarPage() {
 
       {passo === "horario" && (
         <div className="mt-8">
-          <label className="text-xs uppercase tracking-widest text-neutral-500">Data</label>
-          <input
+          <label className="text-xs uppercase tracking-widest text-muted-foreground">Data</label>
+          <Input
             type="date"
             value={data}
             min={new Date().toISOString().slice(0, 10)}
@@ -351,19 +401,19 @@ export default function AgendarPage() {
               setHorarioSelecionado(null);
               setFilaMensagem(null);
             }}
-            className="mt-2 w-full rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
+            className="mt-2 h-11 bg-ink-soft"
           />
 
           {precoFinal !== Number(servicoSelecionado?.preco) && (
             <p className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-gold">
               Preço nesta data: <strong>R$ {precoFinal.toFixed(2).replace(".", ",")}</strong>{" "}
-              <span className="text-neutral-400 line-through">
+              <span className="text-muted-foreground line-through">
                 R$ {Number(servicoSelecionado?.preco).toFixed(2).replace(".", ",")}
               </span>
             </p>
           )}
 
-          <p className="mt-6 text-xs uppercase tracking-widest text-neutral-500">
+          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
             {diaAtende
               ? `Horários disponíveis (${horaInicioDia} - ${horaFimDia}, a cada 30 min)`
               : "Horários disponíveis"}
@@ -376,14 +426,14 @@ export default function AgendarPage() {
                 className={`rounded-lg border px-2 py-2 text-sm ${
                   horarioSelecionado === s
                     ? "border-gold bg-gold-gradient font-bold text-ink"
-                    : "border-ink-line text-neutral-300 hover:border-gold"
+                    : "border-border text-muted-foreground hover:border-gold"
                 }`}
               >
                 {s}
               </button>
             ))}
             {!diaAtende && (
-              <p className="col-span-full text-sm text-neutral-500">
+              <p className="col-span-full text-sm text-muted-foreground">
                 {nomeBarbeiro} não atende nessa data (folga ou dia fechado). Escolha
                 outra data.
               </p>
@@ -392,7 +442,7 @@ export default function AgendarPage() {
 
           {diaAtende && horariosOcupados.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs uppercase tracking-widest text-neutral-600">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground/70">
                 Já ocupados (entre na fila de espera se quiser)
               </p>
               <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -404,7 +454,7 @@ export default function AgendarPage() {
                       onClick={() => entrarNaFila(s)}
                       disabled={entrandoFila === s}
                       title="Entrar na fila de espera para este horário"
-                      className="rounded-lg border border-ink-line/50 px-2 py-2 text-xs text-neutral-600 line-through hover:border-gold hover:text-gold hover:no-underline disabled:opacity-50"
+                      className="rounded-lg border border-border/50 px-2 py-2 text-xs text-muted-foreground/70 line-through hover:border-gold hover:text-gold hover:no-underline disabled:opacity-50"
                     >
                       {s}
                     </button>
@@ -415,7 +465,7 @@ export default function AgendarPage() {
 
           {diaAtende && slotsLivres.length === 0 && (
             <div className="mt-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
-              <p className="text-sm text-neutral-200">
+              <p className="text-sm text-foreground/90">
                 Não há mais horários livres neste dia. Entre na fila de espera —
                 se alguém desistir, você é avisado na hora.
               </p>
@@ -431,38 +481,39 @@ export default function AgendarPage() {
 
           {filaMensagem && <p className="mt-4 text-sm text-gold">{filaMensagem}</p>}
 
-          <div className="mt-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
-            <p className="text-sm font-bold uppercase tracking-wider text-gold">
-              ⏱ Tolerância de atraso: {TOLERANCIA_ATRASO_MINUTOS} minutos
-            </p>
-            <p className="mt-1 text-sm text-neutral-300">
+          <Alert className="mt-6 border-gold/40 bg-gold/10">
+            <ClockIcon className="text-gold" />
+            <AlertTitle className="uppercase tracking-wider text-gold">
+              Tolerância de atraso: {TOLERANCIA_ATRASO_MINUTOS} minutos
+            </AlertTitle>
+            <AlertDescription className="text-muted-foreground">
               Chegando com mais de {TOLERANCIA_ATRASO_MINUTOS} minutos de atraso, seu
               agendamento será cancelado automaticamente e sua próxima marcação
               exigirá pagamento antecipado. Cancelamentos por sua conta só podem
               ser feitos até 1 hora antes do horário marcado.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
 
-          <button
+          <Button
             disabled={!horarioSelecionado}
             onClick={() => setPasso("pagamento")}
-            className="mt-6 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-40"
+            className="mt-6 w-full uppercase tracking-widest"
           >
             Continuar
-          </button>
+          </Button>
         </div>
       )}
 
       {passo === "pagamento" && (
         <div className="mt-8">
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-muted-foreground">
             {servicoSelecionado?.nome} · {data} às {horarioSelecionado} · R${" "}
             {precoFinal.toFixed(2).replace(".", ",")}
           </p>
 
           {!exigePagamentoAntecipado && (
             <>
-              <p className="mt-6 text-xs uppercase tracking-widest text-neutral-500">
+              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
                 Quando você prefere pagar?
               </p>
               <div className="mt-3 grid grid-cols-2 gap-3">
@@ -471,7 +522,7 @@ export default function AgendarPage() {
                   className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                     !pagarAntecipado
                       ? "border-gold bg-gold-gradient text-ink"
-                      : "border-ink-line text-neutral-300 hover:border-gold"
+                      : "border-border text-muted-foreground hover:border-gold"
                   }`}
                 >
                   Pagar no local
@@ -481,7 +532,7 @@ export default function AgendarPage() {
                   className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                     pagarAntecipado
                       ? "border-gold bg-gold-gradient text-ink"
-                      : "border-ink-line text-neutral-300 hover:border-gold"
+                      : "border-border text-muted-foreground hover:border-gold"
                   }`}
                 >
                   Pagar agora (antecipado)
@@ -490,7 +541,7 @@ export default function AgendarPage() {
             </>
           )}
 
-          <p className="mt-6 text-xs uppercase tracking-widest text-neutral-500">
+          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
             Forma de pagamento
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
@@ -501,7 +552,7 @@ export default function AgendarPage() {
                 className={`rounded-lg border px-4 py-3 text-sm ${
                   formaPagamento === f.id
                     ? "border-gold bg-gold-gradient font-bold text-ink"
-                    : "border-ink-line text-neutral-300 hover:border-gold"
+                    : "border-border text-muted-foreground hover:border-gold"
                 }`}
               >
                 {f.label}
@@ -510,52 +561,58 @@ export default function AgendarPage() {
           </div>
 
           {exigePagamentoAntecipado && (
-            <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
-              Devido a um cancelamento por atraso anterior, esta marcação exige
-              pagamento antecipado obrigatório.
-            </div>
+            <Alert variant="destructive" className="mt-6">
+              <AlertDescription>
+                Devido a um cancelamento por atraso anterior, esta marcação exige
+                pagamento antecipado obrigatório.
+              </AlertDescription>
+            </Alert>
           )}
 
-          <div className="mt-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
-            <p className="text-sm font-bold uppercase tracking-wider text-gold">
-              ⏱ Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos
-            </p>
-            <p className="mt-1 text-sm text-neutral-300">
+          <Alert className="mt-6 border-gold/40 bg-gold/10">
+            <ClockIcon className="text-gold" />
+            <AlertTitle className="uppercase tracking-wider text-gold">
+              Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos
+            </AlertTitle>
+            <AlertDescription className="text-muted-foreground">
               O barbeiro verá sua forma de pagamento escolhida na comanda do
               atendimento.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
 
-          {erro && <p className="mt-4 text-sm text-red-400">{erro}</p>}
+          {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}
 
-          <button
+          <Button
             disabled={enviando}
             onClick={confirmarAgendamento}
-            className="mt-6 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
+            className="mt-6 w-full uppercase tracking-widest"
           >
             {enviando ? "Confirmando..." : "Confirmar agendamento"}
-          </button>
+          </Button>
         </div>
       )}
 
       {passo === "confirmado" && (
         <div className="mt-8 rounded-2xl border border-gold/40 bg-gold/10 p-8 text-center">
-          <p className="font-display text-3xl text-neutral-50">Tudo certo! ✂️</p>
-          <p className="mt-3 text-neutral-300">
+          <ScissorsIcon className="mx-auto size-8 text-gold" />
+          <p className="mt-3 font-display text-3xl text-foreground">Tudo certo!</p>
+          <p className="mt-3 text-muted-foreground">
             Seu horário com {nomeBarbeiro} em {data} às {horarioSelecionado} foi
             registrado. Você vai receber um lembrete por WhatsApp 1 hora antes.
             Acompanhe sua comanda em tempo real no painel.
           </p>
-          <p className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm font-semibold text-red-300">
-            Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
-            Após esse tempo o horário será cancelado.
-          </p>
-          <button
+          <Alert variant="destructive" className="mt-4 text-left">
+            <AlertDescription>
+              Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
+              Após esse tempo o horário será cancelado.
+            </AlertDescription>
+          </Alert>
+          <Button
             onClick={() => router.push("/painel/cliente")}
-            className="mt-6 rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink"
+            className="mt-6 uppercase tracking-widest"
           >
             Ver meus agendamentos
-          </button>
+          </Button>
         </div>
       )}
     </div>

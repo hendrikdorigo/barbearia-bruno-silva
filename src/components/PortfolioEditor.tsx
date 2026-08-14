@@ -78,7 +78,7 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
 
   return (
     <div className="mt-8 flex flex-col gap-4">
-      <label className="text-xs uppercase tracking-widest text-neutral-500">
+      <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Banner do perfil (imagem larga, estilo capa)
       </label>
       {bannerUrl && (
@@ -86,7 +86,7 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
           <button
             onClick={() => setBannerUrl(null)}
-            className="absolute right-2 top-2 rounded-full bg-red-500/80 px-2 text-xs text-white"
+            className="absolute right-2 top-2 rounded-full bg-destructive/80 px-2 text-xs text-white"
           >
             ×
           </button>
@@ -97,37 +97,37 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           type="file"
           accept="image/*"
           onChange={(e) => setNovoBanner(e.target.files?.[0] ?? null)}
-          className="flex-1 text-sm text-neutral-400"
+          className="flex-1 text-sm text-muted-foreground"
         />
         <button
           onClick={adicionarBanner}
-          className="rounded-lg border border-ink-line px-4 py-2 text-xs font-bold uppercase text-neutral-300 hover:border-gold hover:text-gold"
+          className="rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase text-muted-foreground hover:border-gold hover:text-gold"
         >
           Enviar banner
         </button>
       </div>
 
-      <label className="mt-4 text-xs uppercase tracking-widest text-neutral-500">
+      <label className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">
         Descrição / bio
       </label>
       <textarea
         value={bio}
         onChange={(e) => setBio(e.target.value)}
         rows={4}
-        className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
+        className="rounded-lg border border-border bg-ink-soft px-4 py-3 text-foreground focus:border-gold focus:outline-none"
       />
 
-      <label className="text-xs uppercase tracking-widest text-neutral-500">
+      <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Especialidades (separadas por vírgula)
       </label>
       <input
         value={especialidades}
         onChange={(e) => setEspecialidades(e.target.value)}
         placeholder="Degradê, Barba desenhada, Corte social"
-        className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
+        className="rounded-lg border border-border bg-ink-soft px-4 py-3 text-foreground focus:border-gold focus:outline-none"
       />
 
-      <label className="text-xs uppercase tracking-widest text-neutral-500">
+      <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Imagens do portfólio
       </label>
       <div className="grid grid-cols-3 gap-3">
@@ -136,7 +136,7 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
             <img src={img} alt="" className="h-24 w-full rounded-lg object-cover" />
             <button
               onClick={() => removerImagem(img)}
-              className="absolute right-1 top-1 rounded-full bg-red-500/80 px-2 text-xs text-white"
+              className="absolute right-1 top-1 rounded-full bg-destructive/80 px-2 text-xs text-white"
             >
               ×
             </button>
@@ -148,11 +148,11 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           type="file"
           accept="image/*"
           onChange={(e) => setNovaImagem(e.target.files?.[0] ?? null)}
-          className="flex-1 text-sm text-neutral-400"
+          className="flex-1 text-sm text-muted-foreground"
         />
         <button
           onClick={adicionarImagem}
-          className="rounded-lg border border-ink-line px-4 py-2 text-xs font-bold uppercase text-neutral-300 hover:border-gold hover:text-gold"
+          className="rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase text-muted-foreground hover:border-gold hover:text-gold"
         >
           Adicionar
         </button>

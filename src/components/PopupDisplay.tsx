@@ -82,7 +82,7 @@ export default function PopupDisplay() {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-gold/40 bg-ink-soft p-6">
-        <p className="font-display text-2xl tracking-wide text-neutral-50">
+        <p className="font-display text-2xl tracking-wide text-foreground">
           {popup.titulo}
         </p>
 
@@ -92,7 +92,7 @@ export default function PopupDisplay() {
         {popup.tipo === "imagem" && popup.conteudo_url && (
           <img src={popup.conteudo_url} alt="" className="mt-4 w-full rounded-lg object-cover" />
         )}
-        {popup.mensagem && <p className="mt-4 text-neutral-300">{popup.mensagem}</p>}
+        {popup.mensagem && <p className="mt-4 text-muted-foreground">{popup.mensagem}</p>}
 
         <button
           onClick={fechar}

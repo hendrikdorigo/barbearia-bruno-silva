@@ -36,10 +36,10 @@ export default async function ComandaClientePage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-4xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-4xl tracking-wide text-foreground">
         Sua comanda
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Acompanhe em tempo real o que você está gastando neste atendimento.
       </p>
       <ComandaView

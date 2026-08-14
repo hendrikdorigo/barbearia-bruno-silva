@@ -41,29 +41,29 @@ export default async function HorariosBarbeiroPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meus horários
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Escolha os dias em que você atende e o horário de início/fim de cada
         um. Os clientes só vão poder agendar dentro dessa janela.
       </p>
       <HorariosEditor barbeiroId={user.id} horariosIniciais={horarios ?? []} />
 
-      <h2 className="mt-14 font-display text-3xl tracking-wide text-neutral-50">
+      <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
         Folgas e exceções
       </h2>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Vai tirar uma folga num dia específico (ex: 10/08) ou tem um
         compromisso que muda seu horário só naquele dia (ex: 25/07)? Cadastre
         aqui — isso tem prioridade sobre o horário padrão da semana.
       </p>
       <ExcecoesEditor barbeiroId={user.id} excecoesIniciais={excecoes ?? []} />
 
-      <h2 className="mt-14 font-display text-3xl tracking-wide text-neutral-50">
+      <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
         Almoço e compromissos
       </h2>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Bloqueie uma janela de horário toda semana (ex: almoço 12h–13h) ou em
         uma data específica (ex: dentista às 15h). Esses horários somem da
         agenda automaticamente, sem precisar desligar o dia inteiro.

@@ -35,27 +35,27 @@ export default async function RepassesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Repasses (50%)
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Valor devido ao Bruno referente aos atendimentos feitos por barbeiros
         parceiros (50% do valor de cada serviço).
       </p>
 
       <div className="mt-8 rounded-xl border border-gold/40 bg-gold/10 p-5">
         <p className="text-xs uppercase tracking-widest text-gold">Total acumulado</p>
-        <p className="font-display text-4xl text-neutral-50">
+        <p className="font-display text-4xl text-foreground">
           R$ {totalGeral.toFixed(2).replace(".", ",")}
         </p>
       </div>
 
       <div className="mt-6 space-y-3">
         {[...porBarbeiro.entries()].map(([id, v]) => (
-          <div key={id} className="flex items-center justify-between rounded-xl border border-ink-line bg-ink-soft p-4">
+          <div key={id} className="flex items-center justify-between rounded-xl border border-border bg-ink-soft p-4">
             <div>
-              <p className="font-semibold text-neutral-100">{v.nome}</p>
-              <p className="text-xs text-neutral-500">{v.qtd} atendimento(s)</p>
+              <p className="font-semibold text-foreground">{v.nome}</p>
+              <p className="text-xs text-muted-foreground">{v.qtd} atendimento(s)</p>
             </div>
             <p className="font-display text-2xl text-gold-gradient">
               R$ {v.total.toFixed(2).replace(".", ",")}
@@ -63,7 +63,7 @@ export default async function RepassesPage() {
           </div>
         ))}
         {porBarbeiro.size === 0 && (
-          <p className="text-sm text-neutral-500">Nenhum repasse registrado ainda.</p>
+          <p className="text-sm text-muted-foreground">Nenhum repasse registrado ainda.</p>
         )}
       </div>
     </div>

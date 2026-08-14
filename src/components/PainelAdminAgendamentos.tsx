@@ -36,7 +36,7 @@ export default function PainelAdminAgendamentos({
         <select
           value={filtroBarbeiro}
           onChange={(e) => setFiltroBarbeiro(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-3 py-2 text-sm text-neutral-200"
+          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
         >
           <option value="">Todos os barbeiros</option>
           {barbeiros.map((b) => (
@@ -49,12 +49,12 @@ export default function PainelAdminAgendamentos({
           type="date"
           value={filtroData}
           onChange={(e) => setFiltroData(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-3 py-2 text-sm text-neutral-200"
+          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
         />
         <select
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-3 py-2 text-sm text-neutral-200"
+          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
         >
           <option value="">Todos os status</option>
           {Object.entries(STATUS_LABEL).map(([k, v]) => (
@@ -65,9 +65,9 @@ export default function PainelAdminAgendamentos({
         </select>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl border border-ink-line">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-ink-soft text-left text-xs uppercase tracking-widest text-neutral-500">
+          <thead className="bg-ink-soft text-left text-xs uppercase tracking-widest text-muted-foreground">
             <tr>
               <th className="px-4 py-3">Data/hora</th>
               <th className="px-4 py-3">Cliente</th>
@@ -78,9 +78,9 @@ export default function PainelAdminAgendamentos({
               <th className="px-4 py-3">Repasse Bruno</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-ink-line">
+          <tbody className="divide-y divide-border">
             {filtrados.map((a) => (
-              <tr key={a.id} className="text-neutral-300">
+              <tr key={a.id} className="text-muted-foreground">
                 <td className="px-4 py-3">
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
                 </td>
@@ -103,7 +103,7 @@ export default function PainelAdminAgendamentos({
             ))}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhum agendamento encontrado.
                 </td>
               </tr>

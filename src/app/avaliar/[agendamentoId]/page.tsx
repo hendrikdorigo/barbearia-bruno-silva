@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { SparkleIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import StarRating from "@/components/StarRating";
+import { cn } from "@/lib/utils";
 
 const PRESETS = [
   "Corte impecável!",
@@ -85,12 +90,12 @@ export default function AvaliarPage() {
   }
 
   if (carregando) {
-    return <div className="mx-auto max-w-md px-4 py-24 text-center text-neutral-500">Carregando...</div>;
+    return <div className="mx-auto max-w-md px-4 py-24 text-center text-muted-foreground">Carregando...</div>;
   }
 
   if (!agendamento) {
     return (
-      <div className="mx-auto max-w-md px-4 py-24 text-center text-neutral-400">
+      <div className="mx-auto max-w-md px-4 py-24 text-center text-muted-foreground">
         Agendamento não encontrado.
       </div>
     );
@@ -99,17 +104,15 @@ export default function AvaliarPage() {
   if (jaAvaliado || enviado) {
     return (
       <div className="mx-auto max-w-md px-4 py-24 text-center">
-        <p className="font-display text-3xl text-neutral-50">Obrigado! ⭐</p>
-        <p className="mt-3 text-neutral-400">
+        <SparkleIcon className="mx-auto size-8 text-gold" />
+        <p className="mt-3 font-display text-3xl text-foreground">Obrigado!</p>
+        <p className="mt-3 text-muted-foreground">
           Sua avaliação foi registrada no perfil de{" "}
           {agendamento.barbeiros?.profiles?.nome}.
         </p>
-        <button
-          onClick={() => router.push("/painel/cliente")}
-          className="mt-6 rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink"
-        >
+        <Button onClick={() => router.push("/painel/cliente")} className="mt-6 uppercase tracking-widest">
           Voltar ao painel
-        </button>
+        </Button>
       </div>
     );
   }
@@ -119,27 +122,15 @@ export default function AvaliarPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
         {agendamento.servicos?.nome}
       </p>
-      <h1 className="mt-2 font-display text-4xl tracking-wide text-neutral-50">
+      <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">
         Como foi com {agendamento.barbeiros?.profiles?.nome}?
       </h1>
 
-      <div className="mt-8 flex justify-center gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setNota(n)}
-            className={`text-4xl transition-transform hover:scale-110 ${
-              n <= nota ? "text-gold" : "text-neutral-700"
-            }`}
-            aria-label={`${n} estrelas`}
-          >
-            ★
-          </button>
-        ))}
+      <div className="mt-8 flex justify-center">
+        <StarRating value={nota} onChange={setNota} />
       </div>
 
-      <p className="mt-8 text-xs uppercase tracking-widest text-neutral-500">
+      <p className="mt-8 text-xs uppercase tracking-widest text-muted-foreground">
         Comentário rápido (opcional)
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -147,34 +138,31 @@ export default function AvaliarPage() {
           <button
             key={p}
             onClick={() => setPresetSelecionado(presetSelecionado === p ? null : p)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
               presetSelecionado === p
                 ? "border-gold bg-gold-gradient text-ink"
-                : "border-ink-line text-neutral-300 hover:border-gold"
-            }`}
+                : "border-border text-muted-foreground hover:border-gold"
+            )}
           >
             {p}
           </button>
         ))}
       </div>
 
-      <textarea
+      <Textarea
         value={comentario}
         onChange={(e) => setComentario(e.target.value)}
         placeholder="Escreva seu próprio comentário (opcional)"
         rows={3}
-        className="mt-4 w-full rounded-lg border border-ink-line bg-ink-soft px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
+        className="mt-4 bg-ink-soft"
       />
 
-      {erro && <p className="mt-4 text-sm text-red-400">{erro}</p>}
+      {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}
 
-      <button
-        onClick={enviar}
-        disabled={enviando}
-        className="mt-6 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-      >
+      <Button onClick={enviar} disabled={enviando} className="mt-6 w-full uppercase tracking-widest">
         {enviando ? "Enviando..." : "Enviar avaliação"}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,4 +1,6 @@
+import { ClockIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { Card } from "@/components/ui/card";
 
 export default async function ServicosPage() {
   const supabase = await createClient();
@@ -13,23 +15,25 @@ export default async function ServicosPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
         Tabela de preços
       </p>
-      <h1 className="mt-2 font-display text-5xl tracking-wide text-neutral-50">
-        Serviços
-      </h1>
-      <div className="mt-10 divide-y divide-ink-line rounded-2xl border border-ink-line bg-ink-soft">
+      <h1 className="mt-2 font-display text-5xl tracking-wide text-foreground">Serviços</h1>
+
+      <Card className="mt-10 divide-y divide-border rounded-2xl border-border bg-ink-soft py-0">
         {servicos?.map((s) => (
           <div key={s.id} className="flex items-center justify-between px-6 py-5">
             <div>
-              <p className="font-display text-xl text-neutral-50">{s.nome}</p>
-              <p className="text-sm text-neutral-400">{s.duracao_minutos} minutos</p>
+              <p className="font-display text-xl text-foreground">{s.nome}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                <ClockIcon className="size-3.5" />
+                {s.duracao_minutos} minutos
+              </p>
             </div>
-            <p className="font-display text-2xl text-gold-gradient">
+            <p className="font-mono text-2xl font-medium text-gold-gradient">
               R$ {Number(s.preco).toFixed(2).replace(".", ",")}
             </p>
           </div>
         ))}
-      </div>
-      <p className="mt-8 text-sm text-neutral-500">
+      </Card>
+      <p className="mt-8 text-sm text-muted-foreground">
         Formas de pagamento aceitas: Crédito, Débito, Dinheiro e Pix. Você pode
         optar por pagamento antecipado ao agendar.
       </p>

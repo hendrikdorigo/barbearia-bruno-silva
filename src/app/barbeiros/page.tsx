@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { Badge } from "@/components/ui/badge";
 
 export default async function BarbeirosPage() {
   const supabase = await createClient();
@@ -16,10 +17,10 @@ export default async function BarbeirosPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
         Time
       </p>
-      <h1 className="mt-2 font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="mt-2 font-display text-5xl tracking-wide text-foreground">
         Nossos barbeiros
       </h1>
-      <p className="mt-3 max-w-xl text-neutral-400">
+      <p className="mt-3 max-w-xl text-muted-foreground">
         Escolha um profissional para ver o portfólio completo, avaliações de
         clientes e agendar seu horário.
       </p>
@@ -29,7 +30,7 @@ export default async function BarbeirosPage() {
           <Link
             key={b.profile_id}
             href={`/barbeiros/${b.profile_id}`}
-            className="group overflow-hidden rounded-2xl border border-ink-line bg-ink-soft transition-colors hover:border-gold"
+            className="group overflow-hidden rounded-2xl border border-border bg-ink-soft transition-colors hover:border-gold"
           >
             <div className="relative h-56 w-full overflow-hidden">
               <Image
@@ -42,26 +43,23 @@ export default async function BarbeirosPage() {
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {b.is_dono && (
-                <span className="absolute left-3 top-3 rounded-full bg-gold-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-ink">
+                <Badge className="absolute left-3 top-3 border-transparent bg-gold-gradient text-[10px] font-bold uppercase tracking-widest text-ink">
                   Fundador
-                </span>
+                </Badge>
               )}
             </div>
             <div className="p-5">
-              <p className="font-display text-2xl text-neutral-50">
+              <p className="font-display text-2xl text-foreground">
                 {b.profiles?.nome}
               </p>
-              <p className="mt-1 line-clamp-2 text-sm text-neutral-400">
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {b.bio}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {b.especialidades?.slice(0, 3).map((e: string) => (
-                  <span
-                    key={e}
-                    className="rounded-full border border-ink-line px-2.5 py-1 text-xs text-neutral-400"
-                  >
+                  <Badge key={e} variant="outline" className="text-muted-foreground">
                     {e}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>

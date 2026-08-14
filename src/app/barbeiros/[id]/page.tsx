@@ -1,9 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StarIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import FeedbackForm from "@/components/FeedbackForm";
 import PostCard from "@/components/PostCard";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default async function BarbeiroPage({
   params,
@@ -72,12 +77,12 @@ export default async function BarbeiroPage({
           fill
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
 
       <div className="px-4 sm:px-6">
         <div className="flex flex-wrap items-end gap-4 sm:items-center">
-          <div className="relative -mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-ink bg-ink-soft sm:h-28 sm:w-28">
+          <div className="relative -mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-background bg-ink-soft sm:h-28 sm:w-28">
             <Image
               src={
                 barbeiro.profiles?.avatar_url ||
@@ -91,30 +96,37 @@ export default async function BarbeiroPage({
           </div>
           <div className="flex-1">
             {barbeiro.is_dono && (
-              <span className="rounded-full bg-gold-gradient px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-ink">
+              <Badge className="border-transparent bg-gold-gradient text-[10px] font-bold uppercase tracking-widest text-ink">
                 Fundador da barbearia
-              </span>
+              </Badge>
             )}
-            <h1 className="mt-1 font-display text-4xl tracking-wide text-neutral-50">
+            <h1 className="mt-1 font-display text-4xl tracking-wide text-foreground">
               {barbeiro.profiles?.nome}
             </h1>
             {media && (
-              <p className="mt-1 text-sm text-gold">
-                ★ {media} · {feedbacks?.length} avaliações
+              <p className="mt-1 flex items-center gap-1 text-sm text-gold">
+                <StarIcon className="size-3.5 fill-gold" />
+                {media} · {feedbacks?.length} avaliações
               </p>
             )}
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href={`/agendar/${barbeiro.profile_id}`}
-              className="inline-block rounded-full bg-gold-gradient px-6 py-2.5 text-sm font-bold uppercase tracking-wider text-ink transition-transform hover:scale-105"
+              className={cn(
+                buttonVariants(),
+                "rounded-full px-6 uppercase tracking-wider"
+              )}
             >
               Agendar
             </Link>
             {isDono && (
               <Link
                 href="/painel/barbeiro/portfolio"
-                className="inline-block rounded-full border border-gold px-6 py-2.5 text-sm font-bold uppercase tracking-wider text-gold hover:bg-gold/10"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "rounded-full border-gold px-6 uppercase tracking-wider text-gold hover:bg-gold/10"
+                )}
               >
                 Editar perfil
               </Link>
@@ -122,28 +134,25 @@ export default async function BarbeiroPage({
           </div>
         </div>
 
-        <p className="mt-4 max-w-xl text-neutral-300">{barbeiro.bio}</p>
+        <p className="mt-4 max-w-xl text-muted-foreground">{barbeiro.bio}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {barbeiro.especialidades?.map((e: string) => (
-            <span
-              key={e}
-              className="rounded-full border border-ink-line px-3 py-1 text-xs text-neutral-300"
-            >
+            <Badge key={e} variant="outline" className="text-muted-foreground">
               {e}
-            </span>
+            </Badge>
           ))}
         </div>
 
         {barbeiro.portfolio_imagens && barbeiro.portfolio_imagens.length > 0 && (
           <div className="mt-10">
-            <h2 className="font-display text-2xl tracking-wide text-neutral-50">
+            <h2 className="font-display text-2xl tracking-wide text-foreground">
               Portfólio
             </h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {barbeiro.portfolio_imagens.map((img: string, i: number) => (
                 <div
                   key={i}
-                  className="relative h-32 overflow-hidden rounded-xl border border-ink-line"
+                  className="relative h-32 overflow-hidden rounded-xl border border-border"
                 >
                   <Image src={img} alt="" fill className="object-cover" />
                 </div>
@@ -154,7 +163,7 @@ export default async function BarbeiroPage({
 
         {/* ===== Posts do perfil = posts da comunidade filtrados por esse barbeiro ===== */}
         <div className="mt-12">
-          <h2 className="font-display text-2xl tracking-wide text-neutral-50">
+          <h2 className="font-display text-2xl tracking-wide text-foreground">
             Posts de {barbeiro.profiles?.nome?.split(" ")[0]}
           </h2>
           <div className="mt-4 space-y-6">
@@ -163,13 +172,13 @@ export default async function BarbeiroPage({
                 <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} />
               ))
             ) : (
-              <p className="text-sm text-neutral-500">Nenhum post ainda.</p>
+              <p className="text-sm text-muted-foreground">Nenhum post ainda.</p>
             )}
           </div>
         </div>
 
         <div className="mt-12">
-          <h2 className="font-display text-2xl tracking-wide text-neutral-50">
+          <h2 className="font-display text-2xl tracking-wide text-foreground">
             Avaliações
           </h2>
 
@@ -178,28 +187,29 @@ export default async function BarbeiroPage({
           <div className="mt-6 space-y-4">
             {feedbacks?.length ? (
               feedbacks.map((f: any) => (
-                <div
-                  key={f.id}
-                  className="rounded-xl border border-ink-line bg-ink-soft p-5"
-                >
+                <Card key={f.id} className="border-border bg-ink-soft p-5">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold text-neutral-100">
+                    <p className="font-semibold text-foreground">
                       {f.clientes?.profiles?.nome ?? "Cliente"}
                     </p>
-                    <p className="text-gold">{"★".repeat(f.nota)}</p>
+                    <div className="flex items-center gap-0.5 text-gold">
+                      {Array.from({ length: f.nota }).map((_, i) => (
+                        <StarIcon key={i} className="size-3.5 fill-gold" />
+                      ))}
+                    </div>
                   </div>
                   {f.comentario_preset && (
-                    <span className="mt-1 inline-block rounded-full bg-gold/10 px-2 py-0.5 text-xs text-gold">
+                    <Badge variant="secondary" className="mt-1 w-fit bg-gold/10 text-gold">
                       {f.comentario_preset}
-                    </span>
+                    </Badge>
                   )}
                   {f.comentario && (
-                    <p className="mt-2 text-sm text-neutral-400">{f.comentario}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{f.comentario}</p>
                   )}
-                </div>
+                </Card>
               ))
             ) : (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-muted-foreground">
                 Ainda não há avaliações para este barbeiro.
               </p>
             )}

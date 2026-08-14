@@ -17,10 +17,10 @@ export default async function ComunidadeBarbeiroPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <h1 className="font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meus posts
       </h1>
-      <p className="mt-2 text-neutral-400">
+      <p className="mt-2 text-muted-foreground">
         Compartilhe fotos, vídeos ou textos com os clientes cadastrados. Eles
         recebem uma notificação a cada novo post.
       </p>
@@ -30,17 +30,17 @@ export default async function ComunidadeBarbeiroPage() {
       <div className="mt-10 space-y-3">
         {posts?.length ? (
           posts.map((p) => (
-            <div key={p.id} className="rounded-xl border border-ink-line bg-ink-soft p-4">
+            <div key={p.id} className="rounded-xl border border-border bg-ink-soft p-4">
               <p className="text-xs uppercase tracking-widest text-gold">{p.tipo}</p>
-              {p.texto && <p className="mt-1 text-neutral-200">{p.texto}</p>}
-              <p className="mt-2 text-xs text-neutral-500">
+              {p.texto && <p className="mt-1 text-foreground/90">{p.texto}</p>}
+              <p className="mt-2 text-xs text-muted-foreground">
                 {(p.post_curtidas as any[])?.length ?? 0} curtidas ·{" "}
                 {(p.post_comentarios as any[])?.length ?? 0} comentários
               </p>
             </div>
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Você ainda não postou nada.</p>
+          <p className="text-sm text-muted-foreground">Você ainda não postou nada.</p>
         )}
       </div>
     </div>

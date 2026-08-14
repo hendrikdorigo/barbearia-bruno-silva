@@ -1,5 +1,7 @@
+import { UsersIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
 export default async function ComunidadePage() {
   const supabase = await createClient();
@@ -20,10 +22,10 @@ export default async function ComunidadePage() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
         Comunidade
       </p>
-      <h1 className="mt-2 font-display text-5xl tracking-wide text-neutral-50">
+      <h1 className="mt-2 font-display text-5xl tracking-wide text-foreground">
         Novidades da barbearia
       </h1>
-      <p className="mt-3 text-neutral-400">
+      <p className="mt-3 text-muted-foreground">
         Acompanhe cortes, bastidores e novidades postadas pelos barbeiros.
         Curta e comente se você for cliente cadastrado.
       </p>
@@ -34,7 +36,17 @@ export default async function ComunidadePage() {
             <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} />
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Nenhum post ainda.</p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <UsersIcon />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum post ainda</EmptyTitle>
+              <EmptyDescription>
+                Quando os barbeiros publicarem novidades, elas aparecem aqui.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

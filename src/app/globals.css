@@ -1,26 +1,137 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand constants — the metallic gold + ink from the Bruno Silva monogram */
+  --color-gold: #c9a227;
+  --color-gold-light: #e4c767;
+  --color-gold-dark: #8f7418;
+  --color-ink: #0b0b0c;
+  --color-ink-soft: #141416;
+  --color-ink-line: #29292d;
+
+  --background-image-gold-gradient: linear-gradient(135deg, #e4c767 0%, #c9a227 50%, #8f7418 100%);
+
+  --font-sans: var(--font-body);
+  --font-body: var(--font-body);
+  --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
 
 :root {
-  --font-display: "Bebas Neue", "Oswald", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --background: #0b0b0c;
+  --foreground: #f2ede1;
+
+  --card: #141416;
+  --card-foreground: #f2ede1;
+
+  --popover: #17171a;
+  --popover-foreground: #f2ede1;
+
+  --primary: #c9a227;
+  --primary-foreground: #0b0b0c;
+
+  --secondary: #1e1e21;
+  --secondary-foreground: #f2ede1;
+
+  --muted: #1a1a1d;
+  --muted-foreground: #a9a29b;
+
+  --accent: #26221a;
+  --accent-foreground: #e4c767;
+
+  --destructive: #b3452f;
+  --destructive-foreground: #f7ede7;
+
+  --success: #3f7a5c;
+  --success-foreground: #eff7f1;
+
+  --border: #29292d;
+  --input: #29292d;
+  --ring: #c9a227;
+
+  --chart-1: #c9a227;
+  --chart-2: #3f7a5c;
+  --chart-3: #7c8ca6;
+  --chart-4: #b3452f;
+  --chart-5: #8f7418;
+
+  --radius: 0.5rem;
+
+  --sidebar: #101012;
+  --sidebar-foreground: #f2ede1;
+  --sidebar-primary: #c9a227;
+  --sidebar-primary-foreground: #0b0b0c;
+  --sidebar-accent: #1c1c1f;
+  --sidebar-accent-foreground: #f2ede1;
+  --sidebar-border: #26262a;
+  --sidebar-ring: #c9a227;
 }
 
-html {
-  scroll-behavior: smooth;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    background-color: #c9a227;
+    color: #0b0b0c;
+  }
 }
 
-body {
-  background-color: #0b0b0c;
-  color: #f2ede1;
-}
-
-::selection {
-  background-color: #c9a227;
-  color: #0b0b0c;
-}
-
+/* Signature brand treatments — echo the logo's brushed-gold monogram & razor motif */
 .text-gold-gradient {
   background: linear-gradient(135deg, #e4c767 0%, #c9a227 50%, #8f7418 100%);
   -webkit-background-clip: text;
@@ -28,9 +139,9 @@ body {
   color: transparent;
 }
 
-.divider-razor {
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #c9a227, transparent);
+.bg-noise {
+  background-image: radial-gradient(circle at 1px 1px, rgba(242, 237, 225, 0.035) 1px, transparent 0);
+  background-size: 3px 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {

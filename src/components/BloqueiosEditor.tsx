@@ -98,14 +98,14 @@ export default function BloqueiosEditor({
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-ink-line bg-ink-soft p-5">
+      <div className="rounded-xl border border-border bg-ink-soft p-5">
         <div className="flex gap-2">
           <button
             onClick={() => setRecorrencia("semanal")}
             className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
               recorrencia === "semanal"
                 ? "border-gold bg-gold-gradient text-ink"
-                : "border-ink-line text-neutral-300 hover:border-gold"
+                : "border-border text-muted-foreground hover:border-gold"
             }`}
           >
             Toda semana (ex: almoço)
@@ -115,7 +115,7 @@ export default function BloqueiosEditor({
             className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
               recorrencia === "data"
                 ? "border-gold bg-gold-gradient text-ink"
-                : "border-ink-line text-neutral-300 hover:border-gold"
+                : "border-border text-muted-foreground hover:border-gold"
             }`}
           >
             Data específica (compromisso)
@@ -126,7 +126,7 @@ export default function BloqueiosEditor({
           <select
             value={diaSemana}
             onChange={(e) => setDiaSemana(Number(e.target.value))}
-            className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-neutral-100 focus:border-gold focus:outline-none"
+            className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-foreground focus:border-gold focus:outline-none"
           >
             {DIAS.map((label, i) => (
               <option key={i} value={i}>
@@ -140,23 +140,23 @@ export default function BloqueiosEditor({
             value={data}
             min={new Date().toISOString().slice(0, 10)}
             onChange={(e) => setData(e.target.value)}
-            className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
+            className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:border-gold focus:outline-none"
           />
         )}
 
-        <div className="mt-3 flex items-center gap-2 text-sm text-neutral-300">
+        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="time"
             value={horaInicio}
             onChange={(e) => setHoraInicio(e.target.value)}
-            className="rounded-lg border border-ink-line bg-ink px-2 py-1.5 text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
           />
-          <span className="text-neutral-500">até</span>
+          <span className="text-muted-foreground">até</span>
           <input
             type="time"
             value={horaFim}
             onChange={(e) => setHoraFim(e.target.value)}
-            className="rounded-lg border border-ink-line bg-ink px-2 py-1.5 text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
           />
         </div>
 
@@ -164,10 +164,10 @@ export default function BloqueiosEditor({
           value={motivo}
           onChange={(e) => setMotivo(e.target.value)}
           placeholder="Motivo (opcional) — ex: almoço, consulta..."
-          className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-4 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+          className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
         />
 
-        {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+        {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
         <button
           onClick={adicionar}
@@ -180,25 +180,25 @@ export default function BloqueiosEditor({
 
       {semanais.length > 0 && (
         <div className="mt-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             Bloqueios semanais
           </p>
           <div className="mt-2 space-y-2">
             {semanais.map((b) => (
               <div
                 key={b.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-line bg-ink-soft px-4 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-neutral-100">
+                  <p className="text-sm font-semibold text-foreground">
                     {DIAS[b.dia_semana!]} · {b.hora_inicio.slice(0, 5)} às{" "}
                     {b.hora_fim.slice(0, 5)}
                   </p>
-                  {b.motivo && <p className="text-xs text-neutral-400">{b.motivo}</p>}
+                  {b.motivo && <p className="text-xs text-muted-foreground">{b.motivo}</p>}
                 </div>
                 <button
                   onClick={() => remover(b.id)}
-                  className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold uppercase text-neutral-400 hover:border-red-400 hover:text-red-400"
+                  className="rounded-full border border-border px-3 py-1.5 text-xs font-bold uppercase text-muted-foreground hover:border-red-400 hover:text-destructive"
                 >
                   Remover
                 </button>
@@ -210,25 +210,25 @@ export default function BloqueiosEditor({
 
       {especificos.length > 0 && (
         <div className="mt-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             Compromissos em datas específicas
           </p>
           <div className="mt-2 space-y-2">
             {especificos.map((b) => (
               <div
                 key={b.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-line bg-ink-soft px-4 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-4 py-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-neutral-100">
+                  <p className="text-sm font-semibold text-foreground">
                     {new Date(`${b.data}T00:00:00`).toLocaleDateString("pt-BR")} ·{" "}
                     {b.hora_inicio.slice(0, 5)} às {b.hora_fim.slice(0, 5)}
                   </p>
-                  {b.motivo && <p className="text-xs text-neutral-400">{b.motivo}</p>}
+                  {b.motivo && <p className="text-xs text-muted-foreground">{b.motivo}</p>}
                 </div>
                 <button
                   onClick={() => remover(b.id)}
-                  className="rounded-full border border-ink-line px-3 py-1.5 text-xs font-bold uppercase text-neutral-400 hover:border-red-400 hover:text-red-400"
+                  className="rounded-full border border-border px-3 py-1.5 text-xs font-bold uppercase text-muted-foreground hover:border-red-400 hover:text-destructive"
                 >
                   Remover
                 </button>

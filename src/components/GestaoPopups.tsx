@@ -84,12 +84,12 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-ink-line bg-ink-soft p-5">
+      <div className="rounded-xl border border-border bg-ink-soft p-5">
         <input
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Título do pop-up"
-          className="w-full rounded-lg border border-ink-line bg-ink px-3 py-2.5 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
         />
 
         <div className="mt-3 flex gap-2">
@@ -98,7 +98,7 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
               key={t}
               onClick={() => setTipo(t)}
               className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase ${
-                tipo === t ? "bg-gold-gradient text-ink" : "border border-ink-line text-neutral-400"
+                tipo === t ? "bg-gold-gradient text-ink" : "border border-border text-muted-foreground"
               }`}
             >
               {t}
@@ -111,7 +111,7 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
           onChange={(e) => setMensagem(e.target.value)}
           placeholder="Mensagem"
           rows={3}
-          className="mt-3 w-full rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+          className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
         />
 
         {tipo !== "texto" && (
@@ -119,7 +119,7 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
             type="file"
             accept={tipo === "imagem" ? "image/*" : "video/*"}
             onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-            className="mt-3 text-sm text-neutral-400"
+            className="mt-3 text-sm text-muted-foreground"
           />
         )}
 
@@ -127,13 +127,13 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
           <select
             value={publico}
             onChange={(e) => setPublico(e.target.value as any)}
-            className="rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 focus:border-gold focus:outline-none"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
           >
             <option value="todos">Todos</option>
             <option value="clientes">Só clientes</option>
             <option value="barbeiros">Só barbeiros</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-neutral-300">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
               checked={isBoasVindas}
@@ -144,7 +144,7 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
           </label>
         </div>
 
-        {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+        {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
         <button
           onClick={criar}
@@ -160,14 +160,14 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
           <div
             key={p.id}
             className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
-              p.ativo ? "border-ink-line bg-ink-soft" : "border-ink-line/40 bg-ink-soft/40"
+              p.ativo ? "border-border bg-ink-soft" : "border-border/40 bg-ink-soft/40"
             }`}
           >
             <div>
-              <p className="text-sm font-semibold text-neutral-100">
+              <p className="text-sm font-semibold text-foreground">
                 {p.titulo} {p.is_boas_vindas && "· boas-vindas"}
               </p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 {p.tipo} · {p.publico}
               </p>
             </div>
@@ -175,8 +175,8 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
               onClick={() => alternarAtivo(p.id, p.ativo)}
               className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                 p.ativo
-                  ? "border-red-500/40 text-red-400 hover:bg-red-500/10"
-                  : "border-green-500/40 text-green-400 hover:bg-green-500/10"
+                  ? "border-red-500/40 text-destructive hover:bg-destructive/10"
+                  : "border-green-500/40 text-success hover:bg-success/10"
               }`}
             >
               {p.ativo ? "Desativar" : "Ativar"}

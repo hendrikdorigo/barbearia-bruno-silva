@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
@@ -88,79 +93,115 @@ export default function CadastroPage() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
-        Junte-se a nós
-      </p>
-      <h1 className="mt-2 font-display text-5xl tracking-wide text-neutral-50">
-        Criar conta
-      </h1>
-      <p className="mt-2 text-sm text-neutral-500">
-        Cadastro necessário apenas para agendar horários.
-      </p>
-      <form onSubmit={cadastrar} className="mt-8 flex flex-col gap-4">
-        <input
-          required
-          placeholder="Nome completo"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
-        />
-        <input
-          type="email"
-          required
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
-        />
-        <input
-          type="password"
-          required
-          minLength={6}
-          placeholder="Senha (mínimo 6 caracteres)"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
-        />
-        <input
-          required
-          placeholder="CPF"
-          value={cpf}
-          onChange={(e) => setCpf(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
-        />
-        <label className="text-xs text-neutral-500">Data de nascimento</label>
-        <input
-          type="date"
-          required
-          value={dataNascimento}
-          onChange={(e) => setDataNascimento(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 focus:border-gold focus:outline-none"
-        />
-        <input
-          placeholder="Telefone (WhatsApp)"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
-          className="rounded-lg border border-ink-line bg-ink-soft px-4 py-3 text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
-        />
-        <label className="text-xs text-neutral-500">Foto (opcional)</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-          className="text-sm text-neutral-400"
-        />
-        {erro && <p className="text-sm text-red-400">{erro}</p>}
-        <button
-          disabled={loading}
-          className="mt-2 rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-        >
-          {loading ? "Criando conta..." : "Criar conta"}
-        </button>
-      </form>
-      <p className="mt-6 text-sm text-neutral-500">
+      <div className="mb-8 flex justify-center">
+        <Image src="/logo-full.png" alt="Barbearia Bruno Silva" width={200} height={176} priority />
+      </div>
+
+      <Card className="border-border bg-ink-soft">
+        <CardContent className="px-6 py-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
+            Junte-se a nós
+          </p>
+          <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">Criar conta</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Cadastro necessário apenas para agendar horários.
+          </p>
+
+          <form onSubmit={cadastrar} className="mt-8">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="nome">Nome completo</FieldLabel>
+                <Input
+                  id="nome"
+                  required
+                  autoComplete="name"
+                  placeholder="Seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="email">E-mail</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="voce@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="senha">Senha</FieldLabel>
+                <Input
+                  id="senha"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="cpf">CPF</FieldLabel>
+                <Input
+                  id="cpf"
+                  required
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={(e) => setCpf(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="nascimento">Data de nascimento</FieldLabel>
+                <Input
+                  id="nascimento"
+                  type="date"
+                  required
+                  value={dataNascimento}
+                  onChange={(e) => setDataNascimento(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="foto">Foto</FieldLabel>
+                <Input
+                  id="foto"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
+                />
+                <FieldDescription>Opcional — usada no seu perfil.</FieldDescription>
+              </Field>
+
+              {erro && (
+                <Field data-invalid>
+                  <FieldError>{erro}</FieldError>
+                </Field>
+              )}
+
+              <Button type="submit" disabled={loading} className="mt-1 w-full uppercase tracking-widest">
+                {loading ? "Criando conta..." : "Criar conta"}
+              </Button>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Já tem conta?{" "}
-        <Link href="/login" className="text-gold hover:underline">
+        <Link href="/login" className="font-medium text-gold hover:underline">
           Entrar
         </Link>
       </p>

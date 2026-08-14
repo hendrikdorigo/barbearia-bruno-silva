@@ -3,8 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { HeartIcon, MessageCircleIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { extrairMencoes } from "@/lib/mentions";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function PostCard({ post, usuarioId }: { post: any; usuarioId: string | null }) {
   const [comentario, setComentario] = useState("");
@@ -47,22 +52,24 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-ink-line bg-ink-soft">
+    <article className="overflow-hidden rounded-2xl border border-border bg-ink-soft">
       <div className="flex items-center gap-3 px-5 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold-gradient font-display text-ink">
-          {post.barbeiros?.profiles?.nome?.[0] ?? "B"}
-        </div>
+        <Avatar className="size-9">
+          <AvatarFallback className="bg-gold-gradient font-display text-ink">
+            {post.barbeiros?.profiles?.nome?.[0] ?? "B"}
+          </AvatarFallback>
+        </Avatar>
         <div>
-          <p className="text-sm font-semibold text-neutral-100">
+          <p className="text-sm font-semibold text-foreground">
             {post.barbeiros?.profiles?.nome}
           </p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             {new Date(post.created_at).toLocaleString("pt-BR")}
           </p>
         </div>
       </div>
 
-      {post.texto && <p className="px-5 pb-3 text-neutral-200">{post.texto}</p>}
+      {post.texto && <p className="px-5 pb-3 text-foreground/90">{post.texto}</p>}
 
       {post.tipo === "imagem" && post.conteudo_url && (
         <div className="relative h-80 w-full">
@@ -73,21 +80,28 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
         <video src={post.conteudo_url} controls className="max-h-96 w-full" />
       )}
 
-      <div className="flex items-center gap-4 px-5 py-3 text-sm text-neutral-400">
+      <div className="flex items-center gap-4 px-5 py-3 text-sm text-muted-foreground">
         <button
           onClick={curtir}
-          className={jaCurtiu ? "text-gold" : "hover:text-gold"}
+          className={cn(
+            "flex items-center gap-1.5 transition-colors",
+            jaCurtiu ? "text-gold" : "hover:text-gold"
+          )}
         >
-          {jaCurtiu ? "★" : "☆"} {curtidas.length} curtida{curtidas.length === 1 ? "" : "s"}
+          <HeartIcon className={cn("size-4", jaCurtiu && "fill-gold")} />
+          {curtidas.length} curtida{curtidas.length === 1 ? "" : "s"}
         </button>
-        <span>💬 {comentarios.length} comentário{comentarios.length === 1 ? "" : "s"}</span>
+        <span className="flex items-center gap-1.5">
+          <MessageCircleIcon className="size-4" />
+          {comentarios.length} comentário{comentarios.length === 1 ? "" : "s"}
+        </span>
       </div>
 
       {comentarios.length > 0 && (
-        <div className="space-y-2 border-t border-ink-line px-5 py-3">
+        <div className="space-y-2 border-t border-border px-5 py-3">
           {comentarios.map((c) => (
-            <p key={c.id} className="text-sm text-neutral-400">
-              <span className="font-semibold text-neutral-200">
+            <p key={c.id} className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground/90">
                 {c.clientes?.profiles?.nome ?? "Cliente"}:
               </span>{" "}
               {c.comentario}
@@ -96,21 +110,22 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
         </div>
       )}
 
-      <div className="flex gap-2 border-t border-ink-line px-5 py-3">
-        <input
+      <div className="flex gap-2 border-t border-border px-5 py-3">
+        <Input
           value={comentario}
           onChange={(e) => setComentario(e.target.value)}
           placeholder={usuarioId ? "Escreva um comentário..." : "Entre para comentar"}
           disabled={!usuarioId}
-          className="flex-1 rounded-lg border border-ink-line bg-ink px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-gold focus:outline-none"
+          className="flex-1"
         />
-        <button
+        <Button
           onClick={comentar}
           disabled={enviando || !usuarioId}
-          className="rounded-lg bg-gold-gradient px-4 py-2 text-xs font-bold uppercase text-ink disabled:opacity-40"
+          size="sm"
+          className="uppercase tracking-wide"
         >
           Enviar
-        </button>
+        </Button>
       </div>
     </article>
   );

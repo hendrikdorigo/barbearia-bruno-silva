@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { BellIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 
 export default function NotificacoesLista({ notificacoes }: { notificacoes: any[] }) {
   const supabase = createClient();
@@ -32,29 +37,39 @@ export default function NotificacoesLista({ notificacoes }: { notificacoes: any[
   return (
     <div className="mt-8 space-y-3">
       {notificacoes.length === 0 && (
-        <p className="text-sm text-neutral-500">Nenhuma notificação por enquanto.</p>
+        <Empty className="border border-dashed border-border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BellIcon />
+            </EmptyMedia>
+            <EmptyTitle>Nenhuma notificação por enquanto</EmptyTitle>
+            <EmptyDescription>Avisos de agendamento e fila de espera aparecem aqui.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
       {notificacoes.map((n) => (
-        <div
+        <Card
           key={n.id}
-          className={`rounded-xl border p-4 ${
-            n.lida ? "border-ink-line bg-ink-soft" : "border-gold/40 bg-gold/10"
-          }`}
+          className={cn(
+            "gap-0 border p-4",
+            n.lida ? "border-border bg-ink-soft" : "border-gold/40 bg-gold/10"
+          )}
         >
-          <p className="text-sm font-semibold text-neutral-100">{n.titulo}</p>
-          <p className="mt-1 text-sm text-neutral-400">{n.mensagem}</p>
-          <p className="mt-2 text-xs text-neutral-600">
+          <p className="text-sm font-semibold text-foreground">{n.titulo}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{n.mensagem}</p>
+          <p className="mt-2 text-xs text-muted-foreground/70">
             {new Date(n.created_at).toLocaleString("pt-BR")}
           </p>
 
           {n.tipo === "vaga_liberada" && n.referencia_id && !resultado[n.referencia_id] && (
-            <button
+            <Button
               onClick={() => aceitarVaga(n.referencia_id)}
               disabled={processando === n.referencia_id}
-              className="mt-3 rounded-full bg-gold-gradient px-5 py-2 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
+              size="sm"
+              className="mt-3 w-fit uppercase tracking-widest"
             >
               {processando === n.referencia_id ? "Confirmando..." : "Aceitar esta vaga"}
-            </button>
+            </Button>
           )}
           {n.referencia_id && resultado[n.referencia_id] && (
             <p className="mt-2 text-xs text-gold">{resultado[n.referencia_id]}</p>
@@ -63,12 +78,15 @@ export default function NotificacoesLista({ notificacoes }: { notificacoes: any[
           {n.tipo === "avaliacao" && n.referencia_id && (
             <Link
               href={`/avaliar/${n.referencia_id}`}
-              className="mt-3 inline-block rounded-full border border-gold px-5 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "mt-3 w-fit border-gold uppercase tracking-widest text-gold hover:bg-gold/10"
+              )}
             >
               Avaliar atendimento
             </Link>
           )}
-        </div>
+        </Card>
       ))}
     </div>
   );
