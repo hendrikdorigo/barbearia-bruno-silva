@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AgendaBarbeiro from "@/components/AgendaBarbeiro";
 import ConectarGoogleCalendar from "@/components/ConectarGoogleCalendar";
@@ -34,44 +33,10 @@ export default async function PainelBarbeiroPage() {
     .order("data_hora", { ascending: true });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-5xl tracking-wide text-foreground">
-          Olá, {profile.nome.split(" ")[0]}
-        </h1>
-        <div className="flex gap-3">
-          <Link
-            href="/painel/barbeiro/portfolio"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Editar portfólio
-          </Link>
-          <Link
-            href="/painel/barbeiro/horarios"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Meus horários
-          </Link>
-          <Link
-            href="/painel/barbeiro/servicos"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Meus serviços
-          </Link>
-          <Link
-            href="/painel/barbeiro/fidelidade"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Fidelidade
-          </Link>
-          <Link
-            href="/painel/barbeiro/comunidade"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Comunidade
-          </Link>
-        </div>
-      </div>
+    <div className="mx-auto max-w-4xl">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
+        Olá, {profile.nome.split(" ")[0]}
+      </h1>
 
       <ConectarGoogleCalendar conectado={barbeiro?.google_calendar_connected ?? false} />
 

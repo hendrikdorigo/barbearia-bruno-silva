@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { extrairMencoes } from "@/lib/mentions";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
   const [tipo, setTipo] = useState<"texto" | "imagem" | "video">("texto");
@@ -54,47 +59,44 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-border bg-ink-soft p-5">
+    <Card className="mt-6 border-border bg-ink-soft p-5">
       <div className="flex gap-2">
         {(["texto", "imagem", "video"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTipo(t)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase ${
-              tipo === t ? "bg-gold-gradient text-ink" : "border border-border text-muted-foreground"
-            }`}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-xs font-bold uppercase transition-colors",
+              tipo === t ? "bg-gold-gradient text-ink" : "border border-border text-muted-foreground hover:border-gold"
+            )}
           >
             {t}
           </button>
         ))}
       </div>
 
-      <textarea
+      <Textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
         placeholder="Escreva algo para os clientes... (use @Nome para mencionar alguém)"
         rows={3}
-        className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
+        className="mt-3 bg-background"
       />
 
       {tipo !== "texto" && (
-        <input
+        <Input
           type="file"
           accept={tipo === "imagem" ? "image/*" : "video/*"}
           onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-          className="mt-3 text-sm text-muted-foreground"
+          className="mt-3"
         />
       )}
 
       {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
-      <button
-        onClick={publicar}
-        disabled={enviando}
-        className="mt-3 rounded-full bg-gold-gradient px-5 py-2 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-      >
+      <Button onClick={publicar} disabled={enviando} size="sm" className="mt-3 uppercase tracking-widest">
         {enviando ? "Publicando..." : "Publicar"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }

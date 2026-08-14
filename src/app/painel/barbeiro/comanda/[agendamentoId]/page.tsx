@@ -35,7 +35,7 @@ export default async function ComandaBarbeiroPage({
     .order("categoria");
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-xl">
       <h1 className="font-display text-4xl tracking-wide text-foreground">
         Comanda de {(comanda as any).clientes?.profiles?.nome}
       </h1>

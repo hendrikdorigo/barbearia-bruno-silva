@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: any }) {
   const [cancelando, setCancelando] = useState(false);
@@ -37,7 +39,7 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
       {podeVerComanda && (
         <Link
           href={`/painel/cliente/comanda/${agendamento.id}`}
-          className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-gold hover:text-gold"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
         >
           Ver comanda
         </Link>
@@ -45,19 +47,24 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
       {agendamento.status === "concluido" && (
         <Link
           href={`/avaliar/${agendamento.id}`}
-          className="rounded-full border border-gold/40 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold/10"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "rounded-full border-gold/40 text-gold hover:bg-gold/10"
+          )}
         >
           Avaliar
         </Link>
       )}
       {podeCancel && (
-        <button
+        <Button
           onClick={cancelar}
           disabled={cancelando}
-          className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          variant="destructive"
+          size="sm"
+          className="rounded-full"
         >
           {cancelando ? "Cancelando..." : "Cancelar (até 1h antes)"}
-        </button>
+        </Button>
       )}
       {erro && <p className="text-xs text-destructive">{erro}</p>}
     </div>

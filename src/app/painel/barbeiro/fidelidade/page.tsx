@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FidelidadeEditor from "@/components/FidelidadeEditor";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { GiftIcon } from "lucide-react";
 
 export default async function FidelidadeBarbeiroPage() {
   const supabase = await createClient();
@@ -29,7 +32,7 @@ export default async function FidelidadeBarbeiroPage() {
     .order("atendimentos_concluidos", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Programa de fidelidade
       </h1>
@@ -42,25 +45,40 @@ export default async function FidelidadeBarbeiroPage() {
       <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
         Progresso dos clientes
       </h2>
-      <div className="mt-4 space-y-2">
+      <div className="mt-4">
         {progresso?.length ? (
-          progresso.map((p: any) => (
-            <div
-              key={`${p.barbeiro_id}-${p.cliente_id}`}
-              className="flex items-center justify-between rounded-xl border border-border bg-ink-soft px-4 py-3"
-            >
-              <p className="text-sm font-semibold text-foreground">
-                {p.clientes?.profiles?.nome ?? "Cliente"}
-              </p>
-              <p className="text-sm text-gold">
-                {p.atendimentos_concluidos} atendimentos
-              </p>
-            </div>
-          ))
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead className="text-right">Atendimentos</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {progresso.map((p: any) => (
+                <TableRow key={`${p.barbeiro_id}-${p.cliente_id}`}>
+                  <TableCell className="font-medium text-foreground">
+                    {p.clientes?.profiles?.nome ?? "Cliente"}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-gold">
+                    {p.atendimentos_concluidos}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Ainda não há histórico de atendimentos concluídos.
-          </p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <GiftIcon />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum histórico ainda</EmptyTitle>
+              <EmptyDescription>
+                Quando atendimentos forem concluídos, o progresso aparece aqui.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

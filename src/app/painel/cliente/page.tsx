@@ -1,7 +1,13 @@
+import { CalendarIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AgendamentoClienteAcoes from "@/components/AgendamentoClienteAcoes";
 import PreferenciaNotificacao from "@/components/PreferenciaNotificacao";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
@@ -11,12 +17,12 @@ const STATUS_LABEL: Record<string, string> = {
   concluido: "Concluído",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  pendente: "text-yellow-400",
-  confirmado: "text-success",
-  cancelado: "text-muted-foreground",
-  no_show: "text-destructive",
-  concluido: "text-gold",
+const STATUS_CLASS: Record<string, string> = {
+  pendente: "border-transparent bg-amber-500/15 text-amber-400",
+  confirmado: "border-transparent bg-success/15 text-success",
+  cancelado: "border-transparent bg-muted text-muted-foreground",
+  no_show: "border-transparent bg-destructive/15 text-destructive",
+  concluido: "border-transparent bg-gold/15 text-gold",
 };
 
 export default async function PainelClientePage() {
@@ -56,36 +62,46 @@ export default async function PainelClientePage() {
       />
 
       {cliente?.exige_pagamento_antecipado && (
-        <div className="mt-6 rounded-xl border border-red-500/40 bg-destructive/10 p-4 text-sm text-red-300">
-          Sua próxima marcação exigirá pagamento antecipado devido a um
-          cancelamento por atraso.
-        </div>
+        <Alert variant="destructive" className="mt-6">
+          <AlertDescription>
+            Sua próxima marcação exigirá pagamento antecipado devido a um
+            cancelamento por atraso.
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="mt-8 space-y-4">
         {agendamentos?.length ? (
           agendamentos.map((a: any) => (
-            <div key={a.id} className="rounded-xl border border-border bg-ink-soft p-5">
-              <div className="flex items-center justify-between">
+            <Card key={a.id} className="gap-0 border-border bg-ink-soft p-5">
+              <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold text-foreground">
                   {a.servicos?.nome} com {a.barbeiros?.profiles?.nome}
                 </p>
-                <span className={`text-xs font-bold uppercase ${STATUS_COLOR[a.status]}`}>
+                <Badge className={cn("uppercase", STATUS_CLASS[a.status])}>
                   {STATUS_LABEL[a.status]}
-                </span>
+                </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 {new Date(a.data_hora).toLocaleString("pt-BR")}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 font-mono text-sm text-muted-foreground">
                 R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")} ·{" "}
                 {a.pagamento_antecipado ? "Pago antecipado" : "Pagamento no local"}
               </p>
               <AgendamentoClienteAcoes agendamento={a} />
-            </div>
+            </Card>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">Você ainda não tem agendamentos.</p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarIcon />
+              </EmptyMedia>
+              <EmptyTitle>Você ainda não tem agendamentos</EmptyTitle>
+              <EmptyDescription>Escolha um barbeiro e marque seu horário.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

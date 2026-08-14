@@ -22,7 +22,7 @@ export default async function GestaoPopupsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Pop-ups do app
       </h1>

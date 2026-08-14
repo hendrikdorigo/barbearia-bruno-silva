@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Field, FieldLabel, FieldContent } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
 
 export default function PreferenciaNotificacao({
   profileId,
@@ -25,15 +28,20 @@ export default function PreferenciaNotificacao({
   }
 
   return (
-    <label className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-ink-soft p-4 text-sm text-muted-foreground">
-      <input
-        type="checkbox"
-        checked={ativo}
-        onChange={alternar}
-        disabled={salvando}
-        className="h-4 w-4 accent-[#C9A227]"
-      />
-      Avisar por WhatsApp quando um barbeiro postar na comunidade
-    </label>
+    <Card className="mt-4 border-border bg-ink-soft p-4">
+      <Field orientation="horizontal">
+        <FieldContent>
+          <FieldLabel htmlFor="notif-whatsapp" className="text-sm text-muted-foreground">
+            Avisar por WhatsApp quando um barbeiro postar na comunidade
+          </FieldLabel>
+        </FieldContent>
+        <Switch
+          id="notif-whatsapp"
+          checked={ativo}
+          onCheckedChange={alternar}
+          disabled={salvando}
+        />
+      </Field>
+    </Card>
   );
 }

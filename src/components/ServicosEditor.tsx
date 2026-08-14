@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 type BarbeiroServico = {
@@ -65,26 +70,25 @@ export default function ServicosEditor({
       {servicos.map((s) => {
         const l = linhas.find((x) => x.servico_id === s.id)!;
         return (
-          <div
+          <Card
             key={s.id}
-            className={`flex flex-wrap items-center gap-4 rounded-xl border px-4 py-3 ${
-              l.ativo ? "border-border bg-ink-soft" : "border-border/50 bg-ink-soft/40"
-            }`}
+            className={cn(
+              "flex-row flex-wrap items-center gap-4 border-border bg-ink-soft px-4 py-3",
+              !l.ativo && "bg-ink-soft/40"
+            )}
           >
-            <label className="flex w-44 items-center gap-2 text-sm font-semibold text-foreground/90">
-              <input
-                type="checkbox"
+            <label className="flex w-44 items-center gap-2.5 text-sm font-semibold text-foreground/90">
+              <Switch
                 checked={l.ativo}
-                onChange={(e) => atualizar(s.id, "ativo", e.target.checked)}
-                className="h-4 w-4 accent-[#C9A227]"
+                onCheckedChange={(checked) => atualizar(s.id, "ativo", checked)}
               />
               {s.nome}
             </label>
 
             {l.ativo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="text-muted-foreground">R$</span>
-                <input
+                <span>R$</span>
+                <Input
                   type="number"
                   step="0.01"
                   min="0"
@@ -97,7 +101,7 @@ export default function ServicosEditor({
                       e.target.value === "" ? null : Number(e.target.value)
                     )
                   }
-                  className="w-28 rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
+                  className="w-28 bg-background"
                 />
                 <span className="text-xs text-muted-foreground">
                   (padrão R$ {Number(s.preco).toFixed(2).replace(".", ",")})
@@ -106,19 +110,15 @@ export default function ServicosEditor({
             ) : (
               <span className="text-sm text-muted-foreground">Não oferece este serviço</span>
             )}
-          </div>
+          </Card>
         );
       })}
 
       {mensagem && <p className="text-sm text-gold">{mensagem}</p>}
 
-      <button
-        onClick={salvar}
-        disabled={salvando}
-        className="mt-2 self-start rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-      >
+      <Button onClick={salvar} disabled={salvando} className="mt-2 w-fit uppercase tracking-widest">
         {salvando ? "Salvando..." : "Salvar serviços"}
-      </button>
+      </Button>
     </div>
   );
 }

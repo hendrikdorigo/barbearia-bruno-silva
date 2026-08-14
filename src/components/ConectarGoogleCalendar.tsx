@@ -1,10 +1,18 @@
 "use client";
 
+import { CalendarCheckIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 export default function ConectarGoogleCalendar({ conectado }: { conectado: boolean }) {
   return (
-    <div className="mt-8 flex items-center justify-between rounded-xl border border-border bg-ink-soft p-5">
+    <Card className="mt-8 flex-row items-center justify-between gap-4 border-border bg-ink-soft p-5">
       <div>
-        <p className="text-sm font-semibold text-foreground">Google Calendar</p>
+        <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <CalendarCheckIcon className="size-4 text-gold" />
+          Google Calendar
+        </p>
         <p className="mt-1 text-sm text-muted-foreground">
           {conectado
             ? "Sua conta está conectada. Novos agendamentos confirmados criam eventos automaticamente."
@@ -13,14 +21,15 @@ export default function ConectarGoogleCalendar({ conectado }: { conectado: boole
       </div>
       <a
         href="/api/google/connect"
-        className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest ${
+        className={cn(
+          "shrink-0 rounded-full uppercase tracking-widest",
           conectado
-            ? "border border-green-500/40 text-success"
-            : "bg-gold-gradient text-ink"
-        }`}
+            ? buttonVariants({ variant: "outline", size: "sm" }) + " border-success/40 text-success"
+            : buttonVariants({ size: "sm" })
+        )}
       >
         {conectado ? "Conectado" : "Conectar"}
       </a>
-    </div>
+    </Card>
   );
 }

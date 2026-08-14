@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Produto = {
   id: string;
@@ -57,71 +61,65 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-border bg-ink-soft p-5">
+      <Card className="border-border bg-ink-soft p-5">
         <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Nome do produto"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
-          />
-          <input
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do produto" className="bg-background" />
+          <Input
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
             placeholder="Categoria (ex: bebidas)"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
-          <input
+          <Input
             type="number"
             min="0"
             step="0.01"
             value={preco}
             onChange={(e) => setPreco(e.target.value)}
             placeholder="Preço"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
-          <input
+          <Input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Descrição (opcional)"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
         </div>
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
-        <button
-          onClick={adicionar}
-          disabled={salvando}
-          className="mt-4 rounded-full bg-gold-gradient px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-        >
+        <Button onClick={adicionar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Salvando..." : "Adicionar produto"}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <div className="mt-5 space-y-2">
         {produtos.map((p) => (
-          <div
+          <Card
             key={p.id}
-            className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
-              p.ativo ? "border-border bg-ink-soft" : "border-border/40 bg-ink-soft/40"
-            }`}
+            className={cn(
+              "flex-row flex-wrap items-center justify-between gap-3 border-border bg-ink-soft px-4 py-3",
+              !p.ativo && "border-border/40 bg-ink-soft/40"
+            )}
           >
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {p.nome} · R$ {Number(p.preco).toFixed(2).replace(".", ",")}
+                {p.nome} · <span className="font-mono">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</span>
               </p>
               <p className="text-xs text-muted-foreground">{p.categoria}</p>
             </div>
             <button
               onClick={() => alternarAtivo(p.id, p.ativo)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full",
                 p.ativo
-                  ? "border-red-500/40 text-destructive hover:bg-destructive/10"
-                  : "border-green-500/40 text-success hover:bg-success/10"
-              }`}
+                  ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                  : "border-success/40 text-success hover:bg-success/10"
+              )}
             >
               {p.ativo ? "Desativar" : "Ativar"}
             </button>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

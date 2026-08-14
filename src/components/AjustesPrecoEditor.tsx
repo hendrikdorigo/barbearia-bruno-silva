@@ -3,8 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const selectClass =
+  "h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-gold focus:outline-none";
 
 type Servico = { id: string; nome: string };
 type Ajuste = {
@@ -89,12 +95,12 @@ export default function AjustesPrecoEditor({
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-border bg-ink-soft p-5">
+      <Card className="border-border bg-ink-soft p-5">
         <div className="flex flex-wrap gap-3">
           <select
             value={servicoId}
             onChange={(e) => setServicoId(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className={cn(selectClass, "flex-1")}
           >
             <option value="todos">Todos os serviços</option>
             {servicos.map((s) => (
@@ -103,29 +109,25 @@ export default function AjustesPrecoEditor({
               </option>
             ))}
           </select>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value as any)}
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
-          >
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as any)} className={selectClass}>
             <option value="desconto">Desconto</option>
             <option value="acrescimo">Acréscimo</option>
           </select>
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <input
+          <Input
             type="number"
             min="0"
             step="0.01"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
-            className="w-28 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="w-28 bg-background"
           />
           <select
             value={valorTipo}
             onChange={(e) => setValorTipo(e.target.value as any)}
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+            className={selectClass}
           >
             <option value="percentual">% (percentual)</option>
             <option value="fixo">R$ (fixo)</option>
@@ -135,21 +137,23 @@ export default function AjustesPrecoEditor({
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => setAplicacao("periodo")}
-            className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
+            className={cn(
+              "flex-1 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors",
               aplicacao === "periodo"
                 ? "border-gold bg-gold-gradient text-ink"
                 : "border-border text-muted-foreground hover:border-gold"
-            }`}
+            )}
           >
             Período de datas
           </button>
           <button
             onClick={() => setAplicacao("dia_semana")}
-            className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
+            className={cn(
+              "flex-1 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors",
               aplicacao === "dia_semana"
                 ? "border-gold bg-gold-gradient text-ink"
                 : "border-border text-muted-foreground hover:border-gold"
-            }`}
+            )}
           >
             Todo dia da semana
           </button>
@@ -157,26 +161,26 @@ export default function AjustesPrecoEditor({
 
         {aplicacao === "periodo" ? (
           <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-            <input
+            <Input
               type="date"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
-              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
+              className="w-auto bg-background"
             />
-            <span className="text-muted-foreground">até</span>
-            <input
+            <span>até</span>
+            <Input
               type="date"
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
               placeholder="opcional"
-              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
+              className="w-auto bg-background"
             />
           </div>
         ) : (
           <select
             value={diaSemana}
             onChange={(e) => setDiaSemana(Number(e.target.value))}
-            className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-foreground focus:border-gold focus:outline-none"
+            className={cn(selectClass, "mt-3 w-full")}
           >
             {DIAS.map((label, i) => (
               <option key={i} value={i}>
@@ -186,32 +190,28 @@ export default function AjustesPrecoEditor({
           </select>
         )}
 
-        <input
+        <Input
           value={motivo}
           onChange={(e) => setMotivo(e.target.value)}
           placeholder="Motivo (opcional) — ex: promoção de sexta, feriado..."
-          className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+          className="mt-3 bg-background"
         />
 
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
-        <button
-          onClick={adicionar}
-          disabled={salvando}
-          className="mt-4 rounded-full bg-gold-gradient px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-        >
+        <Button onClick={adicionar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Salvando..." : "Adicionar regra"}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <div className="mt-5 space-y-2">
         {ajustes.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhuma regra de preço cadastrada.</p>
         )}
         {ajustes.map((a) => (
-          <div
+          <Card
             key={a.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-4 py-3"
+            className="flex-row flex-wrap items-center justify-between gap-3 border-border bg-ink-soft px-4 py-3"
           >
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -229,11 +229,14 @@ export default function AjustesPrecoEditor({
             </div>
             <button
               onClick={() => remover(a.id)}
-              className="rounded-full border border-border px-3 py-1.5 text-xs font-bold uppercase text-muted-foreground hover:border-red-400 hover:text-destructive"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full hover:border-destructive/50 hover:text-destructive"
+              )}
             >
               Remover
             </button>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

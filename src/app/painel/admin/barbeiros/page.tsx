@@ -22,7 +22,7 @@ export default async function AdminBarbeirosPage() {
     .order("created_at");
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-3xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Gerenciar barbeiros
       </h1>

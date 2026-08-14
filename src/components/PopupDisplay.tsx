@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type Popup = {
   id: string;
@@ -77,30 +86,33 @@ export default function PopupDisplay() {
     setPopup(null);
   }
 
-  if (!popup) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-gold/40 bg-ink-soft p-6">
-        <p className="font-display text-2xl tracking-wide text-foreground">
-          {popup.titulo}
-        </p>
+    <Dialog open={!!popup} onOpenChange={(open) => !open && fechar()}>
+      <DialogContent className="border-gold/40 bg-ink-soft sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl tracking-wide text-foreground">
+            {popup?.titulo}
+          </DialogTitle>
+          {popup?.mensagem && (
+            <DialogDescription className="text-muted-foreground">
+              {popup.mensagem}
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
-        {popup.tipo === "video" && popup.conteudo_url && (
-          <video src={popup.conteudo_url} controls autoPlay className="mt-4 w-full rounded-lg" />
+        {popup?.tipo === "video" && popup.conteudo_url && (
+          <video src={popup.conteudo_url} controls autoPlay className="w-full rounded-lg" />
         )}
-        {popup.tipo === "imagem" && popup.conteudo_url && (
-          <img src={popup.conteudo_url} alt="" className="mt-4 w-full rounded-lg object-cover" />
+        {popup?.tipo === "imagem" && popup.conteudo_url && (
+          <img src={popup.conteudo_url} alt="" className="w-full rounded-lg object-cover" />
         )}
-        {popup.mensagem && <p className="mt-4 text-muted-foreground">{popup.mensagem}</p>}
 
-        <button
-          onClick={fechar}
-          className="mt-6 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink"
-        >
-          Entendi
-        </button>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button onClick={fechar} className="w-full uppercase tracking-widest">
+            Entendi
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

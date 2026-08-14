@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Card } from "@/components/ui/card";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { WalletIcon } from "lucide-react";
 
 export default async function RepassesPage() {
   const supabase = await createClient();
@@ -34,7 +37,7 @@ export default async function RepassesPage() {
   const totalGeral = [...porBarbeiro.values()].reduce((acc, v) => acc + v.total, 0);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-3xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Repasses (50%)
       </h1>
@@ -43,27 +46,34 @@ export default async function RepassesPage() {
         parceiros (50% do valor de cada serviço).
       </p>
 
-      <div className="mt-8 rounded-xl border border-gold/40 bg-gold/10 p-5">
+      <Card className="mt-8 gap-1 border-gold/40 bg-gold/10 p-5">
         <p className="text-xs uppercase tracking-widest text-gold">Total acumulado</p>
-        <p className="font-display text-4xl text-foreground">
+        <p className="font-mono text-4xl font-medium text-foreground">
           R$ {totalGeral.toFixed(2).replace(".", ",")}
         </p>
-      </div>
+      </Card>
 
       <div className="mt-6 space-y-3">
         {[...porBarbeiro.entries()].map(([id, v]) => (
-          <div key={id} className="flex items-center justify-between rounded-xl border border-border bg-ink-soft p-4">
+          <Card key={id} className="flex-row items-center justify-between border-border bg-ink-soft p-4">
             <div>
               <p className="font-semibold text-foreground">{v.nome}</p>
               <p className="text-xs text-muted-foreground">{v.qtd} atendimento(s)</p>
             </div>
-            <p className="font-display text-2xl text-gold-gradient">
+            <p className="font-mono text-2xl font-medium text-gold-gradient">
               R$ {v.total.toFixed(2).replace(".", ",")}
             </p>
-          </div>
+          </Card>
         ))}
         {porBarbeiro.size === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum repasse registrado ainda.</p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <WalletIcon />
+              </EmptyMedia>
+              <EmptyTitle>Nenhum repasse registrado ainda</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

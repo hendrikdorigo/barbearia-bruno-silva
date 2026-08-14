@@ -1,6 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
@@ -9,6 +20,17 @@ const STATUS_LABEL: Record<string, string> = {
   no_show: "No-show",
   concluido: "Concluído",
 };
+
+const STATUS_CLASS: Record<string, string> = {
+  pendente: "border-transparent bg-amber-500/15 text-amber-400",
+  confirmado: "border-transparent bg-success/15 text-success",
+  cancelado: "border-transparent bg-muted text-muted-foreground",
+  no_show: "border-transparent bg-destructive/15 text-destructive",
+  concluido: "border-transparent bg-gold/15 text-gold",
+};
+
+const selectClass =
+  "h-9 rounded-lg border border-border bg-ink-soft px-3 text-sm text-foreground/90 focus:border-gold focus:outline-none";
 
 export default function PainelAdminAgendamentos({
   agendamentos,
@@ -36,7 +58,7 @@ export default function PainelAdminAgendamentos({
         <select
           value={filtroBarbeiro}
           onChange={(e) => setFiltroBarbeiro(e.target.value)}
-          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
+          className={selectClass}
         >
           <option value="">Todos os barbeiros</option>
           {barbeiros.map((b) => (
@@ -45,16 +67,16 @@ export default function PainelAdminAgendamentos({
             </option>
           ))}
         </select>
-        <input
+        <Input
           type="date"
           value={filtroData}
           onChange={(e) => setFiltroData(e.target.value)}
-          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
+          className="h-9 w-auto bg-ink-soft"
         />
         <select
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
-          className="rounded-lg border border-border bg-ink-soft px-3 py-2 text-sm text-foreground/90"
+          className={selectClass}
         >
           <option value="">Todos os status</option>
           {Object.entries(STATUS_LABEL).map(([k, v]) => (
@@ -66,50 +88,56 @@ export default function PainelAdminAgendamentos({
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-ink-soft text-left text-xs uppercase tracking-widest text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Data/hora</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Barbeiro</th>
-              <th className="px-4 py-3">Serviço</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Valor</th>
-              <th className="px-4 py-3">Repasse Bruno</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-ink-soft hover:bg-ink-soft">
+              <TableHead>Data/hora</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Barbeiro</TableHead>
+              <TableHead>Serviço</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">Repasse Bruno</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filtrados.map((a) => (
-              <tr key={a.id} className="text-muted-foreground">
-                <td className="px-4 py-3">
+              <TableRow key={a.id}>
+                <TableCell className="text-muted-foreground">
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
-                </td>
-                <td className="px-4 py-3">{a.clientes?.profiles?.nome}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {a.clientes?.profiles?.nome}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
                   {a.barbeiros?.profiles?.nome}
                   {a.barbeiros?.is_dono && (
                     <span className="ml-1 text-xs text-gold">(dono)</span>
                   )}
-                </td>
-                <td className="px-4 py-3">{a.servicos?.nome}</td>
-                <td className="px-4 py-3">{STATUS_LABEL[a.status]}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="text-muted-foreground">{a.servicos?.nome}</TableCell>
+                <TableCell>
+                  <Badge className={cn("uppercase", STATUS_CLASS[a.status])}>
+                    {STATUS_LABEL[a.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-mono text-muted-foreground">
                   R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}
-                </td>
-                <td className="px-4 py-3 text-gold">
+                </TableCell>
+                <TableCell className="text-right font-mono text-gold">
                   R$ {Number(a.valor_repasse_bruno).toFixed(2).replace(".", ",")}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {filtrados.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                   Nenhum agendamento encontrado.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

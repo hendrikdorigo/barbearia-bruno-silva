@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
   const [bio, setBio] = useState(barbeiro.bio ?? "");
@@ -86,45 +90,38 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
           <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
           <button
             onClick={() => setBannerUrl(null)}
-            className="absolute right-2 top-2 rounded-full bg-destructive/80 px-2 text-xs text-white"
+            aria-label="Remover banner"
+            className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white"
           >
-            ×
+            <XIcon className="size-3.5" />
           </button>
         </div>
       )}
       <div className="flex gap-2">
-        <input
+        <Input
           type="file"
           accept="image/*"
           onChange={(e) => setNovoBanner(e.target.files?.[0] ?? null)}
-          className="flex-1 text-sm text-muted-foreground"
+          className="flex-1"
         />
-        <button
-          onClick={adicionarBanner}
-          className="rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase text-muted-foreground hover:border-gold hover:text-gold"
-        >
+        <Button onClick={adicionarBanner} variant="outline" size="sm">
           Enviar banner
-        </button>
+        </Button>
       </div>
 
       <label className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">
         Descrição / bio
       </label>
-      <textarea
-        value={bio}
-        onChange={(e) => setBio(e.target.value)}
-        rows={4}
-        className="rounded-lg border border-border bg-ink-soft px-4 py-3 text-foreground focus:border-gold focus:outline-none"
-      />
+      <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="bg-ink-soft" />
 
       <label className="text-xs uppercase tracking-widest text-muted-foreground">
         Especialidades (separadas por vírgula)
       </label>
-      <input
+      <Input
         value={especialidades}
         onChange={(e) => setEspecialidades(e.target.value)}
         placeholder="Degradê, Barba desenhada, Corte social"
-        className="rounded-lg border border-border bg-ink-soft px-4 py-3 text-foreground focus:border-gold focus:outline-none"
+        className="bg-ink-soft"
       />
 
       <label className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -136,37 +133,31 @@ export default function PortfolioEditor({ barbeiro }: { barbeiro: any }) {
             <img src={img} alt="" className="h-24 w-full rounded-lg object-cover" />
             <button
               onClick={() => removerImagem(img)}
-              className="absolute right-1 top-1 rounded-full bg-destructive/80 px-2 text-xs text-white"
+              aria-label="Remover imagem"
+              className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-destructive text-white"
             >
-              ×
+              <XIcon className="size-3" />
             </button>
           </div>
         ))}
       </div>
       <div className="flex gap-2">
-        <input
+        <Input
           type="file"
           accept="image/*"
           onChange={(e) => setNovaImagem(e.target.files?.[0] ?? null)}
-          className="flex-1 text-sm text-muted-foreground"
+          className="flex-1"
         />
-        <button
-          onClick={adicionarImagem}
-          className="rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase text-muted-foreground hover:border-gold hover:text-gold"
-        >
+        <Button onClick={adicionarImagem} variant="outline" size="sm">
           Adicionar
-        </button>
+        </Button>
       </div>
 
       {mensagem && <p className="text-sm text-gold">{mensagem}</p>}
 
-      <button
-        onClick={salvar}
-        disabled={salvando}
-        className="mt-2 rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-      >
+      <Button onClick={salvar} disabled={salvando} className="mt-2 w-fit uppercase tracking-widest">
         {salvando ? "Salvando..." : "Salvar portfólio"}
-      </button>
+      </Button>
     </div>
   );
 }

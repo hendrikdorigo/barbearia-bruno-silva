@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
   const [nome, setNome] = useState("");
@@ -44,70 +49,65 @@ export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
 
   return (
     <div className="mt-8">
-      <div className="rounded-xl border border-border bg-ink-soft p-5">
+      <Card className="border-border bg-ink-soft p-5">
         <p className="text-sm font-semibold text-foreground">Novo barbeiro parceiro</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <input
-            placeholder="Nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
-          />
-          <input
+          <Input placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} className="bg-background" />
+          <Input
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
-          <input
+          <Input
             placeholder="Senha provisória"
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
-          <input
+          <Input
             placeholder="Telefone"
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
+            className="bg-background"
           />
         </div>
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
-        <button
-          onClick={cadastrar}
-          disabled={salvando}
-          className="mt-4 rounded-full bg-gold-gradient px-5 py-2 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-        >
+        <Button onClick={cadastrar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Cadastrando..." : "Cadastrar barbeiro"}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <div className="mt-8 space-y-3">
         {barbeiros.map((b) => (
-          <div
-            key={b.profile_id}
-            className="flex items-center justify-between rounded-xl border border-border bg-ink-soft p-4"
-          >
+          <Card key={b.profile_id} className="flex-row items-center justify-between border-border bg-ink-soft p-4">
             <div>
-              <p className="font-semibold text-foreground">
-                {b.profiles?.nome} {b.is_dono && <span className="text-xs text-gold">(dono)</span>}
+              <p className="flex items-center gap-2 font-semibold text-foreground">
+                {b.profiles?.nome}
+                {b.is_dono && (
+                  <Badge variant="outline" className="text-gold">
+                    dono
+                  </Badge>
+                )}
               </p>
               <p className="text-xs text-muted-foreground">{b.profiles?.telefone}</p>
             </div>
             {!b.is_dono && (
               <button
                 onClick={() => alternarAtivo(b.profile_id, b.ativo)}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase ${
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "rounded-full",
                   b.ativo
-                    ? "border border-red-500/40 text-destructive"
-                    : "border border-green-500/40 text-success"
-                }`}
+                    ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                    : "border-success/40 text-success hover:bg-success/10"
+                )}
               >
                 {b.ativo ? "Desativar" : "Reativar"}
               </button>
             )}
-          </div>
+          </Card>
         ))}
       </div>
     </div>

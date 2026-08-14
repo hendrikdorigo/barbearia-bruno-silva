@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import NovoPostForm from "@/components/NovoPostForm";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { MessagesSquareIcon } from "lucide-react";
 
 export default async function ComunidadeBarbeiroPage() {
   const supabase = await createClient();
@@ -16,7 +20,7 @@ export default async function ComunidadeBarbeiroPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Meus posts
       </h1>
@@ -30,17 +34,26 @@ export default async function ComunidadeBarbeiroPage() {
       <div className="mt-10 space-y-3">
         {posts?.length ? (
           posts.map((p) => (
-            <div key={p.id} className="rounded-xl border border-border bg-ink-soft p-4">
-              <p className="text-xs uppercase tracking-widest text-gold">{p.tipo}</p>
-              {p.texto && <p className="mt-1 text-foreground/90">{p.texto}</p>}
+            <Card key={p.id} className="gap-0 border-border bg-ink-soft p-4">
+              <Badge variant="outline" className="w-fit uppercase tracking-widest text-gold">
+                {p.tipo}
+              </Badge>
+              {p.texto && <p className="mt-2 text-foreground/90">{p.texto}</p>}
               <p className="mt-2 text-xs text-muted-foreground">
                 {(p.post_curtidas as any[])?.length ?? 0} curtidas ·{" "}
                 {(p.post_comentarios as any[])?.length ?? 0} comentários
               </p>
-            </div>
+            </Card>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">Você ainda não postou nada.</p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MessagesSquareIcon />
+              </EmptyMedia>
+              <EmptyTitle>Você ainda não postou nada</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { CalendarOffIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Excecao = {
   id: string;
@@ -87,36 +93,38 @@ export default function ExcecoesEditor({
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-border bg-ink-soft p-5">
+      <Card className="border-border bg-ink-soft p-5">
         <label className="text-xs uppercase tracking-widest text-muted-foreground">
           Data específica
         </label>
-        <input
+        <Input
           type="date"
           value={data}
           min={hoje}
           onChange={(e) => setData(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:border-gold focus:outline-none"
+          className="mt-2 h-11 bg-background"
         />
 
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => setTipo("folga")}
-            className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
+            className={cn(
+              "flex-1 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors",
               tipo === "folga"
                 ? "border-gold bg-gold-gradient text-ink"
                 : "border-border text-muted-foreground hover:border-gold"
-            }`}
+            )}
           >
             Folga (fechado)
           </button>
           <button
             onClick={() => setTipo("customizado")}
-            className={`flex-1 rounded-lg border px-4 py-2 text-sm font-semibold ${
+            className={cn(
+              "flex-1 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors",
               tipo === "customizado"
                 ? "border-gold bg-gold-gradient text-ink"
                 : "border-border text-muted-foreground hover:border-gold"
-            }`}
+            )}
           >
             Horário diferente
           </button>
@@ -124,51 +132,54 @@ export default function ExcecoesEditor({
 
         {tipo === "customizado" && (
           <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-            <input
+            <Input
               type="time"
               value={horaInicio}
               onChange={(e) => setHoraInicio(e.target.value)}
-              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
+              className="w-auto bg-background"
             />
-            <span className="text-muted-foreground">até</span>
-            <input
+            <span>até</span>
+            <Input
               type="time"
               value={horaFim}
               onChange={(e) => setHoraFim(e.target.value)}
-              className="rounded-lg border border-border bg-background px-2 py-1.5 text-foreground focus:border-gold focus:outline-none"
+              className="w-auto bg-background"
             />
           </div>
         )}
 
-        <input
+        <Input
           value={motivo}
           onChange={(e) => setMotivo(e.target.value)}
           placeholder="Motivo (opcional) — ex: consulta médica, viagem..."
-          className="mt-3 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-gold focus:outline-none"
+          className="mt-3 bg-background"
         />
 
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
 
-        <button
-          onClick={adicionar}
-          disabled={salvando}
-          className="mt-4 rounded-full bg-gold-gradient px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-        >
+        <Button onClick={adicionar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Salvando..." : "Salvar exceção"}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       <div className="mt-6 space-y-2">
         {futuras.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma exceção futura cadastrada — sua agenda segue os horários
-            padrão de cada dia da semana.
-          </p>
+          <Empty className="border border-dashed border-border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarOffIcon />
+              </EmptyMedia>
+              <EmptyTitle>Nenhuma exceção futura</EmptyTitle>
+              <EmptyDescription>
+                Sua agenda segue os horários padrão de cada dia da semana.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
         {futuras.map((e) => (
-          <div
+          <Card
             key={e.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-4 py-3"
+            className="flex-row flex-wrap items-center justify-between gap-3 border-border bg-ink-soft px-4 py-3"
           >
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -188,11 +199,14 @@ export default function ExcecoesEditor({
             </div>
             <button
               onClick={() => remover(e.id, e.data)}
-              className="rounded-full border border-border px-3 py-1.5 text-xs font-bold uppercase text-muted-foreground hover:border-red-400 hover:text-destructive"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full hover:border-destructive/50 hover:text-destructive"
+              )}
             >
               Remover
             </button>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

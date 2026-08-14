@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { processarPagamentoMock } from "@/lib/payments";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 type Item = {
   id: string;
@@ -24,6 +31,13 @@ type Comanda = {
 };
 
 type Produto = { id: string; nome: string; preco: number; categoria: string | null };
+
+const STATUS_LABEL: Record<Comanda["status"], string> = {
+  aberta: "Em aberto",
+  aguardando_pagamento: "Aguardando pagamento",
+  paga: "Paga (aguardando fechamento)",
+  fechada: "Fechada",
+};
 
 export default function ComandaView({
   comanda,
@@ -113,18 +127,13 @@ export default function ComandaView({
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-border bg-ink-soft p-6">
+    <Card className="mt-6 gap-0 border-border bg-ink-soft p-6">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-bold uppercase tracking-widest text-gold">
-          Comanda ·{" "}
-          {status === "aberta" && "Em aberto"}
-          {status === "aguardando_pagamento" && "Aguardando pagamento"}
-          {status === "paga" && "Paga (aguardando fechamento)"}
-          {status === "fechada" && "Fechada"}
-        </p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gold">Comanda</p>
+        <Badge variant="outline">{STATUS_LABEL[status]}</Badge>
       </div>
 
-      <div className="mt-4 space-y-2 text-sm">
+      <div className="mt-4 space-y-2 font-mono text-sm">
         <div className="flex justify-between text-muted-foreground">
           <span>Serviço</span>
           <span>R$ {Number(comanda.valor_servico).toFixed(2).replace(".", ",")}</span>
@@ -139,16 +148,18 @@ export default function ComandaView({
               {podeAdicionar && (
                 <button
                   onClick={() => removerItem(i.id)}
-                  className="text-xs text-muted-foreground/70 hover:text-destructive"
+                  aria-label="Remover item"
+                  className="text-muted-foreground/70 hover:text-destructive"
                 >
-                  remover
+                  <XIcon className="size-3.5" />
                 </button>
               )}
             </div>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold text-foreground">
-          <span>Total</span>
+        <Separator className="my-2" />
+        <div className="flex justify-between font-bold text-foreground">
+          <span className="font-sans">Total</span>
           <span className="text-gold-gradient">R$ {total.toFixed(2).replace(".", ",")}</span>
         </div>
       </div>
@@ -164,10 +175,10 @@ export default function ComandaView({
                 key={p.id}
                 onClick={() => adicionarProduto(p)}
                 disabled={adicionando === p.id}
-                className="rounded-lg border border-border px-3 py-2 text-left text-xs text-muted-foreground hover:border-gold disabled:opacity-50"
+                className="rounded-lg border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-gold disabled:opacity-50"
               >
                 <p className="font-semibold text-foreground">{p.nome}</p>
-                <p className="text-gold">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</p>
+                <p className="font-mono text-gold">R$ {Number(p.preco).toFixed(2).replace(".", ",")}</p>
               </button>
             ))}
           </div>
@@ -182,11 +193,12 @@ export default function ComandaView({
               <button
                 key={f.id}
                 onClick={() => setFormaPagamento(f.id)}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold ${
+                className={cn(
+                  "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                   formaPagamento === f.id
                     ? "border-gold bg-gold-gradient text-ink"
                     : "border-border text-muted-foreground hover:border-gold"
-                }`}
+                )}
               >
                 {f.label}
               </button>
@@ -194,41 +206,41 @@ export default function ComandaView({
           </div>
 
           {papel === "cliente" && !pagoAntecipado && (
-            <button
-              onClick={pagarPeloApp}
-              disabled={processando}
-              className="mt-4 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
-            >
+            <Button onClick={pagarPeloApp} disabled={processando} className="mt-4 w-full uppercase tracking-widest">
               {processando ? "Processando..." : "Pagar agora pelo app"}
-            </button>
+            </Button>
           )}
 
           {papel === "barbeiro" && status === "aguardando_pagamento" && (
-            <button
+            <Button
               onClick={confirmarPagamentoCaixa}
               disabled={processando}
-              className="mt-4 w-full rounded-full bg-gold-gradient px-6 py-3 text-sm font-bold uppercase tracking-widest text-ink disabled:opacity-50"
+              className="mt-4 w-full uppercase tracking-widest"
             >
               {processando ? "Confirmando..." : "Confirmar pagamento no caixa e fechar comanda"}
-            </button>
+            </Button>
           )}
 
           {papel === "cliente" && pagoAntecipado && status !== "fechada" && (
-            <p className="mt-4 rounded-lg border border-green-500/30 bg-success/10 p-3 text-sm text-green-300">
-              Pago pelo app. Aguardando o barbeiro fechar a comanda ao fim do
-              atendimento.
-            </p>
+            <Alert className="mt-4 border-success/30 bg-success/10">
+              <AlertDescription className="text-success">
+                Pago pelo app. Aguardando o barbeiro fechar a comanda ao fim do
+                atendimento.
+              </AlertDescription>
+            </Alert>
           )}
         </div>
       )}
 
       {status === "fechada" && (
-        <p className="mt-6 rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-gold">
-          Comanda fechada. Obrigado pela preferência!
-        </p>
+        <Alert className="mt-6 border-gold/30 bg-gold/10">
+          <AlertDescription className="text-gold">
+            Comanda fechada. Obrigado pela preferência!
+          </AlertDescription>
+        </Alert>
       )}
 
       {mensagem && <p className="mt-4 text-sm text-gold">{mensagem}</p>}
-    </div>
+    </Card>
   );
 }

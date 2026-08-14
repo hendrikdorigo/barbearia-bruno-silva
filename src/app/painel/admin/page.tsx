@@ -2,6 +2,19 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PainelAdminAgendamentos from "@/components/PainelAdminAgendamentos";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { buttonVariants } from "@/components/ui/button";
+import { SparklesIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const BARBEIRO_LINKS = [
+  { href: "/painel/barbeiro", label: "Minha agenda" },
+  { href: "/painel/barbeiro/portfolio", label: "Editar meu portfólio" },
+  { href: "/painel/barbeiro/horarios", label: "Meus horários" },
+  { href: "/painel/barbeiro/servicos", label: "Meus serviços" },
+  { href: "/painel/barbeiro/fidelidade", label: "Fidelidade" },
+  { href: "/painel/barbeiro/comunidade", label: "Meus posts" },
+];
 
 export default async function PainelAdminPage() {
   const supabase = await createClient();
@@ -37,83 +50,33 @@ export default async function PainelAdminPage() {
     .maybeSingle();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-5xl tracking-wide text-foreground">
-          Painel do Bruno
-        </h1>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/painel/admin/barbeiros"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Gerenciar barbeiros
-          </Link>
-          <Link
-            href="/painel/admin/repasses"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Repasses
-          </Link>
-          <Link
-            href="/painel/admin/loja"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Loja
-          </Link>
-          <Link
-            href="/painel/admin/popups"
-            className="rounded-full border border-border px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:border-gold hover:text-gold"
-          >
-            Pop-ups
-          </Link>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl">
+      <h1 className="font-display text-5xl tracking-wide text-foreground">
+        Painel do Bruno
+      </h1>
 
       {souBarbeiro && (
-        <div className="mt-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-gold">
+        <Alert className="mt-6 border-gold/40 bg-gold/10">
+          <SparklesIcon className="text-gold" />
+          <AlertTitle className="uppercase tracking-wider text-gold">
             Você também atende como barbeiro
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link
-              href="/painel/barbeiro"
-              className="rounded-full bg-gold-gradient px-4 py-2 text-xs font-bold uppercase tracking-widest text-ink"
-            >
-              Minha agenda
-            </Link>
-            <Link
-              href="/painel/barbeiro/portfolio"
-              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
-            >
-              Editar meu portfólio
-            </Link>
-            <Link
-              href="/painel/barbeiro/horarios"
-              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
-            >
-              Meus horários
-            </Link>
-            <Link
-              href="/painel/barbeiro/servicos"
-              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
-            >
-              Meus serviços
-            </Link>
-            <Link
-              href="/painel/barbeiro/fidelidade"
-              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
-            >
-              Fidelidade
-            </Link>
-            <Link
-              href="/painel/barbeiro/comunidade"
-              className="rounded-full border border-gold px-4 py-2 text-xs font-bold uppercase tracking-widest text-gold hover:bg-gold/10"
-            >
-              Meus posts
-            </Link>
+          </AlertTitle>
+          <div className="col-start-2 mt-3 flex flex-wrap gap-3">
+            {BARBEIRO_LINKS.map((link, i) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  buttonVariants({ variant: i === 0 ? "default" : "outline", size: "sm" }),
+                  "rounded-full uppercase tracking-widest",
+                  i !== 0 && "border-gold text-gold hover:bg-gold/10"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
-        </div>
+        </Alert>
       )}
 
       <h2 className="mt-10 font-display text-3xl text-foreground">

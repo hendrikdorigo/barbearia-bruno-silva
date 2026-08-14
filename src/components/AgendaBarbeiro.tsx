@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CalendarDaysIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
@@ -42,11 +48,18 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
   return (
     <div className="mt-4 space-y-3">
       {agendamentos.length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhum agendamento por enquanto.</p>
+        <Empty className="border border-dashed border-border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CalendarDaysIcon />
+            </EmptyMedia>
+            <EmptyTitle>Nenhum agendamento por enquanto</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       )}
       {agendamentos.map((a) => (
-        <div key={a.id} className="rounded-xl border border-border bg-ink-soft p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <Card key={a.id} className="gap-0 border-border bg-ink-soft p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-semibold text-foreground">
                 {a.clientes?.profiles?.nome} · {a.servicos?.nome}
@@ -55,11 +68,11 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
                 {new Date(a.data_hora).toLocaleString("pt-BR")} ·{" "}
                 {a.clientes?.profiles?.telefone ?? "sem telefone"}
               </p>
-              <p className="text-xs uppercase tracking-widest text-gold">
+              <Badge variant="outline" className="mt-1.5 uppercase tracking-widest text-gold">
                 {STATUS_LABEL[a.status]}
-              </p>
+              </Badge>
               {a.forma_pagamento && (
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   Pagamento: {PAGAMENTO_LABEL[a.forma_pagamento] ?? a.forma_pagamento}{" "}
                   {a.pagamento_antecipado ? "(antecipado, já pago)" : "(vai pagar no local)"}
                 </p>
@@ -68,40 +81,46 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
             <div className="flex flex-wrap gap-2">
               <Link
                 href={`/painel/barbeiro/comanda/${a.id}`}
-                className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:border-gold hover:text-gold"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
               >
                 Ver comanda
               </Link>
               {(a.status === "pendente" || a.status === "confirmado") && (
                 <>
                   {a.status === "pendente" && (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       disabled={loadingId === a.id}
                       onClick={() => atualizarStatus(a.id, "confirmado")}
-                      className="rounded-full border border-green-500/40 px-3 py-1.5 text-xs font-bold text-success hover:bg-success/10"
+                      className="rounded-full border-success/40 text-success hover:bg-success/10"
                     >
                       Confirmar
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={loadingId === a.id}
                     onClick={() => atualizarStatus(a.id, "concluido")}
-                    className="rounded-full border border-gold/40 px-3 py-1.5 text-xs font-bold text-gold hover:bg-gold/10"
+                    className="rounded-full border-gold/40 text-gold hover:bg-gold/10"
                   >
                     Concluir atendimento
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={loadingId === a.id}
                     onClick={() => marcarNoShow(a.id)}
-                    className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-bold text-destructive hover:bg-destructive/10"
+                    className="rounded-full border-destructive/40 text-destructive hover:bg-destructive/10"
                   >
                     Cliente não veio (no-show)
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
