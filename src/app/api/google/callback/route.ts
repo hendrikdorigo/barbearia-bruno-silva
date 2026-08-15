@@ -7,11 +7,12 @@ import { trocarCodePorTokens } from "@/lib/google-calendar";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
+  // Usa a origem da própria requisição como base do redirect - evita
+  // depender de NEXT_PUBLIC_SITE_URL estar configurada na Vercel.
+  const origem = request.nextUrl.origin;
 
   if (!code || !state) {
-    return NextResponse.redirect(
-      new URL("/painel/barbeiro?erro=Falha+na+autorizacao+do+Google", process.env.NEXT_PUBLIC_SITE_URL)
-    );
+    return NextResponse.redirect(new URL("/painel/barbeiro?erro=Falha+na+autorizacao+do+Google", origem));
   }
 
   try {
@@ -25,9 +26,7 @@ export async function GET(request: NextRequest) {
     // "state" carrega o profile_id de quem iniciou o fluxo em /api/google/connect;
     // confirma que é o mesmo usuário autenticado voltando do Google.
     if (!user || user.id !== state) {
-      return NextResponse.redirect(
-        new URL("/painel/barbeiro?erro=Sessao+invalida+ao+conectar+o+Google", process.env.NEXT_PUBLIC_SITE_URL)
-      );
+      return NextResponse.redirect(new URL("/painel/barbeiro?erro=Sessao+invalida+ao+conectar+o+Google", origem));
     }
 
     const { error: tokenError } = await supabase.from("google_calendar_tokens").upsert({
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     if (tokenError) {
       return NextResponse.redirect(
-        new URL("/painel/barbeiro?erro=Nao+foi+possivel+salvar+a+conexao+com+o+Google", process.env.NEXT_PUBLIC_SITE_URL)
+        new URL("/painel/barbeiro?erro=Nao+foi+possivel+salvar+a+conexao+com+o+Google", origem)
       );
     }
 
@@ -54,16 +53,12 @@ export async function GET(request: NextRequest) {
 
     if (flagError) {
       return NextResponse.redirect(
-        new URL("/painel/barbeiro?erro=Nao+foi+possivel+concluir+a+conexao+com+o+Google", process.env.NEXT_PUBLIC_SITE_URL)
+        new URL("/painel/barbeiro?erro=Nao+foi+possivel+concluir+a+conexao+com+o+Google", origem)
       );
     }
 
-    return NextResponse.redirect(
-      new URL("/painel/barbeiro?sucesso=Google+Calendar+conectado", process.env.NEXT_PUBLIC_SITE_URL)
-    );
+    return NextResponse.redirect(new URL("/painel/barbeiro?sucesso=Google+Calendar+conectado", origem));
   } catch (e) {
-    return NextResponse.redirect(
-      new URL("/painel/barbeiro?erro=Nao+foi+possivel+conectar+ao+Google", process.env.NEXT_PUBLIC_SITE_URL)
-    );
+    return NextResponse.redirect(new URL("/painel/barbeiro?erro=Nao+foi+possivel+conectar+ao+Google", origem));
   }
 }
