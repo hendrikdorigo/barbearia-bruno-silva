@@ -2,6 +2,7 @@ import { UsersIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/components/PostCard";
 import NovoPostForm from "@/components/NovoPostForm";
+import { buscarNomesClientes } from "@/lib/nomes-clientes";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
 export default async function ComunidadePage() {
@@ -10,9 +11,14 @@ export default async function ComunidadePage() {
   const { data: posts } = await supabase
     .from("posts_comunidade")
     .select(
-      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, clientes(profile_id, profiles(nome)))"
+      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
     )
     .order("created_at", { ascending: false });
+
+  const idsComentaristas = (posts ?? []).flatMap((p: any) =>
+    (p.post_comentarios ?? []).map((c: any) => c.cliente_id)
+  );
+  const nomesClientes = await buscarNomesClientes(supabase, idsComentaristas);
 
   const {
     data: { user },
@@ -46,7 +52,7 @@ export default async function ComunidadePage() {
       <div className="mt-10 space-y-6">
         {posts?.length ? (
           posts.map((p: any) => (
-            <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} />
+            <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} nomesClientes={nomesClientes} />
           ))
         ) : (
           <Empty className="border border-dashed border-border">

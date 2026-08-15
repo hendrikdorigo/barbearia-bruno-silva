@@ -12,7 +12,15 @@ import { Button } from "@/components/ui/button";
 import ExcluirPostBotao from "@/components/ExcluirPostBotao";
 import { cn } from "@/lib/utils";
 
-export default function PostCard({ post, usuarioId }: { post: any; usuarioId: string | null }) {
+export default function PostCard({
+  post,
+  usuarioId,
+  nomesClientes = {},
+}: {
+  post: any;
+  usuarioId: string | null;
+  nomesClientes?: Record<string, string>;
+}) {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
   const router = useRouter();
@@ -77,7 +85,7 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
       {post.texto && <p className="px-5 pb-3 text-foreground/90">{post.texto}</p>}
 
       {post.tipo === "imagem" && post.conteudo_url && (
-        <div className="relative aspect-[4/5] w-full">
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-sm">
           <Image src={post.conteudo_url} alt="" fill className="object-cover" />
         </div>
       )}
@@ -107,7 +115,7 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
           {comentarios.map((c) => (
             <p key={c.id} className="text-sm text-muted-foreground">
               <span className="font-semibold text-foreground/90">
-                {c.clientes?.profiles?.nome ?? "Cliente"}:
+                {nomesClientes[c.cliente_id] ?? "Cliente"}:
               </span>{" "}
               {c.comentario}
             </p>

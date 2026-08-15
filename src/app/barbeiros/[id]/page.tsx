@@ -5,6 +5,7 @@ import { StarIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import FeedbackForm from "@/components/FeedbackForm";
 import PostCard from "@/components/PostCard";
+import { buscarNomesClientes } from "@/lib/nomes-clientes";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -37,17 +38,22 @@ export default async function BarbeiroPage({
 
   const { data: feedbacks } = await supabase
     .from("feedbacks")
-    .select("*, clientes(profile_id, profiles(nome))")
+    .select("*")
     .eq("barbeiro_id", id)
     .order("created_at", { ascending: false });
 
   const { data: posts } = await supabase
     .from("posts_comunidade")
     .select(
-      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, clientes(profile_id, profiles(nome)))"
+      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
     )
     .eq("barbeiro_id", id)
     .order("created_at", { ascending: false });
+
+  const nomesClientes = await buscarNomesClientes(supabase, [
+    ...(feedbacks ?? []).map((f) => f.cliente_id),
+    ...(posts ?? []).flatMap((p: any) => (p.post_comentarios ?? []).map((c: any) => c.cliente_id)),
+  ]);
 
   const {
     data: { user },
@@ -186,7 +192,7 @@ export default async function BarbeiroPage({
           <div className="mt-4 space-y-6">
             {posts?.length ? (
               posts.map((p: any) => (
-                <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} />
+                <PostCard key={p.id} post={p} usuarioId={user?.id ?? null} nomesClientes={nomesClientes} />
               ))
             ) : (
               <p className="text-sm text-muted-foreground">Nenhum post ainda.</p>
@@ -207,7 +213,7 @@ export default async function BarbeiroPage({
                 <Card key={f.id} className="border-border bg-ink-soft p-5">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold text-foreground">
-                      {f.clientes?.profiles?.nome ?? "Cliente"}
+                      {nomesClientes[f.cliente_id] ?? "Cliente"}
                     </p>
                     <div className="flex items-center gap-0.5 text-gold">
                       {Array.from({ length: f.nota }).map((_, i) => (

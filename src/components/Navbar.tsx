@@ -16,6 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +40,7 @@ type Profile = {
   id: string;
   nome: string;
   role: "cliente" | "barbeiro" | "admin";
+  avatar_url: string | null;
 };
 
 const NAV_LINKS = [
@@ -68,7 +70,7 @@ export default function Navbar() {
       }
       const { data } = await supabase
         .from("profiles")
-        .select("id, nome, role")
+        .select("id, nome, role, avatar_url")
         .eq("id", user.id)
         .single();
       if (active) setProfile(data);
@@ -188,9 +190,12 @@ export default function Navbar() {
                     />
                   }
                 >
-                  <span className="flex size-6 items-center justify-center rounded-full bg-gold-gradient text-xs font-bold text-ink">
-                    {profile.nome.charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar size="sm">
+                    {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt="" />}
+                    <AvatarFallback className="bg-gold-gradient text-xs font-bold text-ink">
+                      {profile.nome.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   {profile.nome.split(" ")[0]}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
