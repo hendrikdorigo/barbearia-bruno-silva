@@ -139,20 +139,19 @@ export default async function HomePage() {
         </h2>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {servicos?.map((s) => (
-            <Card
-              key={s.id}
-              className="group gap-0 rounded-2xl border-border bg-ink-soft py-6 transition-colors hover:border-gold"
-            >
-              <CardContent className="px-6">
-                <p className="text-sm uppercase tracking-widest text-muted-foreground">
-                  {s.duracao_minutos} min
-                </p>
-                <p className="mt-2 font-display text-2xl text-foreground">{s.nome}</p>
-                <p className="mt-4 font-mono text-3xl font-medium text-gold-gradient">
-                  R$ {Number(s.preco).toFixed(2).replace(".", ",")}
-                </p>
-              </CardContent>
-            </Card>
+            <Link key={s.id} href={`/barbeiros?servico=${s.id}`}>
+              <Card className="group gap-0 rounded-2xl border-border bg-ink-soft py-6 transition-colors hover:border-gold">
+                <CardContent className="px-6">
+                  <p className="text-sm uppercase tracking-widest text-muted-foreground">
+                    {s.duracao_minutos} min
+                  </p>
+                  <p className="mt-2 font-display text-2xl text-foreground">{s.nome}</p>
+                  <p className="mt-4 font-mono text-3xl font-medium text-gold-gradient">
+                    R$ {Number(s.preco).toFixed(2).replace(".", ",")}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>

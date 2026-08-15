@@ -11,6 +11,7 @@ import {
   UserIcon,
   LogOutIcon,
   LayoutDashboardIcon,
+  SettingsIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -207,6 +208,10 @@ export default function Navbar() {
                         {link.label}
                       </DropdownMenuItem>
                     ))}
+                    <DropdownMenuItem render={<Link href="/painel/conta" />}>
+                      <SettingsIcon data-icon="inline-start" />
+                      Minha conta
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={sair}>
@@ -286,6 +291,17 @@ export default function Navbar() {
                         {link.label}
                       </SheetClose>
                     ))}
+                    <SheetClose
+                      render={
+                        <Link
+                          href="/painel/conta"
+                          className="flex items-center gap-2 rounded-md px-2 py-2.5 text-sm text-foreground/90 hover:bg-accent hover:text-accent-foreground"
+                        />
+                      }
+                    >
+                      <SettingsIcon className="size-4" />
+                      Minha conta
+                    </SheetClose>
                     <div className="my-2 h-px bg-border" />
                     <button
                       onClick={() => {

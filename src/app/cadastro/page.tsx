@@ -9,13 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+const ANO_ATUAL = new Date().getFullYear();
+const DIAS = Array.from({ length: 31 }, (_, i) => String(i + 1));
+const ANOS = Array.from({ length: 90 }, (_, i) => String(ANO_ATUAL - 14 - i));
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [cpf, setCpf] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
+  const [diaNasc, setDiaNasc] = useState("");
+  const [mesNasc, setMesNasc] = useState("");
+  const [anoNasc, setAnoNasc] = useState("");
   const [telefone, setTelefone] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -25,8 +37,21 @@ export default function CadastroPage() {
 
   async function cadastrar(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setErro(null);
+
+    if (!diaNasc || !mesNasc || !anoNasc) {
+      setErro("Selecione sua data de nascimento completa.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
+    setLoading(true);
+
+    const dataNascimento = `${anoNasc}-${mesNasc}-${diaNasc.padStart(2, "0")}`;
 
     // profiles/clientes sao criados pelo gatilho on_auth_user_created a partir
     // dos metadados abaixo - inserir direto aqui falharia, pois o upload de
@@ -126,6 +151,23 @@ export default function CadastroPage() {
                   onChange={(e) => setSenha(e.target.value)}
                 />
               </Field>
+              <Field data-invalid={confirmarSenha.length > 0 && confirmarSenha !== senha}>
+                <FieldLabel htmlFor="confirmar-senha">Confirmar senha</FieldLabel>
+                <Input
+                  id="confirmar-senha"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  placeholder="Repita a senha"
+                  value={confirmarSenha}
+                  aria-invalid={confirmarSenha.length > 0 && confirmarSenha !== senha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                />
+                {confirmarSenha.length > 0 && confirmarSenha !== senha && (
+                  <FieldError>As senhas não coincidem.</FieldError>
+                )}
+              </Field>
               <Field>
                 <FieldLabel htmlFor="cpf">CPF</FieldLabel>
                 <Input
@@ -137,14 +179,45 @@ export default function CadastroPage() {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="nascimento">Data de nascimento</FieldLabel>
-                <Input
-                  id="nascimento"
-                  type="date"
-                  required
-                  value={dataNascimento}
-                  onChange={(e) => setDataNascimento(e.target.value)}
-                />
+                <FieldLabel>Data de nascimento</FieldLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  <Select value={diaNasc} onValueChange={setDiaNasc}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Dia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIAS.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={mesNasc} onValueChange={setMesNasc}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Mês" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MESES.map((m, i) => (
+                        <SelectItem key={m} value={String(i + 1).padStart(2, "0")}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={anoNasc} onValueChange={setAnoNasc}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Ano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ANOS.map((a) => (
+                        <SelectItem key={a} value={a}>
+                          {a}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </Field>
               <Field>
                 <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
