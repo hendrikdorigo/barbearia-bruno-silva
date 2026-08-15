@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +10,6 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
   const [cancelando, setCancelando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
   const podeCancel =
     (agendamento.status === "pendente" || agendamento.status === "confirmado") &&
@@ -22,12 +20,13 @@ export default function AgendamentoClienteAcoes({ agendamento }: { agendamento: 
   async function cancelar() {
     setCancelando(true);
     setErro(null);
-    const { error } = await supabase
-      .from("agendamentos")
-      .update({ status: "cancelado" })
-      .eq("id", agendamento.id);
+    const resp = await fetch(`/api/agendamentos/${agendamento.id}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "cancelado" }),
+    });
     setCancelando(false);
-    if (error) {
+    if (!resp.ok) {
       setErro("Cancelamentos só são permitidos até 1 hora antes do horário.");
       return;
     }

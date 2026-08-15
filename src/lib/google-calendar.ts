@@ -14,8 +14,14 @@
  *   3. trocarCodePorTokens() troca o code pelos tokens (access + refresh)
  *      e eles são salvos em `barbeiros.google_calendar_access_token` /
  *      `google_calendar_refresh_token`.
- *   4. Sempre que um agendamento desse barbeiro é confirmado,
- *      `criarEventoAgenda()` deve ser chamada para criar o evento.
+ *   4. Sempre que um agendamento desse barbeiro é confirmado ou cancelado,
+ *      a rota /api/agendamentos/[id]/status chama `criarEventoAgenda()` ou
+ *      `excluirEventoAgenda()`, renovando o access token via
+ *      `refreshAccessToken()` quando necessário.
+ *
+ * Os tokens ficam na tabela `google_calendar_tokens` (RLS restrita ao
+ * próprio barbeiro/admin) e nunca na tabela `barbeiros`, que tem leitura
+ * pública.
  *
  * Sem as credenciais preenchidas, as funções abaixo lançam um erro
  * amigável e o botão de conectar no painel fica desabilitado com um aviso.
@@ -108,5 +114,16 @@ export async function criarEventoAgenda(params: {
     }),
   });
   if (!resp.ok) throw new Error(await resp.text());
-  return resp.json();
+  return resp.json() as Promise<{ id: string }>;
+}
+
+export async function excluirEventoAgenda(accessToken: string, eventId: string) {
+  const resp = await fetch(`${GOOGLE_CALENDAR_EVENTS_URL}/${eventId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  // 410 (Gone) significa que o evento já não existe mais - trata como sucesso.
+  if (!resp.ok && resp.status !== 404 && resp.status !== 410) {
+    throw new Error(await resp.text());
+  }
 }

@@ -33,7 +33,11 @@ export default function AgendaBarbeiro({ agendamentos }: { agendamentos: any[] }
 
   async function atualizarStatus(id: string, status: string) {
     setLoadingId(id);
-    await supabase.from("agendamentos").update({ status }).eq("id", id);
+    await fetch(`/api/agendamentos/${id}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
     setLoadingId(null);
     router.refresh();
   }

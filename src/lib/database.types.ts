@@ -24,6 +24,7 @@ export type Database = {
           created_at: string
           data_hora: string
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          google_event_id: string | null
           id: string
           observacao: string | null
           pagamento_antecipado: boolean
@@ -44,6 +45,7 @@ export type Database = {
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
+          google_event_id?: string | null
           id?: string
           observacao?: string | null
           pagamento_antecipado?: boolean
@@ -64,6 +66,7 @@ export type Database = {
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
+          google_event_id?: string | null
           id?: string
           observacao?: string | null
           pagamento_antecipado?: boolean
@@ -328,10 +331,7 @@ export type Database = {
           bio: string | null
           created_at: string
           especialidades: string[]
-          google_calendar_access_token: string | null
           google_calendar_connected: boolean
-          google_calendar_refresh_token: string | null
-          google_calendar_token_expiry: string | null
           is_dono: boolean
           portfolio_imagens: string[]
           profile_id: string
@@ -342,10 +342,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           especialidades?: string[]
-          google_calendar_access_token?: string | null
           google_calendar_connected?: boolean
-          google_calendar_refresh_token?: string | null
-          google_calendar_token_expiry?: string | null
           is_dono?: boolean
           portfolio_imagens?: string[]
           profile_id: string
@@ -356,10 +353,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           especialidades?: string[]
-          google_calendar_access_token?: string | null
           google_calendar_connected?: boolean
-          google_calendar_refresh_token?: string | null
-          google_calendar_token_expiry?: string | null
           is_dono?: boolean
           portfolio_imagens?: string[]
           profile_id?: string
@@ -738,6 +732,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "servicos"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string | null
+          barbeiro_id: string
+          expiry: string | null
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          barbeiro_id: string
+          expiry?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          barbeiro_id?: string
+          expiry?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_tokens_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: true
+            referencedRelation: "barbeiros"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
