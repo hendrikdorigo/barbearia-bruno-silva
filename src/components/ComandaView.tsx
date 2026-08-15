@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { processarPagamentoMock } from "@/lib/payments";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,25 +85,21 @@ export default function ComandaView({
   async function pagarPeloApp() {
     setProcessando(true);
     setMensagem(null);
-    const resultado = await processarPagamentoMock(formaPagamento as any, total);
-    if (!resultado.aprovado) {
-      setMensagem("Pagamento não aprovado, tente novamente.");
+
+    const resp = await fetch("/api/pagamentos/mercadopago/criar-preferencia-comanda", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comandaId: comanda.id, formaPagamento }),
+    });
+    const json = await resp.json().catch(() => null);
+
+    if (!resp.ok || !json?.initPoint) {
+      setMensagem(json?.error ?? "Não foi possível iniciar o pagamento. Tente novamente.");
       setProcessando(false);
       return;
     }
-    const { error } = await supabase
-      .from("comandas")
-      .update({ status: "paga", forma_pagamento: formaPagamento, pago_antecipado: true })
-      .eq("id", comanda.id);
-    setProcessando(false);
-    if (error) {
-      setMensagem(error.message);
-      return;
-    }
-    setStatus("paga");
-    setPagoAntecipado(true);
-    setMensagem("Pagamento confirmado! Sua comanda será fechada ao final do atendimento.");
-    router.refresh();
+
+    window.location.href = json.initPoint;
   }
 
   async function confirmarPagamentoCaixa() {
@@ -189,7 +184,7 @@ export default function ComandaView({
         <div className="mt-6">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {FORMAS_PAGAMENTO.map((f) => (
+            {FORMAS_PAGAMENTO.filter((f) => !(papel === "cliente" && f.id === "dinheiro")).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFormaPagamento(f.id)}

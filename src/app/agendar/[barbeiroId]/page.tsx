@@ -6,7 +6,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ClockIcon, ScissorsIcon, CheckIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
-import { processarPagamentoMock } from "@/lib/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -293,20 +292,9 @@ export default function AgendarPage() {
     const dataHoraISO = `${data}T${horarioSelecionado}:00`;
     const pagaAntecipado = exigePagamentoAntecipado || pagarAntecipado;
 
-    let statusPagamento: "aprovado" | null = null;
-    let referenciaPagamento: string | null = null;
-
-    if (pagaAntecipado) {
-      const resultado = await processarPagamentoMock(formaPagamento as any, precoFinal);
-      if (!resultado.aprovado) {
-        setErro("Pagamento não aprovado. Tente novamente.");
-        setEnviando(false);
-        return;
-      }
-      statusPagamento = "aprovado";
-      referenciaPagamento = resultado.referencia;
-    }
-
+    // O pagamento antecipado agora é real (Mercado Pago) e não é instantâneo
+    // como o antigo mock - o agendamento sempre entra como "pendente" e só
+    // é confirmado pelo webhook do Mercado Pago quando o pagamento aprova.
     const { data: agendamento, error: agendamentoError } = await supabase
       .from("agendamentos")
       .insert({
@@ -314,9 +302,9 @@ export default function AgendarPage() {
         barbeiro_id: barbeiroId,
         servico_id: servicoSelecionado.id,
         data_hora: dataHoraISO,
-        status: pagaAntecipado ? "confirmado" : "pendente",
+        status: "pendente",
         forma_pagamento: formaPagamento as any,
-        pagamento_antecipado: pagaAntecipado,
+        pagamento_antecipado: false,
         valor_servico: precoFinal,
       })
       .select()
@@ -328,19 +316,30 @@ export default function AgendarPage() {
       return;
     }
 
-    if (pagaAntecipado) {
-      await supabase.from("pagamentos").insert({
-        agendamento_id: agendamento.id,
-        metodo: formaPagamento as any,
-        status: statusPagamento!,
-        valor: precoFinal,
-        gateway_referencia: referenciaPagamento,
-      });
-    }
-
     // Coloca o evento no Google Calendar do barbeiro assim que o horario e
     // reservado, sem esperar ele confirmar. Nao bloqueia a tela de sucesso.
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
+
+    if (pagaAntecipado) {
+      const resp = await fetch("/api/pagamentos/mercadopago/criar-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agendamentoId: agendamento.id }),
+      });
+      const json = await resp.json().catch(() => null);
+
+      if (!resp.ok || !json?.initPoint) {
+        setErro(
+          json?.error ??
+            "Não foi possível iniciar o pagamento. Seu horário ficou reservado como pendente - você pode pagar no local."
+        );
+        setEnviando(false);
+        return;
+      }
+
+      window.location.href = json.initPoint;
+      return;
+    }
 
     setEnviando(false);
     setPasso("confirmado");
@@ -544,7 +543,10 @@ export default function AgendarPage() {
                   Pagar no local
                 </button>
                 <button
-                  onClick={() => setPagarAntecipado(true)}
+                  onClick={() => {
+                    setPagarAntecipado(true);
+                    if (formaPagamento === "dinheiro") setFormaPagamento("pix");
+                  }}
                   className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                     pagarAntecipado
                       ? "border-gold bg-gold-gradient text-ink"
@@ -561,7 +563,9 @@ export default function AgendarPage() {
             Forma de pagamento
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            {FORMAS_PAGAMENTO.map((f) => (
+            {FORMAS_PAGAMENTO.filter(
+              (f) => !((exigePagamentoAntecipado || pagarAntecipado) && f.id === "dinheiro")
+            ).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFormaPagamento(f.id)}
@@ -603,7 +607,11 @@ export default function AgendarPage() {
             onClick={confirmarAgendamento}
             className="mt-6 w-full uppercase tracking-widest"
           >
-            {enviando ? "Confirmando..." : "Confirmar agendamento"}
+            {enviando
+              ? "Confirmando..."
+              : exigePagamentoAntecipado || pagarAntecipado
+                ? "Ir para pagamento"
+                : "Confirmar agendamento"}
           </Button>
         </div>
       )}
