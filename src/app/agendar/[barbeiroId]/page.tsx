@@ -338,6 +338,10 @@ export default function AgendarPage() {
       });
     }
 
+    // Coloca o evento no Google Calendar do barbeiro assim que o horario e
+    // reservado, sem esperar ele confirmar. Nao bloqueia a tela de sucesso.
+    fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
+
     setEnviando(false);
     setPasso("confirmado");
   }
