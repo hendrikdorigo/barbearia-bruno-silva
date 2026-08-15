@@ -93,10 +93,15 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-14 flex flex-wrap items-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
+            <a
+              href="https://maps.app.goo.gl/MTAQ8eTVVPAgpziD6"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 transition-colors hover:text-foreground"
+            >
               <MapPinIcon className="size-4 text-gold" />
               Rua 25 de Março, 351 — Limeira/SP
-            </span>
+            </a>
             <span className="flex items-center gap-2">
               <CalendarCheckIcon className="size-4 text-gold" />
               Todos os dias, 09h–19h30

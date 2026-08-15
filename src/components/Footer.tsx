@@ -48,7 +48,7 @@ export default function Footer() {
                 <InstagramGlyph />
               </a>
               <a
-                href="https://wa.me/"
+                href="https://wa.me/5519998936840"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="WhatsApp"
@@ -86,10 +86,15 @@ export default function Footer() {
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Crédito · Débito · Dinheiro · Pix
             </p>
-            <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
+            <a
+              href="https://maps.app.goo.gl/MTAQ8eTVVPAgpziD6"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 flex items-start gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
               <MapPinIcon className="mt-0.5 size-4 shrink-0 text-gold" />
               Rua 25 de Março, 351 — Limeira/SP
-            </p>
+            </a>
           </div>
         </div>
 
