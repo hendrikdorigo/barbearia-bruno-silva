@@ -28,9 +28,16 @@ export default function CadastroPage() {
     setLoading(true);
     setErro(null);
 
+    // profiles/clientes sao criados pelo gatilho on_auth_user_created a partir
+    // dos metadados abaixo - inserir direto aqui falharia, pois o upload de
+    // avatar e a insercao via RLS exigem uma sessao que so existe apos a
+    // confirmacao do e-mail (signUp nao retorna sessao nesse caso).
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password: senha,
+      options: {
+        data: { nome, telefone, cpf, data_nascimento: dataNascimento },
+      },
     });
 
     if (signUpError || !signUpData.user) {
@@ -40,46 +47,20 @@ export default function CadastroPage() {
     }
 
     const userId = signUpData.user.id;
-    let fotoUrl: string | null = null;
 
-    if (foto) {
+    if (foto && signUpData.session) {
       const path = `${userId}/${Date.now()}-${foto.name}`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, foto, { upsert: true });
       if (!uploadError) {
-        fotoUrl = supabase.storage.from("avatars").getPublicUrl(path).data
-          .publicUrl;
+        const fotoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+        await supabase.from("profiles").update({ avatar_url: fotoUrl }).eq("id", userId);
+        await supabase.from("clientes").update({ foto_url: fotoUrl }).eq("profile_id", userId);
       }
     }
 
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: userId,
-      nome,
-      role: "cliente",
-      telefone,
-      avatar_url: fotoUrl,
-    });
-
-    if (profileError) {
-      setErro(profileError.message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: clienteError } = await supabase.from("clientes").insert({
-      profile_id: userId,
-      cpf,
-      data_nascimento: dataNascimento,
-      foto_url: fotoUrl,
-    });
-
     setLoading(false);
-
-    if (clienteError) {
-      setErro(clienteError.message);
-      return;
-    }
 
     if (signUpData.session) {
       router.push("/");
