@@ -95,7 +95,7 @@ export default async function HomePage() {
           <div className="mt-14 flex flex-wrap items-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-2">
               <MapPinIcon className="size-4 text-gold" />
-              Endereço da barbearia, cidade — UF
+              Rua 25 de Março, 351 — Limeira/SP
             </span>
             <span className="flex items-center gap-2">
               <CalendarCheckIcon className="size-4 text-gold" />

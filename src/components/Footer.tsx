@@ -39,7 +39,7 @@ export default function Footer() {
             </p>
             <div className="mt-4 flex items-center gap-2">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/bruno__hairstyle/"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
@@ -88,7 +88,7 @@ export default function Footer() {
             </p>
             <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
               <MapPinIcon className="mt-0.5 size-4 shrink-0 text-gold" />
-              Endereço da barbearia, cidade — UF
+              Rua 25 de Março, 351 — Limeira/SP
             </p>
           </div>
         </div>
