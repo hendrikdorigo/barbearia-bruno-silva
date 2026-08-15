@@ -22,42 +22,38 @@ export default async function BarbeiroPage({
   const { servico } = await searchParams;
   const supabase = await createClient();
 
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("*, profiles(nome, avatar_url)")
-    .eq("profile_id", id)
-    .single();
+  // As 5 consultas abaixo sao independentes entre si (nenhuma depende do
+  // resultado de outra) - rodar em paralelo em vez de uma await por vez
+  // evita somar a latencia de cada round-trip ao Supabase, que era o que
+  // deixava a navegacao ate a pagina do barbeiro lenta.
+  const [
+    { data: barbeiro },
+    { data: itensPortfolio },
+    { data: feedbacks },
+    { data: posts },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase.from("barbeiros").select("*, profiles(nome, avatar_url)").eq("profile_id", id).single(),
+    supabase.from("portfolio_itens").select("*").eq("barbeiro_id", id).order("ordem", { ascending: true }),
+    supabase.from("feedbacks").select("*").eq("barbeiro_id", id).order("created_at", { ascending: false }),
+    supabase
+      .from("posts_comunidade")
+      .select(
+        "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
+      )
+      .eq("barbeiro_id", id)
+      .order("created_at", { ascending: false }),
+    supabase.auth.getUser(),
+  ]);
 
   if (!barbeiro) notFound();
-
-  const { data: itensPortfolio } = await supabase
-    .from("portfolio_itens")
-    .select("*")
-    .eq("barbeiro_id", id)
-    .order("ordem", { ascending: true });
-
-  const { data: feedbacks } = await supabase
-    .from("feedbacks")
-    .select("*")
-    .eq("barbeiro_id", id)
-    .order("created_at", { ascending: false });
-
-  const { data: posts } = await supabase
-    .from("posts_comunidade")
-    .select(
-      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
-    )
-    .eq("barbeiro_id", id)
-    .order("created_at", { ascending: false });
 
   const nomesClientes = await buscarNomesClientes(supabase, [
     ...(feedbacks ?? []).map((f) => f.cliente_id),
     ...(posts ?? []).flatMap((p: any) => (p.post_comentarios ?? []).map((c: any) => c.cliente_id)),
   ]);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   let isCliente = false;
   if (user) {

@@ -8,21 +8,20 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 export default async function ComunidadePage() {
   const supabase = await createClient();
 
-  const { data: posts } = await supabase
-    .from("posts_comunidade")
-    .select(
-      "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
-    )
-    .order("created_at", { ascending: false });
+  const [{ data: posts }, { data: { user } }] = await Promise.all([
+    supabase
+      .from("posts_comunidade")
+      .select(
+        "*, barbeiros(profile_id, profiles(nome, avatar_url)), post_curtidas(cliente_id), post_comentarios(id, comentario, created_at, cliente_id)"
+      )
+      .order("created_at", { ascending: false }),
+    supabase.auth.getUser(),
+  ]);
 
   const idsComentaristas = (posts ?? []).flatMap((p: any) =>
     (p.post_comentarios ?? []).map((c: any) => c.cliente_id)
   );
   const nomesClientes = await buscarNomesClientes(supabase, idsComentaristas);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   let isBarbeiro = false;
   if (user) {

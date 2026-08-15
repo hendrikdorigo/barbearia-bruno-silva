@@ -23,26 +23,33 @@ export default function PostCard({
 }) {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
+  // Estado local para curtir refletir na hora - esperar o router.refresh()
+  // (recarrega a pagina inteira do servidor) deixava o botao parecendo
+  // travado até a resposta do banco voltar.
+  const [curtidas, setCurtidas] = useState<any[]>(post.post_curtidas ?? []);
   const router = useRouter();
   const supabase = createClient();
 
-  const curtidas: any[] = post.post_curtidas ?? [];
   const comentarios: any[] = post.post_comentarios ?? [];
   const jaCurtiu = usuarioId ? curtidas.some((c) => c.cliente_id === usuarioId) : false;
   const ehDono = usuarioId !== null && usuarioId === post.barbeiro_id;
 
   async function curtir() {
     if (!usuarioId) return router.push("/login");
+
     if (jaCurtiu) {
-      await supabase
+      setCurtidas((prev) => prev.filter((c) => c.cliente_id !== usuarioId));
+      const { error } = await supabase
         .from("post_curtidas")
         .delete()
         .eq("post_id", post.id)
         .eq("cliente_id", usuarioId);
+      if (error) setCurtidas((prev) => [...prev, { cliente_id: usuarioId }]);
     } else {
-      await supabase.from("post_curtidas").insert({ post_id: post.id, cliente_id: usuarioId });
+      setCurtidas((prev) => [...prev, { cliente_id: usuarioId }]);
+      const { error } = await supabase.from("post_curtidas").insert({ post_id: post.id, cliente_id: usuarioId });
+      if (error) setCurtidas((prev) => prev.filter((c) => c.cliente_id !== usuarioId));
     }
-    router.refresh();
   }
 
   async function comentar() {

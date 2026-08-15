@@ -27,17 +27,14 @@ const STEPS = [
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const { data: servicos } = await supabase
-    .from("servicos")
-    .select("*")
-    .eq("ativo", true)
-    .order("preco");
-
-  const { data: barbeiros } = await supabase
-    .from("barbeiros")
-    .select("profile_id, bio, especialidades, profiles(nome, avatar_url), portfolio_itens(url, ordem)")
-    .eq("ativo", true)
-    .limit(3);
+  const [{ data: servicos }, { data: barbeiros }] = await Promise.all([
+    supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
+    supabase
+      .from("barbeiros")
+      .select("profile_id, bio, especialidades, profiles(nome, avatar_url), portfolio_itens(url, ordem)")
+      .eq("ativo", true)
+      .limit(3),
+  ]);
 
   return (
     <div>
