@@ -11,15 +11,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-const CROP_SIZE = 320;
-const OUTPUT_SIZE = 1080;
+// Retrato 4:5, igual ao formato padrao de post do Instagram - o feed exibe
+// a imagem final nessa mesma proporcao (ver PostCard.tsx), entao o que o
+// barbeiro enquadra aqui é exatamente o que aparece lá, sem cortar de novo.
+const CROP_W = 320;
+const CROP_H = 400;
+const OUTPUT_W = 1080;
+const OUTPUT_H = 1350;
 
 type Offset = { x: number; y: number };
 
-/**
- * Corte estilo Instagram: arrasta para posicionar, slider para dar zoom.
- * Recorta sempre um quadrado (1:1) - suficiente para os posts da comunidade.
- */
+/** Corte estilo Instagram: arrasta para posicionar, slider para dar zoom. */
 export default function ImageCropper({
   file,
   onCancel,
@@ -44,7 +46,7 @@ export default function ImageCropper({
     setImgUrl(url);
     const img = new Image();
     img.onload = () => {
-      const ms = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
+      const ms = Math.max(CROP_W / img.naturalWidth, CROP_H / img.naturalHeight);
       setNatural({ w: img.naturalWidth, h: img.naturalHeight });
       setMinScale(ms);
       setScale(ms);
@@ -56,8 +58,8 @@ export default function ImageCropper({
 
   function clampOffset(next: Offset, s: number): Offset {
     if (!natural) return next;
-    const maxX = Math.max(0, (natural.w * s - CROP_SIZE) / 2);
-    const maxY = Math.max(0, (natural.h * s - CROP_SIZE) / 2);
+    const maxX = Math.max(0, (natural.w * s - CROP_W) / 2);
+    const maxY = Math.max(0, (natural.h * s - CROP_H) / 2);
     return {
       x: Math.min(maxX, Math.max(-maxX, next.x)),
       y: Math.min(maxY, Math.max(-maxY, next.y)),
@@ -87,18 +89,19 @@ export default function ImageCropper({
 
   function confirmar() {
     if (!natural || !imgRef.current) return;
-    const imgLeft = CROP_SIZE / 2 - (natural.w * scale) / 2 + offset.x;
-    const imgTop = CROP_SIZE / 2 - (natural.h * scale) / 2 + offset.y;
+    const imgLeft = CROP_W / 2 - (natural.w * scale) / 2 + offset.x;
+    const imgTop = CROP_H / 2 - (natural.h * scale) / 2 + offset.y;
     const srcX = (0 - imgLeft) / scale;
     const srcY = (0 - imgTop) / scale;
-    const srcSize = CROP_SIZE / scale;
+    const srcW = CROP_W / scale;
+    const srcH = CROP_H / scale;
 
     const canvas = document.createElement("canvas");
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
+    canvas.width = OUTPUT_W;
+    canvas.height = OUTPUT_H;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(imgRef.current, srcX, srcY, srcSize, srcSize, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(imgRef.current, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_W, OUTPUT_H);
 
     canvas.toBlob(
       (blob) => {
@@ -120,7 +123,7 @@ export default function ImageCropper({
 
         <div
           className="relative mx-auto touch-none overflow-hidden rounded-lg border border-border bg-black"
-          style={{ width: CROP_SIZE, height: CROP_SIZE }}
+          style={{ width: CROP_W, height: CROP_H }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}

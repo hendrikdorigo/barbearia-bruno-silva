@@ -77,7 +77,7 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
       {post.texto && <p className="px-5 pb-3 text-foreground/90">{post.texto}</p>}
 
       {post.tipo === "imagem" && post.conteudo_url && (
-        <div className="relative h-80 w-full">
+        <div className="relative aspect-[4/5] w-full">
           <Image src={post.conteudo_url} alt="" fill className="object-cover" />
         </div>
       )}
