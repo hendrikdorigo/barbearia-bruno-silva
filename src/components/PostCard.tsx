@@ -9,6 +9,7 @@ import { extrairMencoes } from "@/lib/mentions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ExcluirPostBotao from "@/components/ExcluirPostBotao";
 import { cn } from "@/lib/utils";
 
 export default function PostCard({ post, usuarioId }: { post: any; usuarioId: string | null }) {
@@ -20,6 +21,7 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
   const curtidas: any[] = post.post_curtidas ?? [];
   const comentarios: any[] = post.post_comentarios ?? [];
   const jaCurtiu = usuarioId ? curtidas.some((c) => c.cliente_id === usuarioId) : false;
+  const ehDono = usuarioId !== null && usuarioId === post.barbeiro_id;
 
   async function curtir() {
     if (!usuarioId) return router.push("/login");
@@ -53,20 +55,23 @@ export default function PostCard({ post, usuarioId }: { post: any; usuarioId: st
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border bg-ink-soft">
-      <div className="flex items-center gap-3 px-5 py-4">
-        <Avatar className="size-9">
-          <AvatarFallback className="bg-gold-gradient font-display text-ink">
-            {post.barbeiros?.profiles?.nome?.[0] ?? "B"}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            {post.barbeiros?.profiles?.nome}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {new Date(post.created_at).toLocaleString("pt-BR")}
-          </p>
+      <div className="flex items-center justify-between gap-3 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="size-9">
+            <AvatarFallback className="bg-gold-gradient font-display text-ink">
+              {post.barbeiros?.profiles?.nome?.[0] ?? "B"}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {post.barbeiros?.profiles?.nome}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(post.created_at).toLocaleString("pt-BR")}
+            </p>
+          </div>
         </div>
+        {ehDono && <ExcluirPostBotao postId={post.id} />}
       </div>
 
       {post.texto && <p className="px-5 pb-3 text-foreground/90">{post.texto}</p>}

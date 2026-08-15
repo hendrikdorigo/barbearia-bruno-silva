@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import NovoPostForm from "@/components/NovoPostForm";
+import ExcluirPostBotao from "@/components/ExcluirPostBotao";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
@@ -34,11 +35,21 @@ export default async function ComunidadeBarbeiroPage() {
       <div className="mt-10 space-y-3">
         {posts?.length ? (
           posts.map((p) => (
-            <Card key={p.id} className="gap-0 border-border bg-ink-soft p-4">
-              <Badge variant="outline" className="w-fit uppercase tracking-widest text-gold">
-                {p.tipo}
-              </Badge>
+            <Card key={p.id} className="gap-0 overflow-hidden border-border bg-ink-soft p-4">
+              <div className="flex items-start justify-between gap-3">
+                <Badge variant="outline" className="w-fit uppercase tracking-widest text-gold">
+                  {p.tipo}
+                </Badge>
+                <ExcluirPostBotao postId={p.id} />
+              </div>
               {p.texto && <p className="mt-2 text-foreground/90">{p.texto}</p>}
+              {p.tipo === "imagem" && p.conteudo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.conteudo_url} alt="" className="mt-3 max-h-64 w-full rounded-lg object-cover" />
+              )}
+              {p.tipo === "video" && p.conteudo_url && (
+                <video src={p.conteudo_url} controls className="mt-3 max-h-64 w-full rounded-lg" />
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
                 {(p.post_curtidas as any[])?.length ?? 0} curtidas ·{" "}
                 {(p.post_comentarios as any[])?.length ?? 0} comentários
