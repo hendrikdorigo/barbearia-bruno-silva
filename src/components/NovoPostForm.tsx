@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { XIcon } from "lucide-react";
+import { CropIcon, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { extrairMencoes } from "@/lib/mentions";
+import ImageCropper from "@/components/ImageCropper";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,8 +15,10 @@ import { cn } from "@/lib/utils";
 export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
   const [tipo, setTipo] = useState<"texto" | "imagem" | "video">("texto");
   const [texto, setTexto] = useState("");
+  const [arquivoOriginal, setArquivoOriginal] = useState<File | null>(null);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [cortando, setCortando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const router = useRouter();
@@ -68,6 +71,7 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
     }
     setTexto("");
     setArquivo(null);
+    setArquivoOriginal(null);
     router.refresh();
   }
 
@@ -80,6 +84,7 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
             onClick={() => {
               setTipo(t);
               setArquivo(null);
+              setArquivoOriginal(null);
             }}
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-bold uppercase transition-colors",
@@ -103,20 +108,42 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
         <Input
           type="file"
           accept={tipo === "imagem" ? "image/*" : "video/*"}
-          onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            const escolhido = e.target.files?.[0] ?? null;
+            if (tipo === "imagem" && escolhido) {
+              setArquivoOriginal(escolhido);
+              setCortando(true);
+            } else {
+              setArquivo(escolhido);
+            }
+          }}
           className="mt-3"
         />
       )}
 
       {tipo !== "texto" && arquivo && previewUrl && (
         <div className="relative mt-3 overflow-hidden rounded-lg border border-border">
-          <button
-            onClick={() => setArquivo(null)}
-            aria-label="Remover mídia"
-            className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-ink/80 text-foreground hover:bg-destructive"
-          >
-            <XIcon className="size-4" />
-          </button>
+          <div className="absolute right-2 top-2 z-10 flex gap-2">
+            {tipo === "imagem" && arquivoOriginal && (
+              <button
+                onClick={() => setCortando(true)}
+                aria-label="Ajustar corte da imagem"
+                className="flex size-7 items-center justify-center rounded-full bg-ink/80 text-foreground hover:bg-gold hover:text-ink"
+              >
+                <CropIcon className="size-4" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setArquivo(null);
+                setArquivoOriginal(null);
+              }}
+              aria-label="Remover mídia"
+              className="flex size-7 items-center justify-center rounded-full bg-ink/80 text-foreground hover:bg-destructive"
+            >
+              <XIcon className="size-4" />
+            </button>
+          </div>
           {tipo === "imagem" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={previewUrl} alt="Pré-visualização" className="max-h-80 w-full object-cover" />
@@ -124,6 +151,20 @@ export default function NovoPostForm({ barbeiroId }: { barbeiroId: string }) {
             <video src={previewUrl} controls className="max-h-80 w-full" />
           )}
         </div>
+      )}
+
+      {cortando && arquivoOriginal && (
+        <ImageCropper
+          file={arquivoOriginal}
+          onCancel={() => {
+            setCortando(false);
+            if (!arquivo) setArquivoOriginal(null);
+          }}
+          onCrop={(cortado) => {
+            setArquivo(cortado);
+            setCortando(false);
+          }}
+        />
       )}
 
       {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
