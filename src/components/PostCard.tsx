@@ -24,14 +24,14 @@ export default function PostCard({
 }) {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
-  // Estado local para curtir refletir na hora - esperar o router.refresh()
-  // (recarrega a pagina inteira do servidor) deixava o botao parecendo
-  // travado até a resposta do banco voltar.
+  // Estado local para curtir/comentar refletirem na hora - esperar o
+  // router.refresh() (recarrega a pagina inteira do servidor) deixava a
+  // acao parecendo travada até a resposta do banco voltar.
   const [curtidas, setCurtidas] = useState<any[]>(post.post_curtidas ?? []);
+  const [comentarios, setComentarios] = useState<any[]>(post.post_comentarios ?? []);
   const router = useRouter();
   const supabase = createClient();
 
-  const comentarios: any[] = post.post_comentarios ?? [];
   const jaCurtiu = usuarioId ? curtidas.some((c) => c.cliente_id === usuarioId) : false;
   const ehDono = usuarioId !== null && usuarioId === post.barbeiro_id;
 
@@ -55,18 +55,33 @@ export default function PostCard({
 
   async function comentar() {
     if (!usuarioId) return router.push("/login");
-    if (!comentario.trim()) return;
+    const texto = comentario.trim();
+    if (!texto) return;
+
     setEnviando(true);
-    const mencoes = await extrairMencoes(supabase, comentario);
-    await supabase.from("post_comentarios").insert({
-      post_id: post.id,
-      cliente_id: usuarioId,
-      comentario,
-      mencoes,
-    });
     setComentario("");
+
+    // Mostra o comentário na hora em vez de esperar o insert + um
+    // router.refresh() completo da pagina - era essa espera que fazia
+    // comentar parecer lento.
+    const tempId = `temp-${Date.now()}`;
+    setComentarios((prev) => [...prev, { id: tempId, comentario: texto, cliente_id: usuarioId }]);
+
+    const mencoes = await extrairMencoes(supabase, texto);
+    const { data, error } = await supabase
+      .from("post_comentarios")
+      .insert({ post_id: post.id, cliente_id: usuarioId, comentario: texto, mencoes })
+      .select("id")
+      .single();
+
     setEnviando(false);
-    router.refresh();
+
+    if (error || !data) {
+      setComentarios((prev) => prev.filter((c) => c.id !== tempId));
+      setComentario(texto);
+      return;
+    }
+    setComentarios((prev) => prev.map((c) => (c.id === tempId ? { ...c, id: data.id } : c)));
   }
 
   return (
@@ -123,24 +138,22 @@ export default function PostCard({
 
       {comentarios.length > 0 && (
         <div className="space-y-2.5 border-t border-border px-5 py-3">
-          {comentarios.map((c) => (
-            <div key={c.id} className="flex items-start gap-2">
-              <Avatar size="sm" className="mt-0.5 shrink-0">
-                {nomesClientes[c.cliente_id]?.avatar_url && (
-                  <AvatarImage src={nomesClientes[c.cliente_id].avatar_url!} alt="" />
-                )}
-                <AvatarFallback className="text-[10px]">
-                  {(nomesClientes[c.cliente_id]?.nome ?? "C").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground/90">
-                  {nomesClientes[c.cliente_id]?.nome ?? "Cliente"}:
-                </span>{" "}
-                {c.comentario}
-              </p>
-            </div>
-          ))}
+          {comentarios.map((c) => {
+            const proprio = c.cliente_id === usuarioId;
+            const nomeExibido = proprio ? "Você" : nomesClientes[c.cliente_id]?.nome ?? "Cliente";
+            const avatarExibido = proprio ? null : nomesClientes[c.cliente_id]?.avatar_url;
+            return (
+              <div key={c.id} className="flex items-start gap-2">
+                <Avatar size="sm" className="mt-0.5 shrink-0">
+                  {avatarExibido && <AvatarImage src={avatarExibido} alt="" />}
+                  <AvatarFallback className="text-[10px]">{nomeExibido.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground/90">{nomeExibido}:</span> {c.comentario}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
 
