@@ -8,6 +8,7 @@ import PostCard from "@/components/PostCard";
 import { buscarNomesClientes } from "@/lib/nomes-clientes";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -208,9 +209,19 @@ export default async function BarbeiroPage({
               feedbacks.map((f: any) => (
                 <Card key={f.id} className="border-border bg-ink-soft p-5">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold text-foreground">
-                      {nomesClientes[f.cliente_id] ?? "Cliente"}
-                    </p>
+                    <div className="flex items-center gap-2.5">
+                      <Avatar size="sm">
+                        {nomesClientes[f.cliente_id]?.avatar_url && (
+                          <AvatarImage src={nomesClientes[f.cliente_id].avatar_url!} alt="" />
+                        )}
+                        <AvatarFallback className="text-xs">
+                          {(nomesClientes[f.cliente_id]?.nome ?? "C").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="font-semibold text-foreground">
+                        {nomesClientes[f.cliente_id]?.nome ?? "Cliente"}
+                      </p>
+                    </div>
                     <div className="flex items-center gap-0.5 text-gold">
                       {Array.from({ length: f.nota }).map((_, i) => (
                         <StarIcon key={i} className="size-3.5 fill-gold" />

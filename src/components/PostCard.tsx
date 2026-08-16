@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { HeartIcon, MessageCircleIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { extrairMencoes } from "@/lib/mentions";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ExcluirPostBotao from "@/components/ExcluirPostBotao";
+import type { PerfilCliente } from "@/lib/nomes-clientes";
 import { cn } from "@/lib/utils";
 
 export default function PostCard({
@@ -19,7 +20,7 @@ export default function PostCard({
 }: {
   post: any;
   usuarioId: string | null;
-  nomesClientes?: Record<string, string>;
+  nomesClientes?: Record<string, PerfilCliente>;
 }) {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -73,6 +74,9 @@ export default function PostCard({
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div className="flex items-center gap-3">
           <Avatar className="size-9">
+            {post.barbeiros?.profiles?.avatar_url && (
+              <AvatarImage src={post.barbeiros.profiles.avatar_url} alt="" />
+            )}
             <AvatarFallback className="bg-gold-gradient font-display text-ink">
               {post.barbeiros?.profiles?.nome?.[0] ?? "B"}
             </AvatarFallback>
@@ -118,14 +122,24 @@ export default function PostCard({
       </div>
 
       {comentarios.length > 0 && (
-        <div className="space-y-2 border-t border-border px-5 py-3">
+        <div className="space-y-2.5 border-t border-border px-5 py-3">
           {comentarios.map((c) => (
-            <p key={c.id} className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground/90">
-                {nomesClientes[c.cliente_id] ?? "Cliente"}:
-              </span>{" "}
-              {c.comentario}
-            </p>
+            <div key={c.id} className="flex items-start gap-2">
+              <Avatar size="sm" className="mt-0.5 shrink-0">
+                {nomesClientes[c.cliente_id]?.avatar_url && (
+                  <AvatarImage src={nomesClientes[c.cliente_id].avatar_url!} alt="" />
+                )}
+                <AvatarFallback className="text-[10px]">
+                  {(nomesClientes[c.cliente_id]?.nome ?? "C").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground/90">
+                  {nomesClientes[c.cliente_id]?.nome ?? "Cliente"}:
+                </span>{" "}
+                {c.comentario}
+              </p>
+            </div>
           ))}
         </div>
       )}

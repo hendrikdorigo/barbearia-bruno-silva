@@ -6,6 +6,7 @@ import Image from "next/image";
 import { CameraIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import ImageCropper from "@/components/ImageCropper";
 
 export default function AvatarUploader({
   userId,
@@ -21,6 +22,7 @@ export default function AvatarUploader({
   const [url, setUrl] = useState(avatarUrl);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [arquivoParaCortar, setArquivoParaCortar] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -87,11 +89,23 @@ export default function AvatarUploader({
           className="hidden"
           onChange={(e) => {
             const arquivo = e.target.files?.[0];
-            if (arquivo) trocarFoto(arquivo);
+            if (arquivo) setArquivoParaCortar(arquivo);
             e.target.value = "";
           }}
         />
       </div>
+
+      {arquivoParaCortar && (
+        <ImageCropper
+          file={arquivoParaCortar}
+          aspecto={1}
+          onCancel={() => setArquivoParaCortar(null)}
+          onCrop={(recortado) => {
+            setArquivoParaCortar(null);
+            trocarFoto(recortado);
+          }}
+        />
+      )}
       <div>
         <Button
           type="button"

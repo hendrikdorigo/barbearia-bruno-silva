@@ -11,26 +11,33 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// Retrato 4:5, igual ao formato padrao de post do Instagram - o feed exibe
-// a imagem final nessa mesma proporcao (ver PostCard.tsx), entao o que o
-// barbeiro enquadra aqui é exatamente o que aparece lá, sem cortar de novo.
-const CROP_W = 320;
-const CROP_H = 400;
-const OUTPUT_W = 1080;
-const OUTPUT_H = 1350;
+const CROP_LARGURA_BASE = 320;
 
 type Offset = { x: number; y: number };
 
-/** Corte estilo Instagram: arrasta para posicionar, slider para dar zoom. */
+/**
+ * Corte estilo Instagram: arrasta para posicionar, slider para dar zoom.
+ * `aspecto` (largura/altura) define o formato - 1 para foto de perfil
+ * (quadrada), 4/5 para post (retrato, igual ao feed em PostCard.tsx) - o
+ * que é enquadrado aqui é exatamente o que aparece depois, sem cortar de
+ * novo em cima.
+ */
 export default function ImageCropper({
   file,
+  aspecto = 4 / 5,
   onCancel,
   onCrop,
 }: {
   file: File;
+  aspecto?: number;
   onCancel: () => void;
   onCrop: (arquivo: File) => void;
 }) {
+  const CROP_W = CROP_LARGURA_BASE;
+  const CROP_H = Math.round(CROP_LARGURA_BASE / aspecto);
+  const OUTPUT_W = 1080;
+  const OUTPUT_H = Math.round(1080 / aspecto);
+
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
@@ -54,7 +61,7 @@ export default function ImageCropper({
     };
     img.src = url;
     return () => URL.revokeObjectURL(url);
-  }, [file]);
+  }, [file, CROP_W, CROP_H]);
 
   function clampOffset(next: Offset, s: number): Offset {
     if (!natural) return next;
