@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { criarPreferenciaPagamento, mercadoPagoConfigurado } from "@/lib/mercadopago";
+import { criarPagamentoPix, mercadoPagoConfigurado } from "@/lib/mercadopago";
 
 /**
- * Cria uma preferencia de pagamento no Mercado Pago para um agendamento já
- * criado (status "pendente") e devolve a URL do checkout hospedado. Chamada
- * pelo cliente ao escolher "Pagar agora" em /agendar/[barbeiroId].
+ * Gera um pagamento Pix (com QR Code) no Mercado Pago para um agendamento já
+ * criado (status "pendente"). Chamada pelo cliente ao escolher "Pagar agora"
+ * em /agendar/[barbeiroId].
  */
 export async function POST(request: NextRequest) {
   if (!mercadoPagoConfigurado()) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   const { data: agendamento } = await supabase
     .from("agendamentos")
-    .select("id, valor_servico, forma_pagamento, servicos(nome)")
+    .select("id, valor_servico, servicos(nome)")
     .eq("id", agendamentoId)
     .eq("cliente_id", user.id)
     .maybeSingle();
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   const { error: pagamentoError } = await supabase.from("pagamentos").insert({
     agendamento_id: agendamento.id,
-    metodo: (agendamento as any).forma_pagamento,
+    metodo: "pix",
     status: "pendente",
     valor: agendamento.valor_servico,
   });
@@ -51,19 +51,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const preferencia = await criarPreferenciaPagamento({
+    const pix = await criarPagamentoPix({
       externalReference: `agendamento:${agendamento.id}`,
-      titulo: `${(agendamento as any).servicos?.nome ?? "Atendimento"} - Barbearia Bruno Silva`,
+      descricao: `${(agendamento as any).servicos?.nome ?? "Atendimento"} - Barbearia Bruno Silva`,
       valor: Number(agendamento.valor_servico),
-      emailComprador: user.email ?? undefined,
+      emailComprador: user.email!,
       baseUrl: request.nextUrl.origin,
-      backUrlPath: `/pagamento/retorno?agendamento=${agendamento.id}`,
     });
-    return NextResponse.json({ initPoint: preferencia.init_point });
+    return NextResponse.json({
+      paymentId: pix.paymentId,
+      qrCodeBase64: pix.qrCodeBase64,
+      qrCode: pix.qrCode,
+    });
   } catch (e) {
-    console.error("Erro ao criar preferencia Mercado Pago:", e);
+    console.error("Erro ao criar pagamento Pix (Mercado Pago):", e);
     return NextResponse.json(
-      { error: "Não foi possível iniciar o pagamento. Tente novamente." },
+      { error: "Não foi possível gerar o Pix. Tente novamente." },
       { status: 502 }
     );
   }

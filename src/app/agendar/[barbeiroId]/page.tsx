@@ -9,6 +9,7 @@ import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import PixCheckout from "@/components/PixCheckout";
 import { cn } from "@/lib/utils";
 
 const PASSOS: { id: Passo; label: string }[] = [
@@ -85,6 +86,7 @@ export default function AgendarPage() {
   const [enviando, setEnviando] = useState(false);
   const [entrandoFila, setEntrandoFila] = useState<string | null>(null);
   const [filaMensagem, setFilaMensagem] = useState<string | null>(null);
+  const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -292,9 +294,9 @@ export default function AgendarPage() {
     const dataHoraISO = `${data}T${horarioSelecionado}:00`;
     const pagaAntecipado = exigePagamentoAntecipado || pagarAntecipado;
 
-    // O pagamento antecipado agora é real (Mercado Pago) e não é instantâneo
-    // como o antigo mock - o agendamento sempre entra como "pendente" e só
-    // é confirmado pelo webhook do Mercado Pago quando o pagamento aprova.
+    // O pagamento antecipado agora é real (Mercado Pago, só Pix) e não é
+    // instantâneo como o antigo mock - o agendamento sempre entra como
+    // "pendente" e só é confirmado quando o Pix é aprovado.
     const { data: agendamento, error: agendamentoError } = await supabase
       .from("agendamentos")
       .insert({
@@ -303,7 +305,7 @@ export default function AgendarPage() {
         servico_id: servicoSelecionado.id,
         data_hora: dataHoraISO,
         status: "pendente",
-        forma_pagamento: formaPagamento as any,
+        forma_pagamento: (pagaAntecipado ? "pix" : formaPagamento) as any,
         pagamento_antecipado: false,
         valor_servico: precoFinal,
       })
@@ -320,28 +322,13 @@ export default function AgendarPage() {
     // reservado, sem esperar ele confirmar. Nao bloqueia a tela de sucesso.
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
 
+    setEnviando(false);
+
     if (pagaAntecipado) {
-      const resp = await fetch("/api/pagamentos/mercadopago/criar-preferencia", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agendamentoId: agendamento.id }),
-      });
-      const json = await resp.json().catch(() => null);
-
-      if (!resp.ok || !json?.initPoint) {
-        setErro(
-          json?.error ??
-            "Não foi possível iniciar o pagamento. Seu horário ficou reservado como pendente - você pode pagar no local."
-        );
-        setEnviando(false);
-        return;
-      }
-
-      window.location.href = json.initPoint;
+      setAgendamentoParaPagar(agendamento.id);
       return;
     }
 
-    setEnviando(false);
     setPasso("confirmado");
   }
 
@@ -545,7 +532,7 @@ export default function AgendarPage() {
                 <button
                   onClick={() => {
                     setPagarAntecipado(true);
-                    if (formaPagamento === "dinheiro") setFormaPagamento("pix");
+                    setFormaPagamento("pix");
                   }}
                   className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                     pagarAntecipado
@@ -553,32 +540,41 @@ export default function AgendarPage() {
                       : "border-border text-muted-foreground hover:border-gold"
                   }`}
                 >
-                  Pagar agora (antecipado)
+                  Pagar agora (Pix)
                 </button>
               </div>
             </>
           )}
 
-          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-            Forma de pagamento
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {FORMAS_PAGAMENTO.filter(
-              (f) => !((exigePagamentoAntecipado || pagarAntecipado) && f.id === "dinheiro")
-            ).map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFormaPagamento(f.id)}
-                className={`rounded-lg border px-4 py-3 text-sm ${
-                  formaPagamento === f.id
-                    ? "border-gold bg-gold-gradient font-bold text-ink"
-                    : "border-border text-muted-foreground hover:border-gold"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          {exigePagamentoAntecipado || pagarAntecipado ? (
+            <Alert className="mt-6 border-gold/40 bg-gold/10">
+              <AlertDescription className="text-foreground/90">
+                Pagamento antecipado é feito só via <strong>Pix</strong> - depois de
+                confirmar, um QR Code aparece na tela para você escanear ou copiar o código.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
+                Forma de pagamento (no local)
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {FORMAS_PAGAMENTO.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFormaPagamento(f.id)}
+                    className={`rounded-lg border px-4 py-3 text-sm ${
+                      formaPagamento === f.id
+                        ? "border-gold bg-gold-gradient font-bold text-ink"
+                        : "border-border text-muted-foreground hover:border-gold"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {exigePagamentoAntecipado && (
             <Alert variant="destructive" className="mt-6">
@@ -610,11 +606,23 @@ export default function AgendarPage() {
             {enviando
               ? "Confirmando..."
               : exigePagamentoAntecipado || pagarAntecipado
-                ? "Ir para pagamento"
+                ? "Gerar Pix"
                 : "Confirmar agendamento"}
           </Button>
         </div>
       )}
+
+      <PixCheckout
+        open={Boolean(agendamentoParaPagar)}
+        onClose={() => setAgendamentoParaPagar(null)}
+        criarEndpoint="/api/pagamentos/mercadopago/criar-pix"
+        corpo={{ agendamentoId: agendamentoParaPagar }}
+        valor={precoFinal}
+        onConfirmado={() => {
+          setPasso("confirmado");
+          setAgendamentoParaPagar(null);
+        }}
+      />
 
       {passo === "confirmado" && (
         <div className="mt-8 rounded-2xl border border-gold/40 bg-gold/10 p-8 text-center">

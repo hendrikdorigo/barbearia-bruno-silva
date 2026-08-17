@@ -1,24 +1,26 @@
 /**
- * INTEGRAÇÃO MERCADO PAGO (Checkout Pro)
+ * INTEGRAÇÃO MERCADO PAGO (Pix direto, com QR Code)
  * -----------------------------------------------------------------------
- * Pagamento antecipado real via redirecionamento para o checkout hospedado
- * do Mercado Pago (cliente sai do site, paga (cartão/Pix/boleto) e volta).
+ * Pagamento antecipado real, aceitando somente Pix. O cliente nunca sai do
+ * site: geramos um pagamento Pix via API do Mercado Pago e mostramos o QR
+ * Code (+ código "copia e cola") na própria página.
  *
  * Variável de ambiente necessária: MERCADOPAGO_ACCESS_TOKEN (Access Token
  * de produção, obtido em https://www.mercadopago.com.br/developers -> Suas
  * integrações -> credenciais de produção).
  *
  * Fluxo:
- *   1. Cliente escolhe "Pagar agora" em /agendar/[barbeiroId] -> o
- *      agendamento é criado com status "pendente" e o navegador chama
- *      POST /api/pagamentos/mercadopago/criar-preferencia.
- *   2. Essa rota cria uma "preference" via criarPreferenciaPagamento() e
- *      retorna o init_point (URL do checkout) - o navegador é redirecionado
- *      para lá.
- *   3. O Mercado Pago notifica POST /api/pagamentos/mercadopago/webhook de
- *      forma assíncrona quando o pagamento muda de status. O webhook busca
- *      o pagamento real via consultarPagamento() (nunca confia em dados que
- *      viriam só da URL de retorno) e, se aprovado, confirma o agendamento.
+ *   1. Cliente escolhe "Pagar agora" (Pix) -> o navegador chama
+ *      POST /api/pagamentos/mercadopago/criar-pix (ou -comanda), que cria o
+ *      pagamento via criarPagamentoPix() e devolve o QR Code em base64 e o
+ *      código copia-e-cola.
+ *   2. A página fica mostrando o QR Code e consultando periodicamente
+ *      GET /api/pagamentos/mercadopago/status?paymentId=... até o pagamento
+ *      aprovar.
+ *   3. Em paralelo, o Mercado Pago também notifica
+ *      POST /api/pagamentos/mercadopago/webhook de forma assíncrona - ambos
+ *      os caminhos usam confirmarPagamentoPorId() (nunca confiam em dados
+ *      vindos só do cliente, sempre re-consultam o pagamento pela API).
  */
 
 const MP_API_BASE = "https://api.mercadopago.com";
@@ -27,41 +29,45 @@ export function mercadoPagoConfigurado(): boolean {
   return Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN);
 }
 
-export async function criarPreferenciaPagamento(params: {
+export async function criarPagamentoPix(params: {
   /** Formato "agendamento:<id>" ou "comanda:<id>" - o webhook usa o prefixo para saber o que confirmar. */
   externalReference: string;
-  titulo: string;
+  descricao: string;
   valor: number;
-  emailComprador?: string;
+  emailComprador: string;
   baseUrl: string;
-  /** Caminho (sem domínio) para onde o cliente volta após pagar, ex: "/pagamento/retorno?agendamento=123". */
-  backUrlPath: string;
 }) {
-  const backUrl = `${params.baseUrl}${params.backUrlPath}`;
-  const resp = await fetch(`${MP_API_BASE}/checkout/preferences`, {
+  const resp = await fetch(`${MP_API_BASE}/v1/payments`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
       "Content-Type": "application/json",
+      "X-Idempotency-Key": crypto.randomUUID(),
     },
     body: JSON.stringify({
-      items: [
-        {
-          title: params.titulo,
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: params.valor,
-        },
-      ],
-      payer: params.emailComprador ? { email: params.emailComprador } : undefined,
+      transaction_amount: params.valor,
+      description: params.descricao,
+      payment_method_id: "pix",
+      payer: { email: params.emailComprador },
       external_reference: params.externalReference,
-      back_urls: { success: backUrl, pending: backUrl, failure: backUrl },
-      auto_return: "approved",
       notification_url: `${params.baseUrl}/api/pagamentos/mercadopago/webhook`,
     }),
   });
   if (!resp.ok) throw new Error(await resp.text());
-  return resp.json() as Promise<{ id: string; init_point: string }>;
+  const data = await resp.json();
+
+  const qrCodeBase64: string | undefined = data.point_of_interaction?.transaction_data?.qr_code_base64;
+  const qrCode: string | undefined = data.point_of_interaction?.transaction_data?.qr_code;
+  if (!qrCodeBase64 || !qrCode) {
+    throw new Error("Mercado Pago não retornou o QR Code do Pix.");
+  }
+
+  return {
+    paymentId: String(data.id),
+    status: data.status as string,
+    qrCodeBase64,
+    qrCode,
+  };
 }
 
 export async function consultarPagamento(paymentId: string) {

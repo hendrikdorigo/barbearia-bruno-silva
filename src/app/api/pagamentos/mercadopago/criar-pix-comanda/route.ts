@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { criarPreferenciaPagamento, mercadoPagoConfigurado } from "@/lib/mercadopago";
-
-const FORMAS_VALIDAS = ["credito", "debito", "pix"];
+import { criarPagamentoPix, mercadoPagoConfigurado } from "@/lib/mercadopago";
 
 /**
- * Cria uma preferencia de pagamento para a comanda (servico + produtos
+ * Gera um pagamento Pix (com QR Code) para a comanda (serviço + produtos
  * adicionados). O total é sempre recalculado aqui a partir do banco, nunca
  * confiado no valor que o navegador enviaria.
  */
@@ -19,7 +17,6 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const comandaId = body?.comandaId;
-  const formaPagamento = FORMAS_VALIDAS.includes(body?.formaPagamento) ? body.formaPagamento : "pix";
   if (!comandaId) {
     return NextResponse.json({ error: "Comanda inválida." }, { status: 400 });
   }
@@ -54,7 +51,7 @@ export async function POST(request: NextRequest) {
 
   const { error: pagamentoError } = await supabase.from("pagamentos").insert({
     agendamento_id: comanda.agendamento_id,
-    metodo: formaPagamento,
+    metodo: "pix",
     status: "pendente",
     valor: total,
   });
@@ -63,19 +60,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const preferencia = await criarPreferenciaPagamento({
+    const pix = await criarPagamentoPix({
       externalReference: `comanda:${comanda.id}`,
-      titulo: "Atendimento - Barbearia Bruno Silva",
+      descricao: "Atendimento - Barbearia Bruno Silva",
       valor: total,
-      emailComprador: user.email ?? undefined,
+      emailComprador: user.email!,
       baseUrl: request.nextUrl.origin,
-      backUrlPath: `/pagamento/retorno-comanda?comanda=${comanda.id}`,
     });
-    return NextResponse.json({ initPoint: preferencia.init_point });
+    return NextResponse.json({
+      paymentId: pix.paymentId,
+      qrCodeBase64: pix.qrCodeBase64,
+      qrCode: pix.qrCode,
+    });
   } catch (e) {
-    console.error("Erro ao criar preferencia Mercado Pago (comanda):", e);
+    console.error("Erro ao criar pagamento Pix (comanda):", e);
     return NextResponse.json(
-      { error: "Não foi possível iniciar o pagamento. Tente novamente." },
+      { error: "Não foi possível gerar o Pix. Tente novamente." },
       { status: 502 }
     );
   }

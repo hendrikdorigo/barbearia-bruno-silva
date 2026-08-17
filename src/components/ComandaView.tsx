@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import PixCheckout from "@/components/PixCheckout";
 import { cn } from "@/lib/utils";
 
 type Item = {
@@ -55,7 +56,7 @@ export default function ComandaView({
   const [formaPagamento, setFormaPagamento] = useState(comanda.forma_pagamento ?? "pix");
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
-  const [mensagem, setMensagem] = useState<string | null>(null);
+  const [pixAberto, setPixAberto] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -82,24 +83,11 @@ export default function ComandaView({
     router.refresh();
   }
 
-  async function pagarPeloApp() {
-    setProcessando(true);
-    setMensagem(null);
-
-    const resp = await fetch("/api/pagamentos/mercadopago/criar-preferencia-comanda", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ comandaId: comanda.id, formaPagamento }),
-    });
-    const json = await resp.json().catch(() => null);
-
-    if (!resp.ok || !json?.initPoint) {
-      setMensagem(json?.error ?? "Não foi possível iniciar o pagamento. Tente novamente.");
-      setProcessando(false);
-      return;
-    }
-
-    window.location.href = json.initPoint;
+  function pagamentoPixConfirmado() {
+    setPixAberto(false);
+    setPagoAntecipado(true);
+    setStatus("paga");
+    router.refresh();
   }
 
   async function confirmarPagamentoCaixa() {
@@ -182,28 +170,36 @@ export default function ComandaView({
 
       {podeAdicionar && (
         <div className="mt-6">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {FORMAS_PAGAMENTO.filter((f) => !(papel === "cliente" && f.id === "dinheiro")).map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFormaPagamento(f.id)}
-                className={cn(
-                  "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
-                  formaPagamento === f.id
-                    ? "border-gold bg-gold-gradient text-ink"
-                    : "border-border text-muted-foreground hover:border-gold"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
           {papel === "cliente" && !pagoAntecipado && (
-            <Button onClick={pagarPeloApp} disabled={processando} className="mt-4 w-full uppercase tracking-widest">
-              {processando ? "Processando..." : "Pagar agora pelo app"}
+            <Button
+              onClick={() => setPixAberto(true)}
+              disabled={processando}
+              className="w-full uppercase tracking-widest"
+            >
+              Pagar agora com Pix
             </Button>
+          )}
+
+          {papel === "barbeiro" && (
+            <>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {FORMAS_PAGAMENTO.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFormaPagamento(f.id)}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
+                      formaPagamento === f.id
+                        ? "border-gold bg-gold-gradient text-ink"
+                        : "border-border text-muted-foreground hover:border-gold"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {papel === "barbeiro" && status === "aguardando_pagamento" && (
@@ -235,7 +231,14 @@ export default function ComandaView({
         </Alert>
       )}
 
-      {mensagem && <p className="mt-4 text-sm text-gold">{mensagem}</p>}
+      <PixCheckout
+        open={pixAberto}
+        onClose={() => setPixAberto(false)}
+        criarEndpoint="/api/pagamentos/mercadopago/criar-pix-comanda"
+        corpo={{ comandaId: comanda.id }}
+        valor={total}
+        onConfirmado={pagamentoPixConfirmado}
+      />
     </Card>
   );
 }
