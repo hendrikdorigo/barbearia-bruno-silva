@@ -136,7 +136,7 @@ export default async function HomePage() {
         </h2>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {servicos?.map((s) => (
-            <Link key={s.id} href={`/barbeiros?servico=${s.id}`}>
+            <Link key={s.id} href={`/agendar?servico=${s.id}`}>
               <Card className="group gap-0 rounded-2xl border-border bg-ink-soft py-6 transition-colors hover:border-gold">
                 <CardContent className="px-6">
                   <p className="text-sm uppercase tracking-widest text-muted-foreground">

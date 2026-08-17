@@ -44,6 +44,7 @@ type Profile = {
 };
 
 const NAV_LINKS = [
+  { href: "/agendar", label: "Agendar" },
   { href: "/barbeiros", label: "Barbeiros" },
   { href: "/comunidade", label: "Comunidade" },
   { href: "/servicos", label: "Serviços" },

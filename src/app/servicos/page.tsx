@@ -22,7 +22,7 @@ export default async function ServicosPage() {
         {servicos?.map((s) => (
           <Link
             key={s.id}
-            href={`/barbeiros?servico=${s.id}`}
+            href={`/agendar?servico=${s.id}`}
             className="flex items-center justify-between px-6 py-5 transition-colors hover:bg-gold/5"
           >
             <div>

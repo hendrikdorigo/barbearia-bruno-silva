@@ -3,13 +3,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ClockIcon, ScissorsIcon, CheckIcon } from "lucide-react";
+import { ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import PixCheckout from "@/components/PixCheckout";
+import AgendamentoStepper from "@/components/AgendamentoStepper";
 import { cn } from "@/lib/utils";
 
 const PASSOS: { id: Passo; label: string }[] = [
@@ -17,40 +18,6 @@ const PASSOS: { id: Passo; label: string }[] = [
   { id: "horario", label: "Horário" },
   { id: "pagamento", label: "Pagamento" },
 ];
-
-function Stepper({ atual }: { atual: Passo }) {
-  if (atual === "confirmado") return null;
-  const indexAtual = PASSOS.findIndex((p) => p.id === atual);
-  return (
-    <div className="mt-6 flex items-center gap-2">
-      {PASSOS.map((p, i) => (
-        <div key={p.id} className="flex flex-1 items-center gap-2">
-          <div
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
-              i < indexAtual && "border-gold bg-gold text-ink",
-              i === indexAtual && "border-gold text-gold",
-              i > indexAtual && "border-border text-muted-foreground"
-            )}
-          >
-            {i < indexAtual ? <CheckIcon className="size-3.5" /> : i + 1}
-          </div>
-          <span
-            className={cn(
-              "hidden text-xs font-medium uppercase tracking-wider sm:inline",
-              i <= indexAtual ? "text-foreground" : "text-muted-foreground"
-            )}
-          >
-            {p.label}
-          </span>
-          {i < PASSOS.length - 1 && (
-            <span className={cn("h-px flex-1", i < indexAtual ? "bg-gold" : "bg-border")} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 
@@ -363,7 +330,7 @@ export default function AgendarPage() {
         {passo === "confirmado" && "Agendamento confirmado!"}
       </h1>
 
-      <Stepper atual={passo} />
+      <AgendamentoStepper passos={PASSOS} atual={passo} />
 
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">
