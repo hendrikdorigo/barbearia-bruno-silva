@@ -37,15 +37,22 @@ export default function HorariosEditor({
   const [horarios, setHorarios] = useState<Horario[]>(
     DIAS.map((d) => {
       const existente = horariosIniciais.find((h) => h.dia_semana === d.dia);
-      return (
-        existente ?? {
-          id: "",
-          dia_semana: d.dia,
-          ativo: d.dia !== 0,
-          hora_inicio: "09:00",
-          hora_fim: "19:30",
-        }
-      );
+      // O Postgres devolve o horario como "09:00:00" (com segundos), mas
+      // <input type="time"> so aceita "09:00" - sem isso o campo aparecia
+      // vazio toda vez que a pagina recarregava com horarios ja salvos.
+      return existente
+        ? {
+            ...existente,
+            hora_inicio: existente.hora_inicio.slice(0, 5),
+            hora_fim: existente.hora_fim.slice(0, 5),
+          }
+        : {
+            id: "",
+            dia_semana: d.dia,
+            ativo: d.dia !== 0,
+            hora_inicio: "09:00",
+            hora_fim: "19:30",
+          };
     })
   );
   const [salvando, setSalvando] = useState(false);
