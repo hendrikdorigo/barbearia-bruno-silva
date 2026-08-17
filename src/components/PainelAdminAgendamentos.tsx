@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Trash2Icon } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,18 +41,30 @@ export default function PainelAdminAgendamentos({
   agendamentos: any[];
   barbeiros: any[];
 }) {
+  const [lista, setLista] = useState(agendamentos);
   const [filtroBarbeiro, setFiltroBarbeiro] = useState("");
   const [filtroData, setFiltroData] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [excluindoId, setExcluindoId] = useState<string | null>(null);
+  const supabase = createClient();
 
   const filtrados = useMemo(() => {
-    return agendamentos.filter((a) => {
+    return lista.filter((a) => {
       if (filtroBarbeiro && a.barbeiro_id !== filtroBarbeiro) return false;
       if (filtroStatus && a.status !== filtroStatus) return false;
       if (filtroData && !a.data_hora.startsWith(filtroData)) return false;
       return true;
     });
-  }, [agendamentos, filtroBarbeiro, filtroData, filtroStatus]);
+  }, [lista, filtroBarbeiro, filtroData, filtroStatus]);
+
+  async function excluir(id: string) {
+    if (!window.confirm("Excluir este agendamento? Essa ação não pode ser desfeita.")) return;
+    setExcluindoId(id);
+    const { error } = await supabase.from("agendamentos").delete().eq("id", id);
+    setExcluindoId(null);
+    if (error) return;
+    setLista((prev) => prev.filter((a) => a.id !== id));
+  }
 
   return (
     <div className="mt-4">
@@ -98,6 +112,7 @@ export default function PainelAdminAgendamentos({
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Repasse Bruno</TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -127,11 +142,21 @@ export default function PainelAdminAgendamentos({
                 <TableCell className="text-right font-mono text-gold">
                   R$ {Number(a.valor_repasse_bruno).toFixed(2).replace(".", ",")}
                 </TableCell>
+                <TableCell className="text-right">
+                  <button
+                    onClick={() => excluir(a.id)}
+                    disabled={excluindoId === a.id}
+                    aria-label="Excluir agendamento"
+                    className="text-muted-foreground/70 hover:text-destructive disabled:opacity-50"
+                  >
+                    <Trash2Icon className="size-3.5" />
+                  </button>
+                </TableCell>
               </TableRow>
             ))}
             {filtrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="py-6 text-center text-muted-foreground">
                   Nenhum agendamento encontrado.
                 </TableCell>
               </TableRow>
