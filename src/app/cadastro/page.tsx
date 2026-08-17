@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatarCPF, normalizarCPF, validarCPF } from "@/lib/cpf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
@@ -21,10 +22,8 @@ const ANOS = Array.from({ length: 90 }, (_, i) => String(ANO_ATUAL - 14 - i));
 
 export default function CadastroPage() {
   const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [cpf, setCpf] = useState("");
+  const [emailContato, setEmailContato] = useState("");
   const [diaNasc, setDiaNasc] = useState("");
   const [mesNasc, setMesNasc] = useState("");
   const [anoNasc, setAnoNasc] = useState("");
@@ -44,8 +43,9 @@ export default function CadastroPage() {
       return;
     }
 
-    if (senha !== confirmarSenha) {
-      setErro("As senhas não coincidem.");
+    const cpfDigits = normalizarCPF(cpf);
+    if (!validarCPF(cpfDigits)) {
+      setErro("CPF inválido. Confira os números digitados.");
       return;
     }
 
@@ -53,47 +53,44 @@ export default function CadastroPage() {
 
     const dataNascimento = `${anoNasc}-${mesNasc}-${diaNasc.padStart(2, "0")}`;
 
-    // profiles/clientes sao criados pelo gatilho on_auth_user_created a partir
-    // dos metadados abaixo - inserir direto aqui falharia, pois o upload de
-    // avatar e a insercao via RLS exigem uma sessao que so existe apos a
-    // confirmacao do e-mail (signUp nao retorna sessao nesse caso).
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password: senha,
-      options: {
-        data: { nome, telefone, cpf, data_nascimento: dataNascimento },
-      },
+    const resp = await fetch("/api/auth/cadastro-cliente", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome,
+        cpf: cpfDigits,
+        telefone,
+        dataNascimento,
+        emailContato: emailContato || null,
+      }),
     });
+    const json = await resp.json().catch(() => null);
 
-    if (signUpError || !signUpData.user) {
-      setErro(signUpError?.message ?? "Não foi possível criar sua conta.");
+    if (!resp.ok) {
+      setErro(json?.error ?? "Não foi possível criar sua conta.");
       setLoading(false);
       return;
     }
 
-    const userId = signUpData.user.id;
-
-    if (foto && signUpData.session) {
-      const path = `${userId}/${Date.now()}-${foto.name}`;
+    if (foto) {
+      const path = `${json.userId}/${Date.now()}-${foto.name}`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, foto, { upsert: true });
       if (!uploadError) {
         const fotoUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-        await supabase.from("profiles").update({ avatar_url: fotoUrl }).eq("id", userId);
-        await supabase.from("clientes").update({ foto_url: fotoUrl }).eq("profile_id", userId);
+        await supabase.from("profiles").update({ avatar_url: fotoUrl }).eq("id", json.userId);
+        await supabase.from("clientes").update({ foto_url: fotoUrl }).eq("profile_id", json.userId);
       }
     }
 
     setLoading(false);
 
-    if (signUpData.session) {
+    if (json.autoLogin) {
       router.push("/");
       router.refresh();
     } else {
-      router.push(
-        "/login?mensagem=Verifique seu e-mail para confirmar o cadastro."
-      );
+      router.push("/login");
     }
   }
 
@@ -110,7 +107,8 @@ export default function CadastroPage() {
           </p>
           <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">Criar conta</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cadastro necessário apenas para agendar horários.
+            Cadastro necessário apenas para agendar horários. Sem senha - você
+            entra só com o CPF.
           </p>
 
           <form onSubmit={cadastrar} className="mt-8">
@@ -126,57 +124,31 @@ export default function CadastroPage() {
                   onChange={(e) => setNome(e.target.value)}
                 />
               </Field>
-              <Field>
-                <FieldLabel htmlFor="email">E-mail</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="voce@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="senha">Senha</FieldLabel>
-                <Input
-                  id="senha"
-                  type="password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Mínimo 6 caracteres"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                />
-              </Field>
-              <Field data-invalid={confirmarSenha.length > 0 && confirmarSenha !== senha}>
-                <FieldLabel htmlFor="confirmar-senha">Confirmar senha</FieldLabel>
-                <Input
-                  id="confirmar-senha"
-                  type="password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  placeholder="Repita a senha"
-                  value={confirmarSenha}
-                  aria-invalid={confirmarSenha.length > 0 && confirmarSenha !== senha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
-                />
-                {confirmarSenha.length > 0 && confirmarSenha !== senha && (
-                  <FieldError>As senhas não coincidem.</FieldError>
-                )}
-              </Field>
-              <Field>
+              <Field data-invalid={cpf.length > 0 && !validarCPF(cpf)}>
                 <FieldLabel htmlFor="cpf">CPF</FieldLabel>
                 <Input
                   id="cpf"
                   required
+                  inputMode="numeric"
                   placeholder="000.000.000-00"
                   value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
+                  onChange={(e) => setCpf(formatarCPF(e.target.value))}
+                  maxLength={14}
+                  aria-invalid={cpf.length > 0 && !validarCPF(cpf)}
                 />
+                <FieldDescription>É com o CPF que você entra na sua conta, sem senha.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="email">E-mail (opcional)</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="voce@email.com"
+                  value={emailContato}
+                  onChange={(e) => setEmailContato(e.target.value)}
+                />
+                <FieldDescription>Só um contato - não é usado para entrar.</FieldDescription>
               </Field>
               <Field>
                 <FieldLabel>Data de nascimento</FieldLabel>

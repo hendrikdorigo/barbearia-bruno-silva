@@ -29,12 +29,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  const { data: agendamento } = await supabase
-    .from("agendamentos")
-    .select("id, valor_servico, servicos(nome)")
-    .eq("id", agendamentoId)
-    .eq("cliente_id", user.id)
-    .maybeSingle();
+  const [{ data: agendamento }, { data: cliente }] = await Promise.all([
+    supabase
+      .from("agendamentos")
+      .select("id, valor_servico, servicos(nome)")
+      .eq("id", agendamentoId)
+      .eq("cliente_id", user.id)
+      .maybeSingle(),
+    supabase.from("clientes").select("email").eq("profile_id", user.id).maybeSingle(),
+  ]);
 
   if (!agendamento) {
     return NextResponse.json({ error: "Agendamento não encontrado." }, { status: 404 });
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
       externalReference: `agendamento:${agendamento.id}`,
       descricao: `${(agendamento as any).servicos?.nome ?? "Atendimento"} - Barbearia Bruno Silva`,
       valor: Number(agendamento.valor_servico),
-      emailComprador: user.email!,
+      emailComprador: cliente?.email || user.email!,
       baseUrl: request.nextUrl.origin,
     });
     return NextResponse.json({

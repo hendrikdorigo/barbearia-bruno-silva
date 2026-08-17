@@ -379,6 +379,7 @@ export type Database = {
           cpf: string
           created_at: string
           data_nascimento: string
+          email: string | null
           exige_pagamento_antecipado: boolean
           foto_url: string | null
           profile_id: string
@@ -388,6 +389,7 @@ export type Database = {
           cpf: string
           created_at?: string
           data_nascimento: string
+          email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
           profile_id: string
@@ -397,6 +399,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_nascimento?: string
+          email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
           profile_id?: string

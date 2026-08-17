@@ -29,12 +29,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  const { data: comanda } = await supabase
-    .from("comandas")
-    .select("id, agendamento_id, valor_servico, status, comanda_itens(quantidade, preco_unitario)")
-    .eq("id", comandaId)
-    .eq("cliente_id", user.id)
-    .maybeSingle();
+  const [{ data: comanda }, { data: cliente }] = await Promise.all([
+    supabase
+      .from("comandas")
+      .select("id, agendamento_id, valor_servico, status, comanda_itens(quantidade, preco_unitario)")
+      .eq("id", comandaId)
+      .eq("cliente_id", user.id)
+      .maybeSingle(),
+    supabase.from("clientes").select("email").eq("profile_id", user.id).maybeSingle(),
+  ]);
 
   if (!comanda) {
     return NextResponse.json({ error: "Comanda não encontrada." }, { status: 404 });
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
       externalReference: `comanda:${comanda.id}`,
       descricao: "Atendimento - Barbearia Bruno Silva",
       valor: total,
-      emailComprador: user.email!,
+      emailComprador: cliente?.email || user.email!,
       baseUrl: request.nextUrl.origin,
     });
     return NextResponse.json({
