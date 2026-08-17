@@ -103,6 +103,7 @@ export type Database = {
       app_popups: {
         Row: {
           ativo: boolean
+          audiencia_login: string
           conteudo_url: string | null
           created_at: string
           criado_por: string | null
@@ -117,6 +118,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          audiencia_login?: string
           conteudo_url?: string | null
           created_at?: string
           criado_por?: string | null
@@ -131,6 +133,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          audiencia_login?: string
           conteudo_url?: string | null
           created_at?: string
           criado_por?: string | null

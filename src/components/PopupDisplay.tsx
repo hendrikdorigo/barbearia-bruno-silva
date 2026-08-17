@@ -21,8 +21,24 @@ type Popup = {
   mensagem: string | null;
 };
 
+const CHAVE_VISTOS_ANONIMO = "popups_vistos_anonimo";
+
+function popupsVistosAnonimo(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_VISTOS_ANONIMO) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function marcarVistoAnonimo(popupId: string) {
+  const vistos = popupsVistosAnonimo();
+  localStorage.setItem(CHAVE_VISTOS_ANONIMO, JSON.stringify([...vistos, popupId]));
+}
+
 export default function PopupDisplay() {
   const [popup, setPopup] = useState<Popup | null>(null);
+  const [logado, setLogado] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
 
@@ -32,7 +48,29 @@ export default function PopupDisplay() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+
+      if (!user) {
+        // Visitante não logado - só pop-ups liberados para "deslogados"/"ambos",
+        // e o "já visto" é lembrado no localStorage (não há profile_id para
+        // gravar em popup_visualizacoes).
+        const vistos = popupsVistosAnonimo();
+        let query = supabase
+          .from("app_popups")
+          .select("*")
+          .eq("ativo", true)
+          .in("audiencia_login", ["deslogados", "ambos"])
+          .order("created_at", { ascending: true })
+          .limit(1);
+        if (vistos.length > 0) {
+          query = query.not("id", "in", `(${vistos.join(",")})`);
+        }
+        const { data: popups } = await query;
+        if (ativo && popups && popups[0]) {
+          setLogado(false);
+          setPopup(popups[0] as Popup);
+        }
+        return;
+      }
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -53,6 +91,7 @@ export default function PopupDisplay() {
         .from("app_popups")
         .select("*")
         .eq("ativo", true)
+        .in("audiencia_login", ["logados", "ambos"])
         .or(`publico.eq.todos,publico.eq.${publicoAlvo}`)
         .order("created_at", { ascending: true })
         .limit(1);
@@ -63,6 +102,7 @@ export default function PopupDisplay() {
 
       const { data: popups } = await query;
       if (ativo && popups && popups[0]) {
+        setLogado(true);
         setPopup(popups[0] as Popup);
       }
     }
@@ -75,13 +115,17 @@ export default function PopupDisplay() {
 
   async function fechar() {
     if (!popup) return;
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from("popup_visualizacoes")
-        .insert({ popup_id: popup.id, profile_id: user.id });
+    if (logado) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("popup_visualizacoes")
+          .insert({ popup_id: popup.id, profile_id: user.id });
+      }
+    } else {
+      marcarVistoAnonimo(popup.id);
     }
     setPopup(null);
   }
