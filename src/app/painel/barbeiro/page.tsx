@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AgendaBarbeiro from "@/components/AgendaBarbeiro";
 import ConectarGoogleCalendar from "@/components/ConectarGoogleCalendar";
+import EstatisticasCards from "@/components/EstatisticasCards";
+import { calcularEstatisticas } from "@/lib/estatisticas";
 
 export default async function PainelBarbeiroPage() {
   const supabase = await createClient();
@@ -39,6 +41,15 @@ export default async function PainelBarbeiroPage() {
       </h1>
 
       <ConectarGoogleCalendar conectado={barbeiro?.google_calendar_connected ?? false} />
+
+      <div className="mt-10">
+        <EstatisticasCards estatisticas={calcularEstatisticas(agendamentos ?? [])} />
+        {barbeiro && !barbeiro.is_dono && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sua comissão atual: <span className="text-gold">{barbeiro.comissao_percentual}%</span> do valor de cada serviço.
+          </p>
+        )}
+      </div>
 
       <h2 className="mt-10 font-display text-3xl text-foreground">Minha agenda</h2>
       <AgendaBarbeiro agendamentos={agendamentos ?? []} />

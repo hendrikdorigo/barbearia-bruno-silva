@@ -20,16 +20,25 @@ export default async function RepassesPage() {
 
   const { data: agendamentos } = await supabase
     .from("agendamentos")
-    .select("*, barbeiros(profile_id, is_dono, profiles(nome))")
-    .gt("valor_repasse_bruno", 0)
+    .select("*, barbeiros(profile_id, is_dono, comissao_percentual, profiles(nome))")
     .in("status", ["confirmado", "concluido"])
     .order("data_hora", { ascending: false });
 
-  const porBarbeiro = new Map<string, { nome: string; total: number; qtd: number }>();
+  // Como o pagamento cai sempre na conta do Bruno, o que importa aqui é o
+  // complemento de valor_repasse_bruno: quanto o Bruno precisa repassar
+  // (pagar) para cada barbeiro parceiro pelos atendimentos que ele fez.
+  const porBarbeiro = new Map<string, { nome: string; percentual: number; total: number; qtd: number }>();
   for (const a of agendamentos ?? []) {
-    const nome = (a as any).barbeiros?.profiles?.nome ?? "—";
-    const atual = porBarbeiro.get(a.barbeiro_id) ?? { nome, total: 0, qtd: 0 };
-    atual.total += Number(a.valor_repasse_bruno);
+    const barbeiro = (a as any).barbeiros;
+    if (!barbeiro || barbeiro.is_dono) continue;
+    const comissao = Number(a.valor_servico) - Number(a.valor_repasse_bruno);
+    const atual = porBarbeiro.get(a.barbeiro_id) ?? {
+      nome: barbeiro.profiles?.nome ?? "—",
+      percentual: barbeiro.comissao_percentual,
+      total: 0,
+      qtd: 0,
+    };
+    atual.total += comissao;
     atual.qtd += 1;
     porBarbeiro.set(a.barbeiro_id, atual);
   }
@@ -39,15 +48,17 @@ export default async function RepassesPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
-        Repasses (50%)
+        Comissões a repassar
       </h1>
       <p className="mt-2 text-muted-foreground">
-        Valor devido ao Bruno referente aos atendimentos feitos por barbeiros
-        parceiros (50% do valor de cada serviço).
+        Como os pagamentos caem todos na sua conta, aqui está quanto você
+        precisa repassar a cada barbeiro parceiro pelos atendimentos que ele
+        fez. O percentual de cada um pode ser ajustado em &quot;Gerenciar
+        barbeiros&quot;.
       </p>
 
       <Card className="mt-8 gap-1 border-gold/40 bg-gold/10 p-5">
-        <p className="text-xs uppercase tracking-widest text-gold">Total acumulado</p>
+        <p className="text-xs uppercase tracking-widest text-gold">Total a repassar</p>
         <p className="font-mono text-4xl font-medium text-foreground">
           R$ {totalGeral.toFixed(2).replace(".", ",")}
         </p>
@@ -58,7 +69,9 @@ export default async function RepassesPage() {
           <Card key={id} className="flex-row items-center justify-between border-border bg-ink-soft p-4">
             <div>
               <p className="font-semibold text-foreground">{v.nome}</p>
-              <p className="text-xs text-muted-foreground">{v.qtd} atendimento(s)</p>
+              <p className="text-xs text-muted-foreground">
+                {v.qtd} atendimento(s) · {v.percentual}% de comissão
+              </p>
             </div>
             <p className="font-mono text-2xl font-medium text-gold-gradient">
               R$ {v.total.toFixed(2).replace(".", ",")}

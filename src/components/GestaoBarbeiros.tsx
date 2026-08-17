@@ -15,6 +15,10 @@ export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [comissoes, setComissoes] = useState<Record<string, number>>(
+    Object.fromEntries(barbeiros.map((b) => [b.profile_id, b.comissao_percentual]))
+  );
+  const [salvandoComissao, setSalvandoComissao] = useState<string | null>(null);
   const router = useRouter();
 
   async function cadastrar() {
@@ -44,6 +48,17 @@ export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ profile_id, ativo: !ativo }),
     });
+    router.refresh();
+  }
+
+  async function salvarComissao(profile_id: string) {
+    setSalvandoComissao(profile_id);
+    await fetch("/api/admin/barbeiros", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_id, comissao_percentual: comissoes[profile_id] }),
+    });
+    setSalvandoComissao(null);
     router.refresh();
   }
 
@@ -81,7 +96,10 @@ export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
 
       <div className="mt-8 space-y-3">
         {barbeiros.map((b) => (
-          <Card key={b.profile_id} className="flex-row items-center justify-between border-border bg-ink-soft p-4">
+          <Card
+            key={b.profile_id}
+            className="flex-row flex-wrap items-center justify-between gap-3 border-border bg-ink-soft p-4"
+          >
             <div>
               <p className="flex items-center gap-2 font-semibold text-foreground">
                 {b.profiles?.nome}
@@ -93,20 +111,39 @@ export default function GestaoBarbeiros({ barbeiros }: { barbeiros: any[] }) {
               </p>
               <p className="text-xs text-muted-foreground">{b.profiles?.telefone}</p>
             </div>
-            {!b.is_dono && (
-              <button
-                onClick={() => alternarAtivo(b.profile_id, b.ativo)}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "rounded-full",
-                  b.ativo
-                    ? "border-destructive/40 text-destructive hover:bg-destructive/10"
-                    : "border-success/40 text-success hover:bg-success/10"
-                )}
-              >
-                {b.ativo ? "Desativar" : "Reativar"}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {!b.is_dono && (
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={comissoes[b.profile_id] ?? 50}
+                    onChange={(e) =>
+                      setComissoes((prev) => ({ ...prev, [b.profile_id]: Number(e.target.value) }))
+                    }
+                    onBlur={() => salvarComissao(b.profile_id)}
+                    disabled={salvandoComissao === b.profile_id}
+                    className="h-9 w-20 bg-background text-right"
+                  />
+                  <span className="text-xs text-muted-foreground">% comissão</span>
+                </div>
+              )}
+              {!b.is_dono && (
+                <button
+                  onClick={() => alternarAtivo(b.profile_id, b.ativo)}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "rounded-full",
+                    b.ativo
+                      ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                      : "border-success/40 text-success hover:bg-success/10"
+                  )}
+                >
+                  {b.ativo ? "Desativar" : "Reativar"}
+                </button>
+              )}
+            </div>
           </Card>
         ))}
       </div>

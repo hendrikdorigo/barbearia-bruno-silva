@@ -332,6 +332,7 @@ export type Database = {
           ativo: boolean
           banner_url: string | null
           bio: string | null
+          comissao_percentual: number
           created_at: string
           especialidades: string[]
           google_calendar_connected: boolean
@@ -343,6 +344,7 @@ export type Database = {
           ativo?: boolean
           banner_url?: string | null
           bio?: string | null
+          comissao_percentual?: number
           created_at?: string
           especialidades?: string[]
           google_calendar_connected?: boolean
@@ -354,6 +356,7 @@ export type Database = {
           ativo?: boolean
           banner_url?: string | null
           bio?: string | null
+          comissao_percentual?: number
           created_at?: string
           especialidades?: string[]
           google_calendar_connected?: boolean

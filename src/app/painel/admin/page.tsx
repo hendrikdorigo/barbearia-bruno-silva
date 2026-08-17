@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PainelAdminAgendamentos from "@/components/PainelAdminAgendamentos";
+import EstatisticasCards from "@/components/EstatisticasCards";
+import { calcularEstatisticas } from "@/lib/estatisticas";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 import { SparklesIcon } from "lucide-react";
@@ -77,6 +79,27 @@ export default async function PainelAdminPage() {
             ))}
           </div>
         </Alert>
+      )}
+
+      <div className="mt-10">
+        <EstatisticasCards
+          titulo="Barbearia inteira"
+          estatisticas={calcularEstatisticas(agendamentos ?? [])}
+        />
+      </div>
+
+      {barbeiros && barbeiros.length > 0 && (
+        <div className="mt-8 space-y-6">
+          {barbeiros.map((b: any) => (
+            <EstatisticasCards
+              key={b.profile_id}
+              titulo={b.profiles?.nome}
+              estatisticas={calcularEstatisticas(
+                (agendamentos ?? []).filter((a) => a.barbeiro_id === b.profile_id)
+              )}
+            />
+          ))}
+        </div>
       )}
 
       <h2 className="mt-10 font-display text-3xl text-foreground">

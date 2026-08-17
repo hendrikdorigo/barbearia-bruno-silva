@@ -89,7 +89,9 @@ async function ehAdmin() {
   return profile?.role === "admin";
 }
 
-// Ativa/desativa um barbeiro (remoção lógica, preserva histórico de agendamentos)
+// Ativa/desativa um barbeiro e/ou ajusta o percentual de comissão dele
+// (remoção lógica preserva histórico de agendamentos; comissão afeta o
+// trigger calcular_repasse_bruno() a partir do próximo agendamento).
 export async function PATCH(request: NextRequest) {
   if (!(await ehAdmin())) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
@@ -98,9 +100,18 @@ export async function PATCH(request: NextRequest) {
   if (!serviceKey) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY não configurada" }, { status: 500 });
   }
-  const { profile_id, ativo } = await request.json();
+  const { profile_id, ativo, comissao_percentual } = await request.json();
+  if (
+    comissao_percentual !== undefined &&
+    (typeof comissao_percentual !== "number" || comissao_percentual < 0 || comissao_percentual > 100)
+  ) {
+    return NextResponse.json({ error: "Comissão precisa ser um número entre 0 e 100." }, { status: 400 });
+  }
   const admin = createServiceClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey);
-  const { error } = await admin.from("barbeiros").update({ ativo }).eq("profile_id", profile_id);
+  const update: { ativo?: boolean; comissao_percentual?: number } = {};
+  if (ativo !== undefined) update.ativo = ativo;
+  if (comissao_percentual !== undefined) update.comissao_percentual = comissao_percentual;
+  const { error } = await admin.from("barbeiros").update(update).eq("profile_id", profile_id);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ success: true });
 }
