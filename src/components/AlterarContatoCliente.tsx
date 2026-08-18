@@ -14,9 +14,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  * opcional (não usado para autenticação, só para o barbeiro entrar em
  * contato se precisar).
  */
-export default function AlterarContatoCliente({ cpf, emailAtual }: { cpf: string; emailAtual: string | null }) {
+export default function AlterarContatoCliente({
+  cpf,
+  emailAtual,
+  telefoneAtual,
+}: {
+  cpf: string;
+  emailAtual: string | null;
+  telefoneAtual: string | null;
+}) {
   const supabase = createClient();
   const [email, setEmail] = useState(emailAtual ?? "");
+  const [telefone, setTelefone] = useState(telefoneAtual ?? "");
   const [msg, setMsg] = useState<{ tipo: "erro" | "sucesso"; texto: string } | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -28,12 +37,13 @@ export default function AlterarContatoCliente({ cpf, emailAtual }: { cpf: string
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from("clientes")
-      .update({ email: email || null })
-      .eq("profile_id", user!.id);
+    const [{ error: errorCliente }, { error: errorPerfil }] = await Promise.all([
+      supabase.from("clientes").update({ email: email || null }).eq("profile_id", user!.id),
+      supabase.from("profiles").update({ telefone: telefone || null }).eq("id", user!.id),
+    ]);
 
     setSalvando(false);
+    const error = errorCliente ?? errorPerfil;
     if (error) {
       setMsg({ tipo: "erro", texto: error.message });
       return;
@@ -60,11 +70,21 @@ export default function AlterarContatoCliente({ cpf, emailAtual }: { cpf: string
 
       <Card className="border-border bg-ink-soft">
         <CardHeader>
-          <CardTitle className="font-display text-xl font-normal tracking-wide">E-mail de contato</CardTitle>
+          <CardTitle className="font-display text-xl font-normal tracking-wide">Contato</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={salvar}>
             <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="telefone-contato">Telefone (WhatsApp)</FieldLabel>
+                <Input
+                  id="telefone-contato"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+                <FieldDescription>É pra esse número que mandamos os lembretes de horário.</FieldDescription>
+              </Field>
               <Field>
                 <FieldLabel htmlFor="email-contato">E-mail (opcional)</FieldLabel>
                 <Input

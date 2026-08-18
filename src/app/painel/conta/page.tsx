@@ -13,7 +13,7 @@ export default async function PainelContaPage() {
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("nome, avatar_url, role")
+    .select("nome, avatar_url, role, telefone")
     .eq("id", user.id)
     .single();
 
@@ -29,8 +29,8 @@ export default async function PainelContaPage() {
       <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">Minha conta</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {ehCliente
-          ? "Altere sua foto ou e-mail de contato."
-          : "Altere sua foto, e-mail ou senha usados para entrar."}
+          ? "Altere sua foto, telefone ou e-mail de contato."
+          : "Altere sua foto, telefone, e-mail ou senha usados para entrar."}
       </p>
 
       <div className="mt-8">
@@ -43,9 +43,13 @@ export default async function PainelContaPage() {
       </div>
 
       {ehCliente ? (
-        <AlterarContatoCliente cpf={cliente?.cpf ?? ""} emailAtual={cliente?.email ?? null} />
+        <AlterarContatoCliente
+          cpf={cliente?.cpf ?? ""}
+          emailAtual={cliente?.email ?? null}
+          telefoneAtual={perfil?.telefone ?? null}
+        />
       ) : (
-        <AlterarCredenciais emailAtual={user.email ?? ""} />
+        <AlterarCredenciais emailAtual={user.email ?? ""} telefoneAtual={perfil?.telefone ?? null} />
       )}
     </div>
   );

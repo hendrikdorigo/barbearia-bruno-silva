@@ -7,12 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function AlterarCredenciais({ emailAtual }: { emailAtual: string }) {
+export default function AlterarCredenciais({
+  emailAtual,
+  telefoneAtual,
+}: {
+  emailAtual: string;
+  telefoneAtual?: string | null;
+}) {
   const supabase = createClient();
 
   const [novoEmail, setNovoEmail] = useState(emailAtual);
   const [emailMsg, setEmailMsg] = useState<{ tipo: "erro" | "sucesso"; texto: string } | null>(null);
   const [salvandoEmail, setSalvandoEmail] = useState(false);
+
+  const [telefone, setTelefone] = useState(telefoneAtual ?? "");
+  const [telefoneMsg, setTelefoneMsg] = useState<{ tipo: "erro" | "sucesso"; texto: string } | null>(null);
+  const [salvandoTelefone, setSalvandoTelefone] = useState(false);
 
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -87,8 +97,57 @@ export default function AlterarCredenciais({ emailAtual }: { emailAtual: string 
     setConfirmarNovaSenha("");
   }
 
+  async function alterarTelefone(e: React.FormEvent) {
+    e.preventDefault();
+    setTelefoneMsg(null);
+    setSalvandoTelefone(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ telefone: telefone || null })
+      .eq("id", user!.id);
+
+    setSalvandoTelefone(false);
+    if (error) {
+      setTelefoneMsg({ tipo: "erro", texto: error.message });
+      return;
+    }
+    setTelefoneMsg({ tipo: "sucesso", texto: "Telefone atualizado." });
+  }
+
   return (
     <div className="mt-8 flex flex-col gap-6">
+      <Card className="border-border bg-ink-soft">
+        <CardHeader>
+          <CardTitle className="font-display text-xl font-normal tracking-wide">Telefone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={alterarTelefone}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+                {telefoneMsg?.tipo === "erro" && <FieldError>{telefoneMsg.texto}</FieldError>}
+                {telefoneMsg?.tipo === "sucesso" && (
+                  <FieldDescription className="text-success">{telefoneMsg.texto}</FieldDescription>
+                )}
+              </Field>
+              <Button type="submit" disabled={salvandoTelefone} variant="outline" className="w-full">
+                {salvandoTelefone ? "Salvando..." : "Salvar telefone"}
+              </Button>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+
       <Card className="border-border bg-ink-soft">
         <CardHeader>
           <CardTitle className="font-display text-xl font-normal tracking-wide">E-mail</CardTitle>
