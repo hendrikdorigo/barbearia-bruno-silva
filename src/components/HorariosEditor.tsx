@@ -99,11 +99,11 @@ export default function HorariosEditor({
           <Card
             key={dia}
             className={cn(
-              "flex-row flex-wrap items-center gap-4 border-border bg-ink-soft px-4 py-3",
+              "min-w-0 flex-col items-start gap-3 border-border bg-ink-soft px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4",
               !h.ativo && "bg-ink-soft/40"
             )}
           >
-            <label className="flex w-32 items-center gap-2.5 text-sm font-semibold text-foreground/90">
+            <label className="flex items-center gap-2.5 text-sm font-semibold text-foreground/90 sm:w-32">
               <Switch
                 checked={h.ativo}
                 onCheckedChange={(checked) => atualizar(dia, "ativo", checked)}
@@ -112,19 +112,19 @@ export default function HorariosEditor({
             </label>
 
             {h.ativo ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <Input
                   type="time"
                   value={h.hora_inicio}
                   onChange={(e) => atualizar(dia, "hora_inicio", e.target.value)}
-                  className="w-auto bg-background"
+                  className="w-auto min-w-0 bg-background"
                 />
                 <span>até</span>
                 <Input
                   type="time"
                   value={h.hora_fim}
                   onChange={(e) => atualizar(dia, "hora_fim", e.target.value)}
-                  className="w-auto bg-background"
+                  className="w-auto min-w-0 bg-background"
                 />
               </div>
             ) : (

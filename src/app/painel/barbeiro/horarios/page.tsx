@@ -47,7 +47,7 @@ export default async function HorariosBarbeiroPage() {
       </h1>
 
       <Tabs defaultValue="horarios" className="mt-8">
-        <TabsList>
+        <TabsList className="w-full max-w-full overflow-x-auto sm:w-fit">
           <TabsTrigger value="horarios">Horário semanal</TabsTrigger>
           <TabsTrigger value="excecoes">Folgas e exceções</TabsTrigger>
           <TabsTrigger value="bloqueios">Almoço e compromissos</TabsTrigger>

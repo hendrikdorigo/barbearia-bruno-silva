@@ -150,19 +150,19 @@ export default function BloqueiosEditor({
           />
         )}
 
-        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <Input
             type="time"
             value={horaInicio}
             onChange={(e) => setHoraInicio(e.target.value)}
-            className="w-auto bg-background"
+            className="w-auto min-w-0 bg-background"
           />
           <span>até</span>
           <Input
             type="time"
             value={horaFim}
             onChange={(e) => setHoraFim(e.target.value)}
-            className="w-auto bg-background"
+            className="w-auto min-w-0 bg-background"
           />
         </div>
 
