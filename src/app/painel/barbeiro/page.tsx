@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import AgendaBarbeiro from "@/components/AgendaBarbeiro";
+import AgendaCalendario from "@/components/AgendaCalendario";
 import ConectarGoogleCalendar from "@/components/ConectarGoogleCalendar";
 import EstatisticasCards from "@/components/EstatisticasCards";
 import { calcularEstatisticas } from "@/lib/estatisticas";
@@ -30,9 +30,15 @@ export default async function PainelBarbeiroPage() {
 
   const { data: agendamentos } = await supabase
     .from("agendamentos")
-    .select("*, clientes(profile_id, profiles(nome, telefone)), servicos(nome, preco)")
+    .select("*, clientes(profile_id, profiles(nome, telefone)), servicos(nome, preco, duracao_minutos)")
     .eq("barbeiro_id", user.id)
     .order("data_hora", { ascending: true });
+
+  const [{ data: horarios }, { data: excecoes }, { data: bloqueios }] = await Promise.all([
+    supabase.from("barbeiro_horarios").select("*").eq("barbeiro_id", user.id),
+    supabase.from("barbeiro_excecoes").select("*").eq("barbeiro_id", user.id),
+    supabase.from("barbeiro_bloqueios").select("*").eq("barbeiro_id", user.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -52,7 +58,12 @@ export default async function PainelBarbeiroPage() {
       </div>
 
       <h2 className="mt-10 font-display text-3xl text-foreground">Minha agenda</h2>
-      <AgendaBarbeiro agendamentos={agendamentos ?? []} />
+      <AgendaCalendario
+        agendamentos={agendamentos ?? []}
+        horarios={horarios ?? []}
+        excecoes={excecoes ?? []}
+        bloqueios={bloqueios ?? []}
+      />
     </div>
   );
 }

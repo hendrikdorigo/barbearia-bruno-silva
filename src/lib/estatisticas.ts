@@ -1,17 +1,7 @@
+import { paraDataSP, somaDias } from "@/lib/timezone-sp";
+
 export type PeriodoStats = { atendimentos: number; faturamento: number };
 export type EstatisticasPeriodo = { hoje: PeriodoStats; semana: PeriodoStats; mes: PeriodoStats };
-
-const SP_TZ = "America/Sao_Paulo";
-
-function paraDataSP(dataHoraIso: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: SP_TZ }).format(new Date(dataHoraIso));
-}
-
-function somaDias(ymd: string, dias: number): string {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + dias);
-  return d.toISOString().slice(0, 10);
-}
 
 /**
  * Conta atendimentos (confirmado/concluido) e faturamento de hoje, desta

@@ -4,6 +4,42 @@ import { gerarSlots, slotBloqueado } from "@/lib/constants";
 
 export type JanelaDia = { atende: boolean; horaInicio: string; horaFim: string };
 
+type HorarioLocal = { dia_semana: number; ativo: boolean; hora_inicio: string; hora_fim: string };
+type ExcecaoLocal = { data: string; ativo: boolean; hora_inicio: string | null; hora_fim: string | null };
+
+/**
+ * Mesma regra de calcularJanelaDia, mas operando sobre listas já carregadas
+ * (sem bater no banco) - usado pela agenda em calendário, que carrega
+ * horarios/excecoes uma vez e navega entre dias no cliente.
+ */
+export function calcularJanelaDiaLocal(
+  horarios: HorarioLocal[],
+  excecoes: ExcecaoLocal[],
+  data: string
+): JanelaDia {
+  const diaSemana = new Date(`${data}T00:00:00`).getDay();
+
+  const excecao = excecoes.find((e) => e.data === data);
+  if (excecao) {
+    return {
+      atende: Boolean(excecao.ativo),
+      horaInicio: excecao.hora_inicio?.slice(0, 5) ?? "09:00",
+      horaFim: excecao.hora_fim?.slice(0, 5) ?? "19:30",
+    };
+  }
+
+  const horarioDia = horarios.find((h) => h.dia_semana === diaSemana);
+  if (horarioDia) {
+    return {
+      atende: Boolean(horarioDia.ativo),
+      horaInicio: horarioDia.hora_inicio.slice(0, 5),
+      horaFim: horarioDia.hora_fim.slice(0, 5),
+    };
+  }
+
+  return { atende: diaSemana !== 0, horaInicio: "09:00", horaFim: "19:30" };
+}
+
 /**
  * Janela de atendimento de um barbeiro numa data: exceção específica daquela
  * data tem prioridade, senão cai no horário padrão do dia da semana, senão
