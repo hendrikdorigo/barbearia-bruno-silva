@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sincronizarCriacaoEvento } from "@/lib/google-calendar-sync";
+import { notificarBarbeiroNovoAgendamento } from "@/lib/notificar-barbeiro";
 
 /**
  * Chamada pelo cliente logo apos criar um agendamento, para colocar o
- * evento no Google Calendar do barbeiro imediatamente - sem esperar o
- * barbeiro confirmar. Falha aqui nunca deve travar a tela de agendamento
- * (o agendamento em si ja foi criado antes desta chamada).
+ * evento no Google Calendar do barbeiro e avisar ele no sino de
+ * notificações imediatamente - sem esperar o barbeiro confirmar. Falha
+ * aqui nunca deve travar a tela de agendamento (o agendamento em si ja
+ * foi criado antes desta chamada).
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,6 +36,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await sincronizarCriacaoEvento(id);
   } catch (e) {
     console.error("Erro na sincronização com Google Calendar:", e);
+  }
+
+  try {
+    await notificarBarbeiroNovoAgendamento(id);
+  } catch (e) {
+    console.error("Erro ao notificar barbeiro do novo agendamento:", e);
   }
 
   return NextResponse.json({ ok: true });

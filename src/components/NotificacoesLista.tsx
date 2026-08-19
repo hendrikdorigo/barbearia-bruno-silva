@@ -86,6 +86,18 @@ export default function NotificacoesLista({ notificacoes }: { notificacoes: any[
               Avaliar atendimento
             </Link>
           )}
+
+          {n.tipo === "novo_agendamento" && (
+            <Link
+              href="/painel/barbeiro"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "mt-3 w-fit border-gold uppercase tracking-widest text-gold hover:bg-gold/10"
+              )}
+            >
+              Ver agenda
+            </Link>
+          )}
         </Card>
       ))}
     </div>
