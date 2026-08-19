@@ -13,18 +13,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
 import PixCheckout from "@/components/PixCheckout";
+import ProdutoPicker from "@/components/ProdutoPicker";
+import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
 
 const PASSOS = [
   { id: "servico", label: "Serviço" },
   { id: "data", label: "Data" },
   { id: "horario", label: "Horário" },
   { id: "barbeiro", label: "Barbeiro" },
+  { id: "produtos", label: "Produtos" },
   { id: "pagamento", label: "Pagamento" },
 ];
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 type Candidato = { id: string; nome: string; avatarUrl: string | null; preco: number };
-type Passo = "servico" | "data" | "horario" | "barbeiro" | "pagamento" | "confirmado";
+type Passo = "servico" | "data" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
 
 export default function AgendarGeralPage() {
   return (
@@ -57,13 +60,28 @@ function AgendarConteudo() {
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
   const [barbeiroSelecionado, setBarbeiroSelecionado] = useState<Candidato | null>(null);
 
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carrinho, setCarrinho] = useState<Carrinho>({});
+
   const [ajustesAtivos, setAjustesAtivos] = useState<any[]>([]);
   const [exigePagamentoAntecipado, setExigePagamentoAntecipado] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
   const [pagarAntecipado, setPagarAntecipado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
+  const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
+
+  function alterarCarrinho(produtoId: string, delta: number) {
+    setCarrinho((prev) => {
+      const novo = Math.max(0, (prev[produtoId] ?? 0) + delta);
+      const copia = { ...prev };
+      if (novo === 0) delete copia[produtoId];
+      else copia[produtoId] = novo;
+      return copia;
+    });
+  }
 
   useEffect(() => {
     async function carregar() {
@@ -73,13 +91,13 @@ function AgendarConteudo() {
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
 
-      const { data: servicosData } = await supabase
-        .from("servicos")
-        .select("*")
-        .eq("ativo", true)
-        .order("preco");
+      const [{ data: servicosData }, { data: produtosData }] = await Promise.all([
+        supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
+        supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
+      ]);
       const lista = servicosData ?? [];
       setServicos(lista);
+      setProdutos(produtosData ?? []);
 
       if (servicoPreSelecionadoId) {
         const preSelecionado = lista.find((s: any) => s.id === servicoPreSelecionadoId);
@@ -210,9 +228,12 @@ function AgendarConteudo() {
   }
 
   const precoFinal = barbeiroSelecionado ? precoComAjuste(barbeiroSelecionado) : 0;
+  const totalProdutos = totalCarrinho(carrinho, produtos);
+  const valorTotal = precoFinal + totalProdutos;
 
   async function confirmarAgendamento() {
     setErro(null);
+    setAvisoProdutos(null);
     setEnviando(true);
 
     const {
@@ -254,10 +275,19 @@ function AgendarConteudo() {
 
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
 
+    const { comandaId, erro: erroProdutos } = await salvarProdutosNaComanda(
+      supabase,
+      agendamento.id,
+      carrinho,
+      produtos
+    );
+    if (erroProdutos) setAvisoProdutos(erroProdutos);
+
     setEnviando(false);
 
     if (pagaAntecipado) {
       setAgendamentoParaPagar(agendamento.id);
+      setComandaIdParaPagar(comandaId);
       return;
     }
 
@@ -288,6 +318,7 @@ function AgendarConteudo() {
         {passo === "data" && "Escolha o dia"}
         {passo === "horario" && "Escolha o horário"}
         {passo === "barbeiro" && "Escolha o barbeiro"}
+        {passo === "produtos" && "Quer levar algo da loja?"}
         {passo === "pagamento" && "Forma de pagamento"}
         {passo === "confirmado" && "Agendamento confirmado!"}
       </h1>
@@ -404,7 +435,7 @@ function AgendarConteudo() {
                 key={c.id}
                 onClick={() => {
                   setBarbeiroSelecionado(c);
-                  setPasso("pagamento");
+                  setPasso("produtos");
                 }}
                 className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
               >
@@ -431,11 +462,43 @@ function AgendarConteudo() {
         </div>
       )}
 
+      {passo === "produtos" && (
+        <div className="mt-8">
+          <p className="text-sm text-muted-foreground">
+            Aproveite e leve pomada, bebida ou outro produto — soma tudo na mesma
+            comanda do seu horário.
+          </p>
+
+          <ProdutoPicker produtos={produtos} carrinho={carrinho} onAlterar={alterarCarrinho} />
+
+          {totalProdutos > 0 && (
+            <p className="mt-6 flex items-center justify-between border-t border-border pt-4 text-sm">
+              <span className="text-muted-foreground">Produtos</span>
+              <span className="font-mono font-semibold text-gold-gradient">
+                R$ {totalProdutos.toFixed(2).replace(".", ",")}
+              </span>
+            </p>
+          )}
+
+          <Button onClick={() => setPasso("pagamento")} className="mt-6 w-full uppercase tracking-widest">
+            {totalProdutos > 0 ? "Continuar" : "Pular, ir para pagamento"}
+          </Button>
+        </div>
+      )}
+
       {passo === "pagamento" && (
         <div className="mt-8">
           <p className="text-sm text-muted-foreground">
-            {servicoSelecionado?.nome} com {barbeiroSelecionado?.nome} · {data} às {horarioSelecionado} · R${" "}
-            {precoFinal.toFixed(2).replace(".", ",")}
+            {servicoSelecionado?.nome} com {barbeiroSelecionado?.nome} · {data} às {horarioSelecionado}
+          </p>
+          <p className="mt-1 font-mono text-lg font-semibold text-gold-gradient">
+            R$ {valorTotal.toFixed(2).replace(".", ",")}
+            {totalProdutos > 0 && (
+              <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
+                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
+                {totalProdutos.toFixed(2).replace(".", ",")})
+              </span>
+            )}
           </p>
 
           {!exigePagamentoAntecipado && (
@@ -529,12 +592,17 @@ function AgendarConteudo() {
       <PixCheckout
         open={Boolean(agendamentoParaPagar)}
         onClose={() => setAgendamentoParaPagar(null)}
-        criarEndpoint="/api/pagamentos/mercadopago/criar-pix"
-        corpo={{ agendamentoId: agendamentoParaPagar }}
-        valor={precoFinal}
+        criarEndpoint={
+          comandaIdParaPagar
+            ? "/api/pagamentos/mercadopago/criar-pix-comanda"
+            : "/api/pagamentos/mercadopago/criar-pix"
+        }
+        corpo={comandaIdParaPagar ? { comandaId: comandaIdParaPagar } : { agendamentoId: agendamentoParaPagar }}
+        valor={valorTotal}
         onConfirmado={() => {
           setPasso("confirmado");
           setAgendamentoParaPagar(null);
+          setComandaIdParaPagar(null);
         }}
       />
 
@@ -546,6 +614,15 @@ function AgendarConteudo() {
             Seu horário com {barbeiroSelecionado?.nome} em {data} às {horarioSelecionado} foi
             registrado. Você vai receber um lembrete por WhatsApp 1 hora antes.
           </p>
+          {itensCarrinho(carrinho, produtos).length > 0 && (
+            <p className="mt-3 text-sm text-gold">
+              Também vai levar:{" "}
+              {itensCarrinho(carrinho, produtos)
+                .map((i) => `${i.quantidade}x ${i.produto.nome}`)
+                .join(", ")}
+            </p>
+          )}
+          {avisoProdutos && <p className="mt-3 text-sm text-destructive">{avisoProdutos}</p>}
           <Alert variant="destructive" className="mt-4 text-left">
             <AlertDescription>
               Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
