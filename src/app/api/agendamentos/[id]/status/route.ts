@@ -31,12 +31,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { data: agendamento, error: fetchError } = await supabase
     .from("agendamentos")
-    .select("id")
+    .select("id, cliente_id, barbeiro_id")
     .eq("id", id)
     .single();
 
   if (fetchError || !agendamento) {
     return NextResponse.json({ error: "Agendamento não encontrado." }, { status: 404 });
+  }
+
+  const { data: perfil } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+
+  const ehCliente = user.id === agendamento.cliente_id;
+  const ehBarbeiroOuAdmin = user.id === agendamento.barbeiro_id || perfil?.role === "admin";
+
+  if (!ehCliente && !ehBarbeiroOuAdmin) {
+    return NextResponse.json({ error: "Você não pode alterar este agendamento." }, { status: 403 });
+  }
+  // Cliente só pode cancelar o próprio horário - confirmar/concluir é ação
+  // do barbeiro (ou admin).
+  if (ehCliente && !ehBarbeiroOuAdmin && status !== "cancelado") {
+    return NextResponse.json({ error: "Você só pode cancelar este agendamento." }, { status: 403 });
   }
 
   const { error: updateError } = await supabase

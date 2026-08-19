@@ -106,6 +106,17 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
             >
               Cliente não veio (no-show)
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              onClick={() => {
+                if (confirm("Recusar esse agendamento?")) atualizarStatus("cancelado");
+              }}
+              className="rounded-full border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              Recusar agendamento
+            </Button>
           </>
         )}
       </div>
