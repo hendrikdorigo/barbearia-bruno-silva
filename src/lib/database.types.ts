@@ -382,6 +382,8 @@ export type Database = {
           email: string | null
           exige_pagamento_antecipado: boolean
           foto_url: string | null
+          frequencia_dias: number | null
+          pre_agendamento_ativo: boolean
           profile_id: string
           qtd_no_show: number
         }
@@ -392,6 +394,8 @@ export type Database = {
           email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
+          frequencia_dias?: number | null
+          pre_agendamento_ativo?: boolean
           profile_id: string
           qtd_no_show?: number
         }
@@ -402,6 +406,8 @@ export type Database = {
           email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
+          frequencia_dias?: number | null
+          pre_agendamento_ativo?: boolean
           profile_id?: string
           qtd_no_show?: number
         }
@@ -1086,6 +1092,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "barbeiros"
             referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      pre_agendamentos: {
+        Row: {
+          agendamento_id: string | null
+          barbeiro_id: string
+          cliente_id: string
+          created_at: string
+          data_hora_prevista: string
+          id: string
+          origem_agendamento_id: string
+          servico_id: string
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          agendamento_id?: string | null
+          barbeiro_id: string
+          cliente_id: string
+          created_at?: string
+          data_hora_prevista: string
+          id?: string
+          origem_agendamento_id: string
+          servico_id: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          agendamento_id?: string | null
+          barbeiro_id?: string
+          cliente_id?: string
+          created_at?: string
+          data_hora_prevista?: string
+          id?: string
+          origem_agendamento_id?: string
+          servico_id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_agendamentos_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_agendamentos_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "pre_agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_agendamentos_origem_agendamento_id_fkey"
+            columns: ["origem_agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_agendamentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
           },
         ]
       }

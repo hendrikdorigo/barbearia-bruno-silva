@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import AlterarCredenciais from "@/components/AlterarCredenciais";
 import AlterarContatoCliente from "@/components/AlterarContatoCliente";
 import AvatarUploader from "@/components/AvatarUploader";
+import PreferenciasPreAgendamento from "@/components/PreferenciasPreAgendamento";
 
 export default async function PainelContaPage() {
   const supabase = await createClient();
@@ -20,7 +21,11 @@ export default async function PainelContaPage() {
   const ehCliente = perfil?.role === "cliente";
 
   const { data: cliente } = ehCliente
-    ? await supabase.from("clientes").select("cpf, email").eq("profile_id", user.id).maybeSingle()
+    ? await supabase
+        .from("clientes")
+        .select("cpf, email, frequencia_dias, pre_agendamento_ativo")
+        .eq("profile_id", user.id)
+        .maybeSingle()
     : { data: null };
 
   return (
@@ -43,11 +48,19 @@ export default async function PainelContaPage() {
       </div>
 
       {ehCliente ? (
-        <AlterarContatoCliente
-          cpf={cliente?.cpf ?? ""}
-          emailAtual={cliente?.email ?? null}
-          telefoneAtual={perfil?.telefone ?? null}
-        />
+        <>
+          <AlterarContatoCliente
+            cpf={cliente?.cpf ?? ""}
+            emailAtual={cliente?.email ?? null}
+            telefoneAtual={perfil?.telefone ?? null}
+          />
+          <div className="mt-6">
+            <PreferenciasPreAgendamento
+              ativoInicial={cliente?.pre_agendamento_ativo ?? false}
+              frequenciaInicial={cliente?.frequencia_dias ?? null}
+            />
+          </div>
+        </>
       ) : (
         <AlterarCredenciais emailAtual={user.email ?? ""} telefoneAtual={perfil?.telefone ?? null} />
       )}

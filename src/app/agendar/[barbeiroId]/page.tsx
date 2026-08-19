@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import PixCheckout from "@/components/PixCheckout";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
 import ProdutoPicker from "@/components/ProdutoPicker";
+import PerguntaFrequencia from "@/components/PerguntaFrequencia";
 import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ export default function AgendarPage() {
   const [filaMensagem, setFilaMensagem] = useState<string | null>(null);
   const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
   const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
+  const [primeiraVisita, setPrimeiraVisita] = useState(false);
 
   function alterarCarrinho(produtoId: string, delta: number) {
     setCarrinho((prev) => {
@@ -316,6 +318,12 @@ export default function AgendarPage() {
     // Coloca o evento no Google Calendar do barbeiro assim que o horario e
     // reservado, sem esperar ele confirmar. Nao bloqueia a tela de sucesso.
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
+
+    const { count: totalAgendamentos } = await supabase
+      .from("agendamentos")
+      .select("id", { count: "exact", head: true })
+      .eq("cliente_id", user.id);
+    setPrimeiraVisita(totalAgendamentos === 1);
 
     const { comandaId, erro: erroProdutos } = await salvarProdutosNaComanda(
       supabase,
@@ -667,36 +675,40 @@ export default function AgendarPage() {
       />
 
       {passo === "confirmado" && (
-        <div className="mt-8 rounded-2xl border border-gold/40 bg-gold/10 p-8 text-center">
-          <ScissorsIcon className="mx-auto size-8 text-gold" />
-          <p className="mt-3 font-display text-3xl text-foreground">Tudo certo!</p>
-          <p className="mt-3 text-muted-foreground">
-            Seu horário com {nomeBarbeiro} em {data} às {horarioSelecionado} foi
-            registrado. Você vai receber um lembrete por WhatsApp 1 hora antes.
-            Acompanhe sua comanda em tempo real no painel.
-          </p>
-          {itensCarrinho(carrinho, produtos).length > 0 && (
-            <p className="mt-3 text-sm text-gold">
-              Também vai levar:{" "}
-              {itensCarrinho(carrinho, produtos)
-                .map((i) => `${i.quantidade}x ${i.produto.nome}`)
-                .join(", ")}
+        <>
+          <div className="mt-8 rounded-2xl border border-gold/40 bg-gold/10 p-8 text-center">
+            <ScissorsIcon className="mx-auto size-8 text-gold" />
+            <p className="mt-3 font-display text-3xl text-foreground">Tudo certo!</p>
+            <p className="mt-3 text-muted-foreground">
+              Seu horário com {nomeBarbeiro} em {data} às {horarioSelecionado} foi
+              registrado. Você vai receber um lembrete por WhatsApp 1 hora antes.
+              Acompanhe sua comanda em tempo real no painel.
             </p>
-          )}
-          {avisoProdutos && <p className="mt-3 text-sm text-destructive">{avisoProdutos}</p>}
-          <Alert variant="destructive" className="mt-4 text-left">
-            <AlertDescription>
-              Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
-              Após esse tempo o horário será cancelado.
-            </AlertDescription>
-          </Alert>
-          <Button
-            onClick={() => router.push("/painel/cliente")}
-            className="mt-6 uppercase tracking-widest"
-          >
-            Ver meus agendamentos
-          </Button>
-        </div>
+            {itensCarrinho(carrinho, produtos).length > 0 && (
+              <p className="mt-3 text-sm text-gold">
+                Também vai levar:{" "}
+                {itensCarrinho(carrinho, produtos)
+                  .map((i) => `${i.quantidade}x ${i.produto.nome}`)
+                  .join(", ")}
+              </p>
+            )}
+            {avisoProdutos && <p className="mt-3 text-sm text-destructive">{avisoProdutos}</p>}
+            <Alert variant="destructive" className="mt-4 text-left">
+              <AlertDescription>
+                Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
+                Após esse tempo o horário será cancelado.
+              </AlertDescription>
+            </Alert>
+            <Button
+              onClick={() => router.push("/painel/cliente")}
+              className="mt-6 uppercase tracking-widest"
+            >
+              Ver meus agendamentos
+            </Button>
+          </div>
+
+          {primeiraVisita && userId && <PerguntaFrequencia clienteId={userId} />}
+        </>
       )}
     </div>
   );
