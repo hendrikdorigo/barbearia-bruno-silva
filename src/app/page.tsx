@@ -9,14 +9,14 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
-    label: "Escolha o barbeiro",
-    description: "Veja portfólio, especialidades e avaliações de cada profissional.",
-    icon: SparklesIcon,
-  },
-  {
-    label: "Escolha o horário",
+    label: "Escolha o dia e horário",
     description: "Agenda em tempo real, sem ligação e sem espera.",
     icon: CalendarCheckIcon,
+  },
+  {
+    label: "Escolha o barbeiro",
+    description: "Veja quem está disponível naquele horário e escolha seu profissional.",
+    icon: SparklesIcon,
   },
   {
     label: "Apareça e aproveite",
@@ -70,7 +70,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href="/barbeiros"
+              href="/agendar"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "rounded-full px-8 uppercase tracking-wider"
@@ -202,10 +202,10 @@ export default async function HomePage() {
           Sua próxima cadeira <span className="text-gold-gradient">já está esperando</span>
         </h2>
         <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-          Escolha o barbeiro, o horário e deixe o resto com a gente.
+          Escolha o dia, o horário e deixe o resto com a gente.
         </p>
         <Link
-          href="/barbeiros"
+          href="/agendar"
           className={cn(
             buttonVariants({ size: "lg" }),
             "mt-8 rounded-full px-10 uppercase tracking-wider"
