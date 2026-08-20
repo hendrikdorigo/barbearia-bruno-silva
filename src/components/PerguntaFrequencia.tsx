@@ -14,10 +14,12 @@ const OPCOES_FREQUENCIA = [
 ];
 
 /**
- * Pergunta feita uma única vez, na tela de sucesso do primeiro agendamento
- * do cliente. Depois disso, ligar/desligar ou trocar a frequência só é
- * feito em Minha Conta (PreferenciasPreAgendamento.tsx) - essa tela nunca
- * pergunta de novo.
+ * Pergunta mostrada na tela de sucesso de cada agendamento enquanto o
+ * cliente não tiver `frequencia_dias` definida (chamador só renderiza esse
+ * componente nesse caso) - "Não sei dizer" não grava nada, então ela volta
+ * a aparecer no próximo agendamento. Assim que o cliente responde com uma
+ * frequência (aqui ou em Minha Conta), para de aparecer; ligar/desligar ou
+ * trocar depois disso só é feito em Minha Conta (PreferenciasPreAgendamento.tsx).
  */
 export default function PerguntaFrequencia({ clienteId }: { clienteId: string }) {
   const supabase = createClient();

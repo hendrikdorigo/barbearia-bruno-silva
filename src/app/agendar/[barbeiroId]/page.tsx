@@ -63,7 +63,7 @@ export default function AgendarPage() {
   const [filaMensagem, setFilaMensagem] = useState<string | null>(null);
   const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
   const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
-  const [primeiraVisita, setPrimeiraVisita] = useState(false);
+  const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
 
   function alterarCarrinho(produtoId: string, delta: number) {
     setCarrinho((prev) => {
@@ -333,11 +333,12 @@ export default function AgendarPage() {
     // reservado, sem esperar ele confirmar. Nao bloqueia a tela de sucesso.
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
 
-    const { count: totalAgendamentos } = await supabase
-      .from("agendamentos")
-      .select("id", { count: "exact", head: true })
-      .eq("cliente_id", user.id);
-    setPrimeiraVisita(totalAgendamentos === 1);
+    const { data: clienteFrequencia } = await supabase
+      .from("clientes")
+      .select("frequencia_dias")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    setPerguntarFrequencia((clienteFrequencia as any)?.frequencia_dias == null);
 
     const { comandaId, erro: erroProdutos } = await salvarProdutosNaComanda(
       supabase,
@@ -742,7 +743,7 @@ export default function AgendarPage() {
             </Button>
           </div>
 
-          {primeiraVisita && userId && <PerguntaFrequencia clienteId={userId} />}
+          {perguntarFrequencia && userId && <PerguntaFrequencia clienteId={userId} />}
         </>
       )}
     </div>

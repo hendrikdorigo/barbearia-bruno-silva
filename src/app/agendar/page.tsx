@@ -74,7 +74,7 @@ function AgendarConteudo() {
   const [enviando, setEnviando] = useState(false);
   const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
   const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
-  const [primeiraVisita, setPrimeiraVisita] = useState(false);
+  const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
 
   function alterarCarrinho(produtoId: string, delta: number) {
     setCarrinho((prev) => {
@@ -286,11 +286,12 @@ function AgendarConteudo() {
 
     fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
 
-    const { count: totalAgendamentos } = await supabase
-      .from("agendamentos")
-      .select("id", { count: "exact", head: true })
-      .eq("cliente_id", user.id);
-    setPrimeiraVisita(totalAgendamentos === 1);
+    const { data: clienteFrequencia } = await supabase
+      .from("clientes")
+      .select("frequencia_dias")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    setPerguntarFrequencia((clienteFrequencia as any)?.frequencia_dias == null);
 
     const { comandaId, erro: erroProdutos } = await salvarProdutosNaComanda(
       supabase,
@@ -673,7 +674,7 @@ function AgendarConteudo() {
             </Button>
           </div>
 
-          {primeiraVisita && userId && <PerguntaFrequencia clienteId={userId} />}
+          {perguntarFrequencia && userId && <PerguntaFrequencia clienteId={userId} />}
         </>
       )}
     </div>
