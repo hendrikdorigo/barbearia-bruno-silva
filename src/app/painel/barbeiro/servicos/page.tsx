@@ -18,6 +18,12 @@ export default async function ServicosBarbeiroPage() {
 
   if (!barbeiro) redirect("/");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
   const { data: servicos } = await supabase
     .from("servicos")
     .select("id, nome, preco, duracao_minutos")
@@ -48,6 +54,7 @@ export default async function ServicosBarbeiroPage() {
         barbeiroId={user.id}
         servicos={servicos ?? []}
         barbeiroServicosIniciais={barbeiroServicos ?? []}
+        isAdmin={profile?.role === "admin"}
       />
 
       <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">

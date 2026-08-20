@@ -20,10 +20,12 @@ export default function ServicosEditor({
   barbeiroId,
   servicos,
   barbeiroServicosIniciais,
+  isAdmin = false,
 }: {
   barbeiroId: string;
   servicos: Servico[];
   barbeiroServicosIniciais: BarbeiroServico[];
+  isAdmin?: boolean;
 }) {
   const [linhas, setLinhas] = useState<BarbeiroServico[]>(
     servicos.map((s) => {
@@ -32,6 +34,9 @@ export default function ServicosEditor({
         existente ?? { servico_id: s.id, ativo: false, preco_personalizado: null }
       );
     })
+  );
+  const [duracoes, setDuracoes] = useState<Record<string, number>>(() =>
+    Object.fromEntries(servicos.map((s) => [s.id, s.duracao_minutos]))
   );
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
@@ -56,6 +61,17 @@ export default function ServicosEditor({
     const { error } = await supabase
       .from("barbeiro_servicos")
       .upsert(payload, { onConflict: "barbeiro_id,servico_id" });
+
+    if (!error && isAdmin) {
+      const alterados = servicos.filter((s) => duracoes[s.id] !== s.duracao_minutos);
+      for (const s of alterados) {
+        await supabase
+          .from("servicos")
+          .update({ duracao_minutos: duracoes[s.id] })
+          .eq("id", s.id);
+      }
+    }
+
     setSalvando(false);
     if (error) {
       setMensagem(error.message);
@@ -85,6 +101,24 @@ export default function ServicosEditor({
               {s.nome}
             </label>
 
+            {isAdmin ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Input
+                  type="number"
+                  step="5"
+                  min="5"
+                  value={duracoes[s.id]}
+                  onChange={(e) =>
+                    setDuracoes((prev) => ({ ...prev, [s.id]: Number(e.target.value) }))
+                  }
+                  className="w-20 bg-background"
+                />
+                <span>min</span>
+              </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">{s.duracao_minutos} min</span>
+            )}
+
             {l.ativo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>R$</span>
@@ -113,6 +147,13 @@ export default function ServicosEditor({
           </Card>
         );
       })}
+
+      {isAdmin && (
+        <p className="text-xs text-muted-foreground">
+          A duração é a mesma para todos os barbeiros que oferecem o serviço — muda a
+          duração aqui afeta a agenda de todo mundo.
+        </p>
+      )}
 
       {mensagem && <p className="text-sm text-gold">{mensagem}</p>}
 
