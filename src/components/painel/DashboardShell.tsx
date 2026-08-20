@@ -16,6 +16,7 @@ import {
   ShoppingBagIcon,
   MegaphoneIcon,
   WalletIcon,
+  PercentIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +48,7 @@ const NAV_ITEMS = {
     { href: "/painel/admin/loja", label: "Loja", icon: ShoppingBagIcon },
     { href: "/painel/admin/popups", label: "Pop-ups", icon: MegaphoneIcon },
     { href: "/painel/admin/repasses", label: "Repasses", icon: WalletIcon },
+    { href: "/painel/admin/pagamentos", label: "Pagamentos", icon: PercentIcon },
   ],
 } as const;
 

@@ -547,6 +547,24 @@ export type Database = {
           },
         ]
       }
+      configuracoes_pagamento: {
+        Row: {
+          desconto_pagamento_antecipado_percentual: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          desconto_pagamento_antecipado_percentual?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          desconto_pagamento_antecipado_percentual?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedbacks: {
         Row: {
           agendamento_id: string | null

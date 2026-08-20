@@ -65,6 +65,7 @@ function AgendarConteudo() {
   const [carrinho, setCarrinho] = useState<Carrinho>({});
 
   const [ajustesAtivos, setAjustesAtivos] = useState<any[]>([]);
+  const [descontoAntecipado, setDescontoAntecipado] = useState(0);
   const [exigePagamentoAntecipado, setExigePagamentoAntecipado] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
   const [pagarAntecipado, setPagarAntecipado] = useState(false);
@@ -93,13 +94,15 @@ function AgendarConteudo() {
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
 
-      const [{ data: servicosData }, { data: produtosData }] = await Promise.all([
+      const [{ data: servicosData }, { data: produtosData }, { data: configPagamento }] = await Promise.all([
         supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
         supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
+        supabase.from("configuracoes_pagamento").select("desconto_pagamento_antecipado_percentual").limit(1).maybeSingle(),
       ]);
       const lista = servicosData ?? [];
       setServicos(lista);
       setProdutos(produtosData ?? []);
+      setDescontoAntecipado(Number(configPagamento?.desconto_pagamento_antecipado_percentual ?? 0));
 
       if (servicoPreSelecionadoId) {
         const preSelecionado = lista.find((s: any) => s.id === servicoPreSelecionadoId);
@@ -230,8 +233,14 @@ function AgendarConteudo() {
   }
 
   const precoFinal = barbeiroSelecionado ? precoComAjuste(barbeiroSelecionado) : 0;
+  const precoComDesconto =
+    descontoAntecipado > 0
+      ? Math.max(0, Math.round(precoFinal * (1 - descontoAntecipado / 100) * 100) / 100)
+      : precoFinal;
+  const pagaAntecipadoAgora = exigePagamentoAntecipado || pagarAntecipado;
+  const precoServicoCobrado = pagaAntecipadoAgora ? precoComDesconto : precoFinal;
   const totalProdutos = totalCarrinho(carrinho, produtos);
-  const valorTotal = precoFinal + totalProdutos;
+  const valorTotal = precoServicoCobrado + totalProdutos;
 
   async function confirmarAgendamento() {
     setErro(null);
@@ -261,7 +270,7 @@ function AgendarConteudo() {
         status: "pendente",
         forma_pagamento: (pagaAntecipado ? "pix" : formaPagamento) as any,
         pagamento_antecipado: false,
-        valor_servico: precoFinal,
+        valor_servico: pagaAntecipado ? precoComDesconto : precoFinal,
       })
       .select()
       .single();
@@ -503,7 +512,7 @@ function AgendarConteudo() {
             R$ {valorTotal.toFixed(2).replace(".", ",")}
             {totalProdutos > 0 && (
               <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
-                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
+                (serviço R$ {precoServicoCobrado.toFixed(2).replace(".", ",")} + produtos R${" "}
                 {totalProdutos.toFixed(2).replace(".", ",")})
               </span>
             )}
@@ -530,15 +539,30 @@ function AgendarConteudo() {
                     setPagarAntecipado(true);
                     setFormaPagamento("pix");
                   }}
-                  className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
+                  className={`relative rounded-lg border px-4 py-3 text-sm font-semibold ${
                     pagarAntecipado
                       ? "border-gold bg-gold-gradient text-ink"
                       : "border-border text-muted-foreground hover:border-gold"
                   }`}
                 >
                   Pagar agora (Pix)
+                  {descontoAntecipado > 0 && (
+                    <span
+                      className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        pagarAntecipado ? "bg-ink/20 text-ink" : "bg-success/15 text-success"
+                      }`}
+                    >
+                      -{descontoAntecipado}%
+                    </span>
+                  )}
                 </button>
               </div>
+              {descontoAntecipado > 0 && !pagarAntecipado && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Pagando agora, o serviço sai por R$ {precoComDesconto.toFixed(2).replace(".", ",")} em vez de
+                  R$ {precoFinal.toFixed(2).replace(".", ",")}.
+                </p>
+              )}
             </>
           )}
 
@@ -547,6 +571,12 @@ function AgendarConteudo() {
               <AlertDescription className="text-foreground/90">
                 Pagamento antecipado é feito só via <strong>Pix</strong> - depois de
                 confirmar, um QR Code aparece na tela para você escanear ou copiar o código.
+                {descontoAntecipado > 0 && (
+                  <>
+                    {" "}
+                    Já está com <strong>{descontoAntecipado}% de desconto</strong> aplicado no serviço.
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           ) : (

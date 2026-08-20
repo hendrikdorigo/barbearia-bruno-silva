@@ -52,6 +52,7 @@ export default function AgendarPage() {
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<Carrinho>({});
+  const [descontoAntecipado, setDescontoAntecipado] = useState(0);
   const [exigePagamentoAntecipado, setExigePagamentoAntecipado] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
   const [pagarAntecipado, setPagarAntecipado] = useState(false);
@@ -95,6 +96,13 @@ export default function AgendarPage() {
         .eq("ativo", true)
         .order("categoria");
       setProdutos(produtosData ?? []);
+
+      const { data: configPagamento } = await supabase
+        .from("configuracoes_pagamento")
+        .select("desconto_pagamento_antecipado_percentual")
+        .limit(1)
+        .maybeSingle();
+      setDescontoAntecipado(Number(configPagamento?.desconto_pagamento_antecipado_percentual ?? 0));
 
       // Serviços que ESSE barbeiro oferece, com preço próprio se houver
       const { data: barbeiroServicos } = await supabase
@@ -251,8 +259,14 @@ export default function AgendarPage() {
     return Math.max(0, Math.round(preco * 100) / 100);
   }, [servicoSelecionado, ajustesAtivos]);
 
+  const precoComDesconto =
+    descontoAntecipado > 0
+      ? Math.max(0, Math.round(precoFinal * (1 - descontoAntecipado / 100) * 100) / 100)
+      : precoFinal;
+  const pagaAntecipadoAgora = exigePagamentoAntecipado || pagarAntecipado;
+  const precoServicoCobrado = pagaAntecipadoAgora ? precoComDesconto : precoFinal;
   const totalProdutos = totalCarrinho(carrinho, produtos);
-  const valorTotal = precoFinal + totalProdutos;
+  const valorTotal = precoServicoCobrado + totalProdutos;
 
   async function entrarNaFila(horaEspecifica: string | null) {
     if (!userId || !servicoSelecionado) return;
@@ -304,7 +318,7 @@ export default function AgendarPage() {
         status: "pendente",
         forma_pagamento: (pagaAntecipado ? "pix" : formaPagamento) as any,
         pagamento_antecipado: false,
-        valor_servico: precoFinal,
+        valor_servico: pagaAntecipado ? precoComDesconto : precoFinal,
       })
       .select()
       .single();
@@ -552,7 +566,7 @@ export default function AgendarPage() {
             R$ {valorTotal.toFixed(2).replace(".", ",")}
             {totalProdutos > 0 && (
               <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
-                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
+                (serviço R$ {precoServicoCobrado.toFixed(2).replace(".", ",")} + produtos R${" "}
                 {totalProdutos.toFixed(2).replace(".", ",")})
               </span>
             )}
@@ -579,15 +593,30 @@ export default function AgendarPage() {
                     setPagarAntecipado(true);
                     setFormaPagamento("pix");
                   }}
-                  className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
+                  className={`relative rounded-lg border px-4 py-3 text-sm font-semibold ${
                     pagarAntecipado
                       ? "border-gold bg-gold-gradient text-ink"
                       : "border-border text-muted-foreground hover:border-gold"
                   }`}
                 >
                   Pagar agora (Pix)
+                  {descontoAntecipado > 0 && (
+                    <span
+                      className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        pagarAntecipado ? "bg-ink/20 text-ink" : "bg-success/15 text-success"
+                      }`}
+                    >
+                      -{descontoAntecipado}%
+                    </span>
+                  )}
                 </button>
               </div>
+              {descontoAntecipado > 0 && !pagarAntecipado && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Pagando agora, o serviço sai por R$ {precoComDesconto.toFixed(2).replace(".", ",")} em vez de
+                  R$ {precoFinal.toFixed(2).replace(".", ",")}.
+                </p>
+              )}
             </>
           )}
 
@@ -596,6 +625,12 @@ export default function AgendarPage() {
               <AlertDescription className="text-foreground/90">
                 Pagamento antecipado é feito só via <strong>Pix</strong> - depois de
                 confirmar, um QR Code aparece na tela para você escanear ou copiar o código.
+                {descontoAntecipado > 0 && (
+                  <>
+                    {" "}
+                    Já está com <strong>{descontoAntecipado}% de desconto</strong> aplicado no serviço.
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           ) : (
