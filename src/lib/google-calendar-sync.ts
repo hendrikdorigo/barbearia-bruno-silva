@@ -1,6 +1,11 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { criarEventoAgenda, excluirEventoAgenda, refreshAccessToken } from "@/lib/google-calendar";
+import {
+  buscarEventoIdPorAgendamento,
+  criarEventoAgenda,
+  excluirEventoAgenda,
+  refreshAccessToken,
+} from "@/lib/google-calendar";
 
 /**
  * Cria (se ainda nao existir) ou remove o evento no Google Calendar do
@@ -65,6 +70,15 @@ export async function sincronizarCriacaoEvento(agendamentoId: string) {
   const accessToken = await obterAccessTokenValido(admin, agendamento.barbeiro_id);
   if (!accessToken) return;
 
+  // Autocura: se já existir um evento com a etiqueta desse agendamento
+  // (ex: tentativa anterior criou o evento no Google mas não conseguiu
+  // salvar o id aqui), só reconecta o vínculo em vez de criar duplicado.
+  const eventoExistenteId = await buscarEventoIdPorAgendamento(accessToken, agendamentoId);
+  if (eventoExistenteId) {
+    await admin.from("agendamentos").update({ google_event_id: eventoExistenteId }).eq("id", agendamentoId);
+    return;
+  }
+
   const inicio = new Date(agendamento.data_hora);
   const duracao = (agendamento as any).servicos?.duracao_minutos ?? 30;
   const fim = new Date(inicio.getTime() + duracao * 60000);
@@ -77,6 +91,7 @@ export async function sincronizarCriacaoEvento(agendamentoId: string) {
     descricao: "Agendamento na Barbearia Bruno Silva.",
     inicioISO: inicio.toISOString(),
     fimISO: fim.toISOString(),
+    agendamentoId,
   });
 
   if (evento.id) {
@@ -94,12 +109,19 @@ export async function sincronizarCancelamentoEvento(agendamentoId: string) {
     .eq("id", agendamentoId)
     .single();
 
-  if (!agendamento?.google_event_id) return;
+  if (!agendamento) return;
   if (!(agendamento as any).barbeiros?.google_calendar_connected) return;
 
   const accessToken = await obterAccessTokenValido(admin, agendamento.barbeiro_id);
   if (!accessToken) return;
 
-  await excluirEventoAgenda(accessToken, agendamento.google_event_id);
+  // Se agendamentos.google_event_id estiver nulo (o vínculo se perdeu em
+  // algum momento, ex: falha logo após criar o evento no Google), busca
+  // pela etiqueta gravada no evento antes de desistir - evita deixar um
+  // evento órfão na agenda do barbeiro.
+  const eventId = agendamento.google_event_id ?? (await buscarEventoIdPorAgendamento(accessToken, agendamentoId));
+  if (!eventId) return;
+
+  await excluirEventoAgenda(accessToken, eventId);
   await admin.from("agendamentos").update({ google_event_id: null }).eq("id", agendamentoId);
 }

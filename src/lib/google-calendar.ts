@@ -99,6 +99,7 @@ export async function criarEventoAgenda(params: {
   descricao: string;
   inicioISO: string;
   fimISO: string;
+  agendamentoId: string;
 }) {
   const resp = await fetch(GOOGLE_CALENDAR_EVENTS_URL, {
     method: "POST",
@@ -111,6 +112,10 @@ export async function criarEventoAgenda(params: {
       description: params.descricao,
       start: { dateTime: params.inicioISO, timeZone: "America/Sao_Paulo" },
       end: { dateTime: params.fimISO, timeZone: "America/Sao_Paulo" },
+      // Marca o evento com o id do agendamento - permite achar e apagar o
+      // evento depois mesmo se agendamentos.google_event_id não tiver sido
+      // salvo por algum motivo (ex: falha de rede logo após criar o evento).
+      extendedProperties: { private: { agendamentoId: params.agendamentoId } },
     }),
   });
   if (!resp.ok) throw new Error(await resp.text());
@@ -126,4 +131,26 @@ export async function excluirEventoAgenda(accessToken: string, eventId: string) 
   if (!resp.ok && resp.status !== 404 && resp.status !== 410) {
     throw new Error(await resp.text());
   }
+}
+
+/**
+ * Busca, pela etiqueta extendedProperties.private.agendamentoId, um evento
+ * já criado no Google Calendar pra esse agendamento - usado como
+ * fallback no cancelamento quando agendamentos.google_event_id está nulo
+ * (evento existe no Google mas o vínculo no nosso banco se perdeu).
+ */
+export async function buscarEventoIdPorAgendamento(
+  accessToken: string,
+  agendamentoId: string
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    privateExtendedProperty: `agendamentoId=${agendamentoId}`,
+    maxResults: "1",
+  });
+  const resp = await fetch(`${GOOGLE_CALENDAR_EVENTS_URL}?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!resp.ok) return null;
+  const json = (await resp.json()) as { items?: { id: string }[] };
+  return json.items?.[0]?.id ?? null;
 }
