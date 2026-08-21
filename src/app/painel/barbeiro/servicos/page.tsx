@@ -35,41 +35,49 @@ export default async function ServicosBarbeiroPage() {
     .select("servico_id, ativo, preco_personalizado")
     .eq("barbeiro_id", user.id);
 
-  const { data: ajustes } = await supabase
-    .from("servico_ajustes")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .order("created_at", { ascending: false });
+  const isAdmin = profile?.role === "admin";
+
+  const { data: ajustes } = isAdmin
+    ? await supabase
+        .from("servico_ajustes")
+        .select("*")
+        .eq("barbeiro_id", user.id)
+        .order("created_at", { ascending: false })
+    : { data: null };
 
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
-        Meus serviços e preços
+        Meus serviços
       </h1>
       <p className="mt-2 text-muted-foreground">
-        Escolha quais serviços você oferece e, se quiser, defina um preço
-        próprio diferente do padrão da barbearia.
+        Escolha quais serviços você oferece.
+        {!isAdmin && " Preço e duração são definidos pelo Bruno."}
       </p>
       <ServicosEditor
         barbeiroId={user.id}
         servicos={servicos ?? []}
         barbeiroServicosIniciais={barbeiroServicos ?? []}
-        isAdmin={profile?.role === "admin"}
+        isAdmin={isAdmin}
       />
 
-      <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
-        Acréscimos e descontos
-      </h2>
-      <p className="mt-2 text-muted-foreground">
-        Crie regras automáticas de acréscimo ou desconto para datas
-        específicas (ex: feriado) ou para um dia da semana fixo (ex: toda
-        sexta 10% off).
-      </p>
-      <AjustesPrecoEditor
-        barbeiroId={user.id}
-        servicos={servicos ?? []}
-        ajustesIniciais={ajustes ?? []}
-      />
+      {isAdmin && (
+        <>
+          <h2 className="mt-14 font-display text-3xl tracking-wide text-foreground">
+            Acréscimos e descontos
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Crie regras automáticas de acréscimo ou desconto para datas
+            específicas (ex: feriado) ou para um dia da semana fixo (ex: toda
+            sexta 10% off).
+          </p>
+          <AjustesPrecoEditor
+            barbeiroId={user.id}
+            servicos={servicos ?? []}
+            ajustesIniciais={ajustes ?? []}
+          />
+        </>
+      )}
     </div>
   );
 }

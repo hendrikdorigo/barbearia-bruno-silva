@@ -17,6 +17,7 @@ import {
   MegaphoneIcon,
   WalletIcon,
   PercentIcon,
+  TagIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +25,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -33,36 +35,55 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const NAV_ITEMS = {
-  barbeiro: [
-    { href: "/painel/barbeiro", label: "Agenda", icon: CalendarDaysIcon },
-    { href: "/painel/barbeiro/horarios", label: "Horários", icon: ClockIcon },
-    { href: "/painel/barbeiro/servicos", label: "Serviços", icon: ScissorsIcon },
-    { href: "/painel/barbeiro/fidelidade", label: "Fidelidade", icon: GiftIcon },
-    { href: "/painel/barbeiro/portfolio", label: "Portfólio", icon: ImageIcon },
-    { href: "/painel/barbeiro/comunidade", label: "Comunidade", icon: MessagesSquareIcon },
-  ],
-  admin: [
-    { href: "/painel/admin", label: "Agendamentos", icon: LayoutDashboardIcon },
-    { href: "/painel/admin/barbeiros", label: "Barbeiros", icon: UsersIcon },
-    { href: "/painel/admin/loja", label: "Loja", icon: ShoppingBagIcon },
-    { href: "/painel/admin/popups", label: "Pop-ups", icon: MegaphoneIcon },
-    { href: "/painel/admin/repasses", label: "Repasses", icon: WalletIcon },
-    { href: "/painel/admin/pagamentos", label: "Pagamentos", icon: PercentIcon },
-  ],
-} as const;
+const BARBEIRO_ITEMS = [
+  { href: "/painel/barbeiro", label: "Agenda", icon: CalendarDaysIcon },
+  { href: "/painel/barbeiro/horarios", label: "Horários", icon: ClockIcon },
+  { href: "/painel/barbeiro/servicos", label: "Serviços", icon: ScissorsIcon },
+  { href: "/painel/barbeiro/fidelidade", label: "Fidelidade", icon: GiftIcon },
+  { href: "/painel/barbeiro/portfolio", label: "Portfólio", icon: ImageIcon },
+  { href: "/painel/barbeiro/comunidade", label: "Comunidade", icon: MessagesSquareIcon },
+];
+
+const ADMIN_GROUPS = [
+  {
+    label: "Barbearia",
+    items: [
+      { href: "/painel/admin", label: "Agendamentos", icon: LayoutDashboardIcon },
+      { href: "/painel/admin/barbeiros", label: "Barbeiros", icon: UsersIcon },
+      { href: "/painel/admin/precos", label: "Preços e fidelidade", icon: TagIcon },
+    ],
+  },
+  {
+    label: "Negócio",
+    items: [
+      { href: "/painel/admin/loja", label: "Loja", icon: ShoppingBagIcon },
+      { href: "/painel/admin/popups", label: "Pop-ups", icon: MegaphoneIcon },
+      { href: "/painel/admin/repasses", label: "Repasses", icon: WalletIcon },
+      { href: "/painel/admin/pagamentos", label: "Pagamentos", icon: PercentIcon },
+    ],
+  },
+];
 
 export default function DashboardShell({
   title,
   variant,
+  souBarbeiro = false,
   children,
 }: {
   title: string;
   variant: "barbeiro" | "admin";
+  souBarbeiro?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const navItems = NAV_ITEMS[variant];
+
+  const groups =
+    variant === "admin"
+      ? [
+          ...ADMIN_GROUPS,
+          ...(souBarbeiro ? [{ label: "Minha agenda (barbeiro)", items: BARBEIRO_ITEMS }] : []),
+        ]
+      : [{ label: undefined as string | undefined, items: BARBEIRO_ITEMS }];
 
   return (
     <SidebarProvider>
@@ -78,24 +99,27 @@ export default function DashboardShell({
           </Link>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={pathname === item.href}
-                      tooltip={item.label}
-                      render={<Link href={item.href} />}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {groups.map((group, i) => (
+            <SidebarGroup key={group.label ?? i}>
+              {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        isActive={pathname === item.href}
+                        tooltip={item.label}
+                        render={<Link href={item.href} />}
+                      >
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
@@ -109,7 +133,7 @@ export default function DashboardShell({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
           <span className="font-display text-sm tracking-wide text-gold-gradient">{title}</span>
         </header>

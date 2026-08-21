@@ -120,27 +120,34 @@ export default function ServicosEditor({
             )}
 
             {l.ativo ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>R$</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder={String(s.preco)}
-                  value={l.preco_personalizado ?? ""}
-                  onChange={(e) =>
-                    atualizar(
-                      s.id,
-                      "preco_personalizado",
-                      e.target.value === "" ? null : Number(e.target.value)
-                    )
-                  }
-                  className="w-28 bg-background"
-                />
-                <span className="text-xs text-muted-foreground">
-                  (padrão R$ {Number(s.preco).toFixed(2).replace(".", ",")})
+              isAdmin ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>R$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder={String(s.preco)}
+                    value={l.preco_personalizado ?? ""}
+                    onChange={(e) =>
+                      atualizar(
+                        s.id,
+                        "preco_personalizado",
+                        e.target.value === "" ? null : Number(e.target.value)
+                      )
+                    }
+                    className="w-28 bg-background"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    (padrão R$ {Number(s.preco).toFixed(2).replace(".", ",")})
+                  </span>
+                </div>
+              ) : (
+                <span className="font-mono text-sm text-muted-foreground">
+                  R$ {Number(l.preco_personalizado ?? s.preco).toFixed(2).replace(".", ",")}
+                  {l.preco_personalizado != null && " (personalizado pelo Bruno)"}
                 </span>
-              </div>
+              )
             ) : (
               <span className="text-sm text-muted-foreground">Não oferece este serviço</span>
             )}

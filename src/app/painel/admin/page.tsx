@@ -1,22 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PainelAdminAgendamentos from "@/components/PainelAdminAgendamentos";
 import EstatisticasCards from "@/components/EstatisticasCards";
 import { calcularEstatisticas } from "@/lib/estatisticas";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { buttonVariants } from "@/components/ui/button";
-import { SparklesIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const BARBEIRO_LINKS = [
-  { href: "/painel/barbeiro", label: "Minha agenda" },
-  { href: "/painel/barbeiro/portfolio", label: "Editar meu portfólio" },
-  { href: "/painel/barbeiro/horarios", label: "Meus horários" },
-  { href: "/painel/barbeiro/servicos", label: "Meus serviços" },
-  { href: "/painel/barbeiro/fidelidade", label: "Fidelidade" },
-  { href: "/painel/barbeiro/comunidade", label: "Meus posts" },
-];
 
 export default async function PainelAdminPage() {
   const supabase = await createClient();
@@ -45,41 +31,11 @@ export default async function PainelAdminPage() {
     .select("profile_id, profiles(nome)")
     .eq("ativo", true);
 
-  const { data: souBarbeiro } = await supabase
-    .from("barbeiros")
-    .select("profile_id")
-    .eq("profile_id", user.id)
-    .maybeSingle();
-
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Painel do Bruno
       </h1>
-
-      {souBarbeiro && (
-        <Alert className="mt-6 border-gold/40 bg-gold/10">
-          <SparklesIcon className="text-gold" />
-          <AlertTitle className="uppercase tracking-wider text-gold">
-            Você também atende como barbeiro
-          </AlertTitle>
-          <div className="col-start-2 mt-3 flex flex-wrap gap-3">
-            {BARBEIRO_LINKS.map((link, i) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  buttonVariants({ variant: i === 0 ? "default" : "outline", size: "sm" }),
-                  "rounded-full uppercase tracking-widest",
-                  i !== 0 && "border-gold text-gold hover:bg-gold/10"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </Alert>
-      )}
 
       <div className="mt-10">
         <EstatisticasCards
