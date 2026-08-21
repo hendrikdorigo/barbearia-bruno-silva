@@ -100,8 +100,11 @@ export default function Footer() {
 
         <RazorDivider className="my-8" />
 
-        <p className="text-xs text-muted-foreground/70">
-          © {new Date().getFullYear()} Barbearia Bruno Silva. Todos os direitos reservados.
+        <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground/70">
+          <span>© {new Date().getFullYear()} Barbearia Bruno Silva. Todos os direitos reservados.</span>
+          <Link href="/privacidade" className="underline-offset-2 hover:underline">
+            Política de privacidade
+          </Link>
         </p>
       </div>
     </footer>
