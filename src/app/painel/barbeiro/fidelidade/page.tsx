@@ -14,31 +14,18 @@ export default async function FidelidadeBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("profile_id")
-    .eq("profile_id", user.id)
-    .single();
+  const [{ data: barbeiro }, { data: profile }, { data: configs }, { data: progresso }] = await Promise.all([
+    supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    supabase.from("fidelidade_config").select("*").eq("barbeiro_id", user.id).order("meta_atendimentos"),
+    supabase
+      .from("fidelidade_progresso")
+      .select("*, clientes(profile_id, profiles(nome))")
+      .eq("barbeiro_id", user.id)
+      .order("atendimentos_concluidos", { ascending: false }),
+  ]);
   if (!barbeiro) redirect("/");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
   const isAdmin = profile?.role === "admin";
-
-  const { data: configs } = await supabase
-    .from("fidelidade_config")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .order("meta_atendimentos");
-
-  const { data: progresso } = await supabase
-    .from("fidelidade_progresso")
-    .select("*, clientes(profile_id, profiles(nome))")
-    .eq("barbeiro_id", user.id)
-    .order("atendimentos_concluidos", { ascending: false });
 
   return (
     <div className="mx-auto max-w-2xl">

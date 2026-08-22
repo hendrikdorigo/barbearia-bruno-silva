@@ -12,33 +12,29 @@ export default async function PainelBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, nome")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || (profile.role !== "barbeiro" && profile.role !== "admin")) {
-    redirect("/");
-  }
-
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("*")
-    .eq("profile_id", user.id)
-    .single();
-
-  const { data: agendamentos } = await supabase
-    .from("agendamentos")
-    .select("*, clientes(profile_id, profiles(nome, telefone)), servicos(nome, preco, duracao_minutos)")
-    .eq("barbeiro_id", user.id)
-    .order("data_hora", { ascending: true });
-
-  const [{ data: horarios }, { data: excecoes }, { data: bloqueios }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: barbeiro },
+    { data: agendamentos },
+    { data: horarios },
+    { data: excecoes },
+    { data: bloqueios },
+  ] = await Promise.all([
+    supabase.from("profiles").select("role, nome").eq("id", user.id).single(),
+    supabase.from("barbeiros").select("*").eq("profile_id", user.id).single(),
+    supabase
+      .from("agendamentos")
+      .select("*, clientes(profile_id, profiles(nome, telefone)), servicos(nome, preco, duracao_minutos)")
+      .eq("barbeiro_id", user.id)
+      .order("data_hora", { ascending: true }),
     supabase.from("barbeiro_horarios").select("*").eq("barbeiro_id", user.id),
     supabase.from("barbeiro_excecoes").select("*").eq("barbeiro_id", user.id),
     supabase.from("barbeiro_bloqueios").select("*").eq("barbeiro_id", user.id),
   ]);
+
+  if (!profile || (profile.role !== "barbeiro" && profile.role !== "admin")) {
+    redirect("/");
+  }
 
   return (
     <div className="mx-auto max-w-4xl">

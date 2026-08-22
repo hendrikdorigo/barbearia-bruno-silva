@@ -33,23 +33,15 @@ export default async function PainelClientePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: cliente } = await supabase
-    .from("clientes")
-    .select("*")
-    .eq("profile_id", user.id)
-    .maybeSingle();
-
-  const { data: agendamentos } = await supabase
-    .from("agendamentos")
-    .select("*, barbeiros(profile_id, profiles(nome)), servicos(nome, preco)")
-    .eq("cliente_id", user.id)
-    .order("data_hora", { ascending: false });
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nome, avatar_url, notif_whatsapp_comunidade")
-    .eq("id", user.id)
-    .single();
+  const [{ data: cliente }, { data: agendamentos }, { data: profile }] = await Promise.all([
+    supabase.from("clientes").select("*").eq("profile_id", user.id).maybeSingle(),
+    supabase
+      .from("agendamentos")
+      .select("*, barbeiros(profile_id, profiles(nome)), servicos(nome, preco)")
+      .eq("cliente_id", user.id)
+      .order("data_hora", { ascending: false }),
+    supabase.from("profiles").select("nome, avatar_url, notif_whatsapp_comunidade").eq("id", user.id).single(),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">

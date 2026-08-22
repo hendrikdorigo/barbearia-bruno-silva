@@ -10,30 +10,15 @@ export default async function ServicosBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("profile_id")
-    .eq("profile_id", user.id)
-    .single();
+  const [{ data: barbeiro }, { data: profile }, { data: servicos }, { data: barbeiroServicos }] =
+    await Promise.all([
+      supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
+      supabase.from("profiles").select("role").eq("id", user.id).single(),
+      supabase.from("servicos").select("id, nome, preco, duracao_minutos").eq("ativo", true).order("preco"),
+      supabase.from("barbeiro_servicos").select("servico_id, ativo, preco_personalizado").eq("barbeiro_id", user.id),
+    ]);
 
   if (!barbeiro) redirect("/");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const { data: servicos } = await supabase
-    .from("servicos")
-    .select("id, nome, preco, duracao_minutos")
-    .eq("ativo", true)
-    .order("preco");
-
-  const { data: barbeiroServicos } = await supabase
-    .from("barbeiro_servicos")
-    .select("servico_id, ativo, preco_personalizado")
-    .eq("barbeiro_id", user.id);
 
   const isAdmin = profile?.role === "admin";
 

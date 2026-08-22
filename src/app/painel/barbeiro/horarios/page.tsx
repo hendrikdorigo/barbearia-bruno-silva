@@ -12,33 +12,15 @@ export default async function HorariosBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("profile_id")
-    .eq("profile_id", user.id)
-    .single();
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [{ data: barbeiro }, { data: horarios }, { data: excecoes }, { data: bloqueios }] = await Promise.all([
+    supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
+    supabase.from("barbeiro_horarios").select("*").eq("barbeiro_id", user.id).order("dia_semana"),
+    supabase.from("barbeiro_excecoes").select("*").eq("barbeiro_id", user.id).gte("data", hoje).order("data"),
+    supabase.from("barbeiro_bloqueios").select("*").eq("barbeiro_id", user.id).or(`data.is.null,data.gte.${hoje}`),
+  ]);
 
   if (!barbeiro) redirect("/");
-
-  const { data: horarios } = await supabase
-    .from("barbeiro_horarios")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .order("dia_semana");
-
-  const hoje = new Date().toISOString().slice(0, 10);
-  const { data: excecoes } = await supabase
-    .from("barbeiro_excecoes")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .gte("data", hoje)
-    .order("data");
-
-  const { data: bloqueios } = await supabase
-    .from("barbeiro_bloqueios")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .or(`data.is.null,data.gte.${hoje}`);
 
   return (
     <div className="mx-auto max-w-2xl">

@@ -11,25 +11,18 @@ export default async function PainelAdminPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, nome")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: agendamentos }, { data: barbeiros }] = await Promise.all([
+    supabase.from("profiles").select("role, nome").eq("id", user.id).single(),
+    supabase
+      .from("agendamentos")
+      .select(
+        "*, clientes(profile_id, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome)"
+      )
+      .order("data_hora", { ascending: false }),
+    supabase.from("barbeiros").select("profile_id, profiles(nome)").eq("ativo", true),
+  ]);
 
   if (profile?.role !== "admin") redirect("/");
-
-  const { data: agendamentos } = await supabase
-    .from("agendamentos")
-    .select(
-      "*, clientes(profile_id, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome)"
-    )
-    .order("data_hora", { ascending: false });
-
-  const { data: barbeiros } = await supabase
-    .from("barbeiros")
-    .select("profile_id, profiles(nome)")
-    .eq("ativo", true);
 
   return (
     <div className="mx-auto max-w-6xl">

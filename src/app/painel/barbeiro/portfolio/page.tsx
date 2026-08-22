@@ -9,25 +9,13 @@ export default async function PortfolioBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: barbeiro } = await supabase
-    .from("barbeiros")
-    .select("*")
-    .eq("profile_id", user.id)
-    .single();
+  const [{ data: barbeiro }, { data: profile }, { data: itensPortfolio }] = await Promise.all([
+    supabase.from("barbeiros").select("*").eq("profile_id", user.id).single(),
+    supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single(),
+    supabase.from("portfolio_itens").select("*").eq("barbeiro_id", user.id).order("ordem", { ascending: true }),
+  ]);
 
   if (!barbeiro) redirect("/");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nome, avatar_url")
-    .eq("id", user.id)
-    .single();
-
-  const { data: itensPortfolio } = await supabase
-    .from("portfolio_itens")
-    .select("*")
-    .eq("barbeiro_id", user.id)
-    .order("ordem", { ascending: true });
 
   return (
     <div className="mx-auto max-w-2xl">

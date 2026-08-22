@@ -14,12 +14,15 @@ export default async function ComandaClientePage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: comanda } = await supabase
-    .from("comandas")
-    .select("*")
-    .eq("agendamento_id", agendamentoId)
-    .eq("cliente_id", user.id)
-    .maybeSingle();
+  const [{ data: comanda }, { data: produtos }] = await Promise.all([
+    supabase
+      .from("comandas")
+      .select("*")
+      .eq("agendamento_id", agendamentoId)
+      .eq("cliente_id", user.id)
+      .maybeSingle(),
+    supabase.from("produtos").select("id, nome, preco, categoria").eq("ativo", true).order("categoria"),
+  ]);
 
   if (!comanda) notFound();
 
@@ -27,12 +30,6 @@ export default async function ComandaClientePage({
     .from("comanda_itens")
     .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
     .eq("comanda_id", comanda.id);
-
-  const { data: produtos } = await supabase
-    .from("produtos")
-    .select("id, nome, preco, categoria")
-    .eq("ativo", true)
-    .order("categoria");
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
