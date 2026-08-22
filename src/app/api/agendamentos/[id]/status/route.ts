@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sincronizarCancelamentoEvento, sincronizarCriacaoEvento } from "@/lib/google-calendar-sync";
+import { notificarClienteStatusAgendamento } from "@/lib/notificar-cliente-whatsapp";
 
 /**
  * Muda o status de um agendamento. O evento no Google Calendar do barbeiro
@@ -72,6 +73,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
   } catch (e) {
     console.error("Erro na sincronização com Google Calendar:", e);
+  }
+
+  // Avisa o cliente por WhatsApp só quando quem mudou o status foi o
+  // barbeiro/admin (cancelamento feito pelo próprio cliente não precisa
+  // avisar ele mesmo).
+  if (ehBarbeiroOuAdmin && (status === "confirmado" || status === "cancelado")) {
+    try {
+      await notificarClienteStatusAgendamento(id, status);
+    } catch (e) {
+      console.error("Erro ao notificar cliente por WhatsApp:", e);
+    }
   }
 
   return NextResponse.json({ ok: true });

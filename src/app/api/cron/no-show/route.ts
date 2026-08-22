@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { TOLERANCIA_ATRASO_MINUTOS } from "@/lib/constants";
+import { notificarClienteStatusAgendamento } from "@/lib/notificar-cliente-whatsapp";
 
 /**
  * Job automático de "no-show" (atraso > 15 minutos).
@@ -70,7 +71,14 @@ async function handleNoShow(request: NextRequest) {
     const { error } = await supabase.rpc("marcar_no_show", {
       p_agendamento_id: a.id,
     });
-    if (!error) processados++;
+    if (!error) {
+      processados++;
+      try {
+        await notificarClienteStatusAgendamento(a.id, "no_show");
+      } catch (e) {
+        console.error("Erro ao notificar cliente por WhatsApp (no-show automático):", e);
+      }
+    }
   }
 
   return NextResponse.json({ processados });

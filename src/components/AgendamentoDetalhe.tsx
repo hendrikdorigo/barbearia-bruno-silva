@@ -42,6 +42,7 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
   async function marcarNoShow() {
     setLoadingId(a.id);
     await supabase.rpc("marcar_no_show", { p_agendamento_id: a.id });
+    fetch(`/api/agendamentos/${a.id}/notificar-no-show`, { method: "POST" }).catch(() => {});
     setLoadingId(null);
     router.refresh();
   }
