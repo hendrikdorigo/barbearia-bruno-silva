@@ -5,14 +5,25 @@ import { useRouter } from "next/navigation";
 import { PlusIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calcularSlotsLivres } from "@/lib/disponibilidade";
+import { somaDias } from "@/lib/timezone-sp";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 type ClienteEncontrado = { id: string; nome: string; telefone: string | null };
+
+const OPCOES_REPETICAO = [
+  { label: "1 semana", dias: 7 },
+  { label: "2 semanas", dias: 14 },
+  { label: "3 semanas", dias: 21 },
+  { label: "1 mês", dias: 30 },
+  { label: "45 dias", dias: 45 },
+  { label: "2 meses", dias: 60 },
+];
 
 export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: string }) {
   const supabase = createClient();
@@ -35,8 +46,12 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
   const [buscandoHorarios, setBuscandoHorarios] = useState(false);
 
   const [formaPagamento, setFormaPagamento] = useState<string>("dinheiro");
+  const [repetir, setRepetir] = useState(false);
+  const [frequenciaDias, setFrequenciaDias] = useState(30);
+  const [repetirAte, setRepetirAte] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -101,7 +116,35 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     setTelefoneAvulso("");
     setHorario(null);
     setFormaPagamento("dinheiro");
+    setRepetir(false);
+    setFrequenciaDias(30);
+    setRepetirAte("");
     setErro(null);
+    setResultado(null);
+  }
+
+  async function criarAgendamento(servico: Servico, dataISO: string) {
+    const { data: agendamento, error } = await supabase
+      .from("agendamentos")
+      .insert({
+        barbeiro_id: barbeiroId,
+        servico_id: servico.id,
+        cliente_id: modoCliente === "cadastrado" ? clienteSelecionado!.id : null,
+        cliente_nome_avulso: modoCliente === "avulso" ? nomeAvulso.trim() : null,
+        cliente_telefone_avulso: modoCliente === "avulso" ? telefoneAvulso.trim() || null : null,
+        data_hora: `${dataISO}T${horario}:00`,
+        status: "confirmado",
+        forma_pagamento: formaPagamento as any,
+        pagamento_antecipado: false,
+        valor_servico: servico.preco,
+      })
+      .select()
+      .single();
+
+    if (!error && agendamento) {
+      fetch(`/api/agendamentos/${agendamento.id}/criar-manual`, { method: "POST" }).catch(() => {});
+    }
+    return { agendamento, error };
   }
 
   async function confirmar() {
@@ -119,38 +162,55 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       setErro("Informe o nome do cliente.");
       return;
     }
+    if (repetir && !repetirAte) {
+      setErro("Escolha até quando repetir.");
+      return;
+    }
 
     setEnviando(true);
-    const { data: agendamento, error } = await supabase
-      .from("agendamentos")
-      .insert({
-        barbeiro_id: barbeiroId,
-        servico_id: servico.id,
-        cliente_id: modoCliente === "cadastrado" ? clienteSelecionado!.id : null,
-        cliente_nome_avulso: modoCliente === "avulso" ? nomeAvulso.trim() : null,
-        cliente_telefone_avulso: modoCliente === "avulso" ? telefoneAvulso.trim() || null : null,
-        data_hora: `${data}T${horario}:00`,
-        status: "confirmado",
-        forma_pagamento: formaPagamento as any,
-        pagamento_antecipado: false,
-        valor_servico: servico.preco,
-      })
-      .select()
-      .single();
+    const { error } = await criarAgendamento(servico, data);
 
-    setEnviando(false);
-    if (error || !agendamento) {
+    if (error) {
+      setEnviando(false);
       setErro(
-        error?.message ??
+        error.message ||
           "Não foi possível reservar. Talvez esse horário já tenha sido ocupado - escolha outro."
       );
       return;
     }
 
-    fetch(`/api/agendamentos/${agendamento.id}/criar-manual`, { method: "POST" }).catch(() => {});
+    if (!repetir) {
+      setEnviando(false);
+      setOpen(false);
+      limpar();
+      router.refresh();
+      return;
+    }
 
-    setOpen(false);
-    limpar();
+    // Repete o mesmo horário a cada `frequenciaDias`, pulando datas em que
+    // esse horário já não estiver mais livre (feriado, outro cliente etc.).
+    let cursor = data;
+    let criados = 1;
+    let pulados = 0;
+    while (true) {
+      cursor = somaDias(cursor, frequenciaDias);
+      if (cursor > repetirAte) break;
+      const livres = await calcularSlotsLivres(supabase, barbeiroId, cursor);
+      if (livres.includes(horario)) {
+        const { error: erroRepeticao } = await criarAgendamento(servico, cursor);
+        if (erroRepeticao) pulados++;
+        else criados++;
+      } else {
+        pulados++;
+      }
+    }
+
+    setEnviando(false);
+    setResultado(
+      pulados > 0
+        ? `Criados ${criados} agendamentos. ${pulados} data(s) pulada(s) porque esse horário já estava ocupado.`
+        : `Criados ${criados} agendamentos.`
+    );
     router.refresh();
   }
 
@@ -173,7 +233,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
           if (!o) limpar();
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Reservar horário</DialogTitle>
             <DialogDescription>
@@ -181,6 +241,20 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
             </DialogDescription>
           </DialogHeader>
 
+          {resultado ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-foreground">{resultado}</p>
+              <Button
+                onClick={() => {
+                  setOpen(false);
+                  limpar();
+                }}
+                className="w-full uppercase tracking-widest"
+              >
+                Fechar
+              </Button>
+            </div>
+          ) : (
           <div className="flex flex-col gap-4">
             <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Serviço</p>
@@ -340,6 +414,46 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
             </div>
 
             <div>
+              <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
+                <span className="text-sm font-medium text-foreground">Repetir esse agendamento</span>
+                <Switch checked={repetir} onCheckedChange={setRepetir} />
+              </label>
+              {repetir && (
+                <div className="mt-3 flex flex-col gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground">De quanto em quanto tempo</p>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {OPCOES_REPETICAO.map((op) => (
+                        <button
+                          key={op.dias}
+                          onClick={() => setFrequenciaDias(op.dias)}
+                          className={cn(
+                            "rounded-lg border px-2 py-2 text-xs font-semibold",
+                            frequenciaDias === op.dias
+                              ? "border-gold bg-gold-gradient text-ink"
+                              : "border-border text-muted-foreground hover:border-gold"
+                          )}
+                        >
+                          {op.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground">Repetir até</p>
+                    <Input
+                      type="date"
+                      value={repetirAte}
+                      min={data}
+                      onChange={(e) => setRepetirAte(e.target.value)}
+                      className="mt-2 bg-background"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {FORMAS_PAGAMENTO.map((f) => (
@@ -362,9 +476,10 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
             {erro && <p className="text-sm text-destructive">{erro}</p>}
 
             <Button onClick={confirmar} disabled={enviando} className="w-full uppercase tracking-widest">
-              {enviando ? "Reservando..." : "Reservar horário"}
+              {enviando ? "Reservando..." : repetir ? "Reservar e repetir" : "Reservar horário"}
             </Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
