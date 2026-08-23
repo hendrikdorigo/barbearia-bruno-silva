@@ -24,15 +24,17 @@ export async function notificarClienteStatusAgendamento(
   const { data: agendamento } = await admin
     .from("agendamentos")
     .select(
-      "data_hora, clientes(profiles(nome, telefone)), barbeiros(profiles(nome)), servicos(nome)"
+      "data_hora, cliente_nome_avulso, cliente_telefone_avulso, clientes(profiles(nome, telefone)), barbeiros(profiles(nome)), servicos(nome)"
     )
     .eq("id", agendamentoId)
     .single();
 
   if (!agendamento) return;
 
-  const telefone = (agendamento as any).clientes?.profiles?.telefone ?? null;
-  const nomeCliente = (agendamento as any).clientes?.profiles?.nome ?? "Cliente";
+  const telefone =
+    (agendamento as any).clientes?.profiles?.telefone ?? agendamento.cliente_telefone_avulso ?? null;
+  const nomeCliente =
+    (agendamento as any).clientes?.profiles?.nome ?? agendamento.cliente_nome_avulso ?? "Cliente";
   const nomeBarbeiro = (agendamento as any).barbeiros?.profiles?.nome ?? "o barbeiro";
   const nomeServico = (agendamento as any).servicos?.nome ?? "seu atendimento";
   const dataHora = new Date(agendamento.data_hora).toLocaleString("pt-BR", {

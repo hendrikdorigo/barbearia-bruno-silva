@@ -17,7 +17,7 @@ export default async function ComandaBarbeiroPage({
   const [{ data: comanda }, { data: produtos }] = await Promise.all([
     supabase
       .from("comandas")
-      .select("*, clientes(profile_id, profiles(nome))")
+      .select("*, clientes(profile_id, profiles(nome)), agendamentos(cliente_nome_avulso)")
       .eq("agendamento_id", agendamentoId)
       .eq("barbeiro_id", user.id)
       .maybeSingle(),
@@ -34,7 +34,8 @@ export default async function ComandaBarbeiroPage({
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="font-display text-4xl tracking-wide text-foreground">
-        Comanda de {(comanda as any).clientes?.profiles?.nome}
+        Comanda de{" "}
+        {(comanda as any).clientes?.profiles?.nome ?? (comanda as any).agendamentos?.cliente_nome_avulso}
       </h1>
       <p className="mt-2 text-muted-foreground">
         Adicione itens da loja e feche a conta quando o atendimento acabar.

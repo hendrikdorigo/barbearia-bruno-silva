@@ -57,7 +57,7 @@ export async function sincronizarCriacaoEvento(agendamentoId: string) {
   const { data: agendamento } = await admin
     .from("agendamentos")
     .select(
-      "id, data_hora, google_event_id, barbeiro_id, status, barbeiros(google_calendar_connected), clientes(profiles(nome)), servicos(nome, duracao_minutos)"
+      "id, data_hora, google_event_id, barbeiro_id, status, cliente_nome_avulso, barbeiros(google_calendar_connected), clientes(profiles(nome)), servicos(nome, duracao_minutos)"
     )
     .eq("id", agendamentoId)
     .single();
@@ -82,7 +82,8 @@ export async function sincronizarCriacaoEvento(agendamentoId: string) {
   const inicio = new Date(agendamento.data_hora);
   const duracao = (agendamento as any).servicos?.duracao_minutos ?? 30;
   const fim = new Date(inicio.getTime() + duracao * 60000);
-  const nomeCliente = (agendamento as any).clientes?.profiles?.nome ?? "Cliente";
+  const nomeCliente =
+    (agendamento as any).clientes?.profiles?.nome ?? agendamento.cliente_nome_avulso ?? "Cliente";
   const nomeServico = (agendamento as any).servicos?.nome ?? "Atendimento";
 
   const evento = await criarEventoAgenda({

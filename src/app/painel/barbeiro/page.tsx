@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import AgendaCalendario from "@/components/AgendaCalendario";
 import ConectarGoogleCalendar from "@/components/ConectarGoogleCalendar";
 import EstatisticasCards from "@/components/EstatisticasCards";
+import NovoAgendamentoBarbeiro from "@/components/NovoAgendamentoBarbeiro";
 import { calcularEstatisticas } from "@/lib/estatisticas";
 
 export default async function PainelBarbeiroPage() {
@@ -53,7 +54,10 @@ export default async function PainelBarbeiroPage() {
         )}
       </div>
 
-      <h2 className="mt-10 font-display text-3xl text-foreground">Minha agenda</h2>
+      <div className="mt-10 flex items-center justify-between gap-3">
+        <h2 className="font-display text-3xl text-foreground">Minha agenda</h2>
+        <NovoAgendamentoBarbeiro barbeiroId={user.id} />
+      </div>
       <AgendaCalendario
         agendamentos={agendamentos ?? []}
         horarios={horarios ?? []}

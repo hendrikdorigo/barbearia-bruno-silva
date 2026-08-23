@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon } from "lucide-react";
 import { calcularJanelaDiaLocal } from "@/lib/disponibilidade";
+import { nomeClienteAgendamento } from "@/lib/cliente-agendamento";
 import { paraDataSP, paraHoraSP, somaDias } from "@/lib/timezone-sp";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
@@ -224,7 +225,7 @@ export default function AgendaCalendario({
                   }}
                 >
                   <p className="truncate text-sm font-semibold">
-                    {paraHoraSP(a.data_hora)} · {a.clientes?.profiles?.nome ?? "Cliente"}
+                    {paraHoraSP(a.data_hora)} · {nomeClienteAgendamento(a)}
                   </p>
                   <p className="truncate text-xs opacity-80">
                     {a.servicos?.nome} · {STATUS_LABEL[a.status]}

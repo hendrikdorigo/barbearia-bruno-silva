@@ -51,7 +51,9 @@ async function handleLembretes(request: NextRequest) {
 
   const { data: lembretes } = await supabase
     .from("lembretes_whatsapp")
-    .select("*, agendamentos(cliente_id, clientes(profile_id, profiles(telefone)))")
+    .select(
+      "*, agendamentos(cliente_id, cliente_telefone_avulso, clientes(profile_id, profiles(telefone)))"
+    )
     .eq("status_envio", "agendado")
     .lte("agendado_para", new Date().toISOString())
     .limit(50);
@@ -60,7 +62,7 @@ async function handleLembretes(request: NextRequest) {
   let falhas = 0;
 
   for (const l of (lembretes as any[]) ?? []) {
-    const telefone = l.agendamentos?.clientes?.profiles?.telefone ?? null;
+    const telefone = l.agendamentos?.clientes?.profiles?.telefone ?? l.agendamentos?.cliente_telefone_avulso ?? null;
     const resultado = await enviarMensagemWhatsapp(telefone, l.mensagem ?? "");
 
     if (resultado.sucesso) {

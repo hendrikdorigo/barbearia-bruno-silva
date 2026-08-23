@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Trash2Icon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { nomeClienteAgendamento } from "@/lib/cliente-agendamento";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -122,7 +123,7 @@ export default function PainelAdminAgendamentos({
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {a.clientes?.profiles?.nome}
+                  {nomeClienteAgendamento(a)}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {a.barbeiros?.profiles?.nome}

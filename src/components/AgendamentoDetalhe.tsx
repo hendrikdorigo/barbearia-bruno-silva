@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { nomeClienteAgendamento, telefoneClienteAgendamento } from "@/lib/cliente-agendamento";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,11 +54,13 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
     <div className="flex flex-col gap-3">
       <div>
         <p className="font-semibold text-foreground">
-          {a.clientes?.profiles?.nome} · {a.servicos?.nome}
+          {nomeClienteAgendamento(a)} · {a.servicos?.nome}
+          {!a.cliente_id && (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">(avulso)</span>
+          )}
         </p>
         <p className="text-sm text-muted-foreground">
-          {new Date(a.data_hora).toLocaleString("pt-BR")} ·{" "}
-          {a.clientes?.profiles?.telefone ?? "sem telefone"}
+          {new Date(a.data_hora).toLocaleString("pt-BR")} · {telefoneClienteAgendamento(a) ?? "sem telefone"}
         </p>
         <Badge variant="outline" className="mt-1.5 uppercase tracking-widest text-gold">
           {STATUS_LABEL[a.status]}

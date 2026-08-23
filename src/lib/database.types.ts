@@ -20,7 +20,9 @@ export type Database = {
           atendimento_iniciado_em: string | null
           barbeiro_id: string
           checkin_at: string | null
-          cliente_id: string
+          cliente_id: string | null
+          cliente_nome_avulso: string | null
+          cliente_telefone_avulso: string | null
           created_at: string
           data_hora: string
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
@@ -39,7 +41,9 @@ export type Database = {
           atendimento_iniciado_em?: string | null
           barbeiro_id: string
           checkin_at?: string | null
-          cliente_id: string
+          cliente_id?: string | null
+          cliente_nome_avulso?: string | null
+          cliente_telefone_avulso?: string | null
           created_at?: string
           data_hora: string
           forma_pagamento?:
@@ -60,7 +64,9 @@ export type Database = {
           atendimento_iniciado_em?: string | null
           barbeiro_id?: string
           checkin_at?: string | null
-          cliente_id?: string
+          cliente_id?: string | null
+          cliente_nome_avulso?: string | null
+          cliente_telefone_avulso?: string | null
           created_at?: string
           data_hora?: string
           forma_pagamento?:
@@ -467,7 +473,7 @@ export type Database = {
         Row: {
           agendamento_id: string
           barbeiro_id: string
-          cliente_id: string
+          cliente_id: string | null
           confirmado_caixa_em: string | null
           confirmado_caixa_por: string | null
           created_at: string
@@ -483,7 +489,7 @@ export type Database = {
         Insert: {
           agendamento_id: string
           barbeiro_id: string
-          cliente_id: string
+          cliente_id?: string | null
           confirmado_caixa_em?: string | null
           confirmado_caixa_por?: string | null
           created_at?: string
@@ -501,7 +507,7 @@ export type Database = {
         Update: {
           agendamento_id?: string
           barbeiro_id?: string
-          cliente_id?: string
+          cliente_id?: string | null
           confirmado_caixa_em?: string | null
           confirmado_caixa_por?: string | null
           created_at?: string
