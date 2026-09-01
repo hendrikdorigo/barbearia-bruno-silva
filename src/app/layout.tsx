@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Inter, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -35,10 +35,60 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+// Troque para o domínio próprio assim que o Bruno registrar um (basta
+// configurar NEXT_PUBLIC_SITE_URL no projeto da Vercel, sem mexer no código).
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://barbearia-bruno-silva.vercel.app";
+
+const titulo = "Barbearia Bruno Silva — Cortes e Barba em Limeira/SP";
+const descricao =
+  "Agende online seu corte de cabelo ou barba na Barbearia Bruno Silva, em Limeira/SP. Horários flexíveis, profissionais experientes e pagamento pelo site.";
+
 export const metadata: Metadata = {
-  title: "Barbearia Bruno Silva",
-  description:
-    "Cortes de cabelo e barba com excelência. Agende seu horário na Barbearia Bruno Silva.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: titulo,
+    template: "%s | Barbearia Bruno Silva",
+  },
+  description: descricao,
+  keywords: [
+    "barbearia Limeira",
+    "corte de cabelo Limeira",
+    "barba Limeira",
+    "agendar barbearia online",
+    "Barbearia Bruno Silva",
+  ],
+  authors: [{ name: "Barbearia Bruno Silva" }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: siteUrl,
+    siteName: "Barbearia Bruno Silva",
+    title: titulo,
+    description: descricao,
+    images: [
+      {
+        url: "/logo-full.png",
+        width: 1191,
+        height: 1049,
+        alt: "Barbearia Bruno Silva",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: titulo,
+    description: descricao,
+    images: ["/logo-full.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0b0c",
 };
 
 export default function RootLayout({
