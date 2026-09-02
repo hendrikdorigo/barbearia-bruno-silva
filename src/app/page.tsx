@@ -40,14 +40,13 @@ export default async function HomePage() {
     <div>
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-border">
-        <div
-          className="absolute inset-0 opacity-25"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&q=60')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
+        <Image
+          src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1600&q=60"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
         <div className="pointer-events-none absolute -right-24 -top-24 hidden opacity-[0.07] lg:block">
