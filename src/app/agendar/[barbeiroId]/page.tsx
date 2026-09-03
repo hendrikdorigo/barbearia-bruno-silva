@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ClockIcon, ScissorsIcon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ const PASSOS: { id: Passo; label: string }[] = [
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 
 type Passo = "servico" | "horario" | "produtos" | "pagamento" | "confirmado";
+
+const ORDEM_PASSOS: Passo[] = ["servico", "horario", "produtos", "pagamento"];
 
 export default function AgendarPage() {
   const { barbeiroId } = useParams<{ barbeiroId: string }>();
@@ -64,6 +66,11 @@ export default function AgendarPage() {
   const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
   const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
   const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
+
+  function voltarPasso() {
+    const i = ORDEM_PASSOS.indexOf(passo as any);
+    if (i > 0) setPasso(ORDEM_PASSOS[i - 1]);
+  }
 
   function alterarCarrinho(produtoId: string, delta: number) {
     setCarrinho((prev) => {
@@ -392,6 +399,16 @@ export default function AgendarPage() {
       </h1>
 
       <AgendamentoStepper passos={PASSOS} atual={passo} />
+
+      {passo !== "servico" && passo !== "confirmado" && (
+        <button
+          onClick={voltarPasso}
+          className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-gold"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Voltar
+        </button>
+      )}
 
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">

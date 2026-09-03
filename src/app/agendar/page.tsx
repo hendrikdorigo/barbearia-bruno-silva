@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ClockIcon, ScissorsIcon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
@@ -19,8 +19,7 @@ import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdut
 
 const PASSOS = [
   { id: "servico", label: "Serviço" },
-  { id: "data", label: "Data" },
-  { id: "horario", label: "Horário" },
+  { id: "horario", label: "Data e horário" },
   { id: "barbeiro", label: "Barbeiro" },
   { id: "produtos", label: "Produtos" },
   { id: "pagamento", label: "Pagamento" },
@@ -28,7 +27,9 @@ const PASSOS = [
 
 type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
 type Candidato = { id: string; nome: string; avatarUrl: string | null; preco: number };
-type Passo = "servico" | "data" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
+type Passo = "servico" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
+
+const ORDEM_PASSOS: Passo[] = ["servico", "horario", "barbeiro", "produtos", "pagamento"];
 
 export default function AgendarGeralPage() {
   return (
@@ -76,6 +77,11 @@ function AgendarConteudo() {
   const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
   const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
 
+  function voltarPasso() {
+    const i = ORDEM_PASSOS.indexOf(passo as any);
+    if (i > 0) setPasso(ORDEM_PASSOS[i - 1]);
+  }
+
   function alterarCarrinho(produtoId: string, delta: number) {
     setCarrinho((prev) => {
       const novo = Math.max(0, (prev[produtoId] ?? 0) + delta);
@@ -108,7 +114,7 @@ function AgendarConteudo() {
         const preSelecionado = lista.find((s: any) => s.id === servicoPreSelecionadoId);
         if (preSelecionado) {
           setServicoSelecionado(preSelecionado);
-          setPasso("data");
+          setPasso("horario");
         }
       }
 
@@ -333,8 +339,7 @@ function AgendarConteudo() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">Agendar horário</p>
       <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">
         {passo === "servico" && "Escolha o serviço"}
-        {passo === "data" && "Escolha o dia"}
-        {passo === "horario" && "Escolha o horário"}
+        {passo === "horario" && "Escolha o dia e horário"}
         {passo === "barbeiro" && "Escolha o barbeiro"}
         {passo === "produtos" && "Quer levar algo da loja?"}
         {passo === "pagamento" && "Forma de pagamento"}
@@ -342,6 +347,16 @@ function AgendarConteudo() {
       </h1>
 
       <AgendamentoStepper passos={PASSOS} atual={passo} />
+
+      {passo !== "servico" && passo !== "confirmado" && (
+        <button
+          onClick={voltarPasso}
+          className="mt-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-gold"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Voltar
+        </button>
+      )}
 
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">
@@ -352,7 +367,7 @@ function AgendarConteudo() {
                 setServicoSelecionado(s);
                 setBarbeiroSelecionado(null);
                 setHorarioSelecionado(null);
-                setPasso("data");
+                setPasso("horario");
               }}
               className="flex items-center justify-between rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
             >
@@ -371,7 +386,7 @@ function AgendarConteudo() {
         </div>
       )}
 
-      {passo === "data" && (
+      {passo === "horario" && (
         <div className="mt-8">
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Data</label>
           <div className="mt-3">
@@ -384,19 +399,8 @@ function AgendarConteudo() {
               }}
             />
           </div>
-          <Button
-            disabled={buscandoCandidatos}
-            onClick={() => setPasso("horario")}
-            className="mt-6 w-full uppercase tracking-widest"
-          >
-            Continuar
-          </Button>
-        </div>
-      )}
 
-      {passo === "horario" && (
-        <div className="mt-8">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
             Horários com pelo menos um barbeiro livre nesse dia
           </p>
           {buscandoHorarios ? (
