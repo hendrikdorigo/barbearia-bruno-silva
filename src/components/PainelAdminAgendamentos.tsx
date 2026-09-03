@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon, ShoppingBagIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -64,6 +65,7 @@ export default function PainelAdminAgendamentos({
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
   const [agendamentoAbertoId, setAgendamentoAbertoId] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   const agendamentoAberto = lista.find((a) => a.id === agendamentoAbertoId) ?? null;
 
@@ -83,6 +85,7 @@ export default function PainelAdminAgendamentos({
     setExcluindoId(null);
     if (error) return;
     setLista((prev) => prev.filter((a) => a.id !== id));
+    router.refresh();
   }
 
   async function alternarBloqueio(a: any) {
@@ -104,6 +107,7 @@ export default function PainelAdminAgendamentos({
           : item
       )
     );
+    router.refresh();
   }
 
   return (
