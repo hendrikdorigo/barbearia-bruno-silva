@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { XIcon } from "lucide-react";
+import { XIcon, PencilIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import PixCheckout from "@/components/PixCheckout";
@@ -23,6 +24,7 @@ type Item = {
 
 type Comanda = {
   id: string;
+  agendamento_id: string;
   status: "aberta" | "aguardando_pagamento" | "paga" | "fechada";
   valor_servico: number;
   valor_produtos: number;
@@ -57,11 +59,31 @@ export default function ComandaView({
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
   const [pixAberto, setPixAberto] = useState(false);
+  const [valorServico, setValorServico] = useState(Number(comanda.valor_servico));
+  const [editandoValor, setEditandoValor] = useState(false);
+  const [valorEditado, setValorEditado] = useState(String(comanda.valor_servico));
+  const [salvandoValor, setSalvandoValor] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const total = Number(comanda.valor_servico) + itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
+  const total = valorServico + itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
   const podeAdicionar = status === "aberta" || status === "aguardando_pagamento";
+
+  async function salvarValorServico() {
+    const novoValor = Number(valorEditado);
+    if (Number.isNaN(novoValor) || novoValor < 0) return;
+    setSalvandoValor(true);
+    const [{ error: erroComanda }, { error: erroAgendamento }] = await Promise.all([
+      supabase.from("comandas").update({ valor_servico: novoValor }).eq("id", comanda.id),
+      supabase.from("agendamentos").update({ valor_servico: novoValor }).eq("id", comanda.agendamento_id),
+    ]);
+    setSalvandoValor(false);
+    if (!erroComanda && !erroAgendamento) {
+      setValorServico(novoValor);
+      setEditandoValor(false);
+      router.refresh();
+    }
+  }
 
   async function adicionarProduto(produto: Produto) {
     setAdicionando(produto.id);
@@ -117,9 +139,45 @@ export default function ComandaView({
       </div>
 
       <div className="mt-4 space-y-2 font-mono text-sm">
-        <div className="flex justify-between text-muted-foreground">
+        <div className="flex items-center justify-between text-muted-foreground">
           <span>Serviço</span>
-          <span>R$ {Number(comanda.valor_servico).toFixed(2).replace(".", ",")}</span>
+          {editandoValor ? (
+            <span className="flex items-center gap-1.5">
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                autoFocus
+                value={valorEditado}
+                onChange={(e) => setValorEditado(e.target.value)}
+                className="h-7 w-24 bg-background text-right font-mono"
+              />
+              <Button
+                size="sm"
+                disabled={salvandoValor}
+                onClick={salvarValorServico}
+                className="h-7 px-2 text-xs uppercase tracking-widest"
+              >
+                OK
+              </Button>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              R$ {valorServico.toFixed(2).replace(".", ",")}
+              {podeAdicionar && papel === "barbeiro" && (
+                <button
+                  onClick={() => {
+                    setValorEditado(String(valorServico));
+                    setEditandoValor(true);
+                  }}
+                  aria-label="Editar valor do serviço"
+                  className="text-muted-foreground/70 hover:text-gold"
+                >
+                  <PencilIcon className="size-3" />
+                </button>
+              )}
+            </span>
+          )}
         </div>
         {itens.map((i) => (
           <div key={i.id} className="flex items-center justify-between text-muted-foreground">

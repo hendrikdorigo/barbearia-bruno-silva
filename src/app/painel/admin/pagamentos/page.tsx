@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DescontoAntecipadoEditor from "@/components/DescontoAntecipadoEditor";
+import AjustesFormaPagamentoEditor from "@/components/AjustesFormaPagamentoEditor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default async function PagamentosAdminPage() {
@@ -17,11 +18,14 @@ export default async function PagamentosAdminPage() {
     .single();
   if (profile?.role !== "admin") redirect("/");
 
-  const { data: config } = await supabase
-    .from("configuracoes_pagamento")
-    .select("id, desconto_pagamento_antecipado_percentual")
-    .limit(1)
-    .single();
+  const [{ data: config }, { data: ajustesFormaPagamento }] = await Promise.all([
+    supabase
+      .from("configuracoes_pagamento")
+      .select("id, desconto_pagamento_antecipado_percentual")
+      .limit(1)
+      .single(),
+    supabase.from("ajustes_forma_pagamento").select("*"),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -42,6 +46,11 @@ export default async function PagamentosAdminPage() {
           descontoInicial={Number(config.desconto_pagamento_antecipado_percentual)}
         />
       )}
+
+      <h2 className="mt-10 font-display text-3xl tracking-wide text-foreground">
+        Ajuste por forma de pagamento
+      </h2>
+      <AjustesFormaPagamentoEditor ajustesIniciais={(ajustesFormaPagamento ?? []) as any} />
     </div>
   );
 }

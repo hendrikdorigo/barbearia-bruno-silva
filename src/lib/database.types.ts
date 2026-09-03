@@ -106,6 +106,33 @@ export type Database = {
           },
         ]
       }
+      ajustes_forma_pagamento: {
+        Row: {
+          ativo: boolean
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          tipo: Database["public"]["Enums"]["ajuste_tipo"]
+          updated_at: string
+          valor: number
+          valor_tipo: Database["public"]["Enums"]["ajuste_valor_tipo"]
+        }
+        Insert: {
+          ativo?: boolean
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          tipo?: Database["public"]["Enums"]["ajuste_tipo"]
+          updated_at?: string
+          valor?: number
+          valor_tipo?: Database["public"]["Enums"]["ajuste_valor_tipo"]
+        }
+        Update: {
+          ativo?: boolean
+          forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
+          tipo?: Database["public"]["Enums"]["ajuste_tipo"]
+          updated_at?: string
+          valor?: number
+          valor_tipo?: Database["public"]["Enums"]["ajuste_valor_tipo"]
+        }
+        Relationships: []
+      }
       app_popups: {
         Row: {
           ativo: boolean

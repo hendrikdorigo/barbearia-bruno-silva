@@ -8,6 +8,7 @@ import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
+import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +17,7 @@ import SeletorDataFaixa from "@/components/SeletorDataFaixa";
 import ProdutoPicker from "@/components/ProdutoPicker";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
 import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
+import { cn } from "@/lib/utils";
 
 const PASSOS = [
   { id: "servico", label: "Serviço" },
@@ -73,7 +75,8 @@ function AgendarConteudo() {
   const [carrinho, setCarrinho] = useState<Carrinho>({});
 
   const [ajustesAtivos, setAjustesAtivos] = useState<any[]>([]);
-  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
+  const [formaPagamento, setFormaPagamento] = useState<string>("dinheiro");
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -102,14 +105,17 @@ function AgendarConteudo() {
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
 
-      const [{ data: servicosData }, { data: produtosData }, { data: clienteData }] = await Promise.all([
-        supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
-        supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
-        user
-          ? supabase.from("clientes").select("bloqueado").eq("profile_id", user.id).maybeSingle()
-          : Promise.resolve({ data: null }),
-      ]);
+      const [{ data: servicosData }, { data: produtosData }, { data: clienteData }, { data: ajustesFpData }] =
+        await Promise.all([
+          supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
+          supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
+          user
+            ? supabase.from("clientes").select("bloqueado").eq("profile_id", user.id).maybeSingle()
+            : Promise.resolve({ data: null }),
+          supabase.from("ajustes_forma_pagamento").select("*"),
+        ]);
       setBloqueado(Boolean((clienteData as any)?.bloqueado));
+      setAjustesFormaPagamento((ajustesFpData ?? []) as any);
       const lista = servicosData ?? [];
       setServicos(lista);
       setProdutos(produtosData ?? []);
@@ -231,8 +237,9 @@ function AgendarConteudo() {
   }
 
   const precoFinal = barbeiroSelecionado ? precoComAjuste(barbeiroSelecionado) : 0;
+  const precoFinalComPagamento = aplicarAjusteFormaPagamento(precoFinal, formaPagamento, ajustesFormaPagamento);
   const totalProdutos = totalCarrinho(carrinho, produtos);
-  const valorTotal = precoFinal + totalProdutos;
+  const valorTotal = precoFinalComPagamento + totalProdutos;
 
   async function confirmarAgendamento() {
     setErro(null);
@@ -261,7 +268,7 @@ function AgendarConteudo() {
         status: "pendente",
         forma_pagamento: formaPagamento as any,
         pagamento_antecipado: false,
-        valor_servico: precoFinal,
+        valor_servico: precoFinalComPagamento,
       })
       .select()
       .single();
@@ -514,7 +521,7 @@ function AgendarConteudo() {
             R$ {valorTotal.toFixed(2).replace(".", ",")}
             {totalProdutos > 0 && (
               <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
-                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
+                (serviço R$ {precoFinalComPagamento.toFixed(2).replace(".", ",")} + produtos R${" "}
                 {totalProdutos.toFixed(2).replace(".", ",")})
               </span>
             )}
@@ -524,19 +531,36 @@ function AgendarConteudo() {
             Forma de pagamento (no local)
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            {FORMAS_PAGAMENTO.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFormaPagamento(f.id)}
-                className={`rounded-lg border px-4 py-3 text-sm ${
-                  formaPagamento === f.id
-                    ? "border-gold bg-gold-gradient font-bold text-ink"
-                    : "border-border text-muted-foreground hover:border-gold"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+            {FORMAS_PAGAMENTO.map((f) => {
+              const selo = seloAjusteFormaPagamento(f.id, ajustesFormaPagamento);
+              const destaque = f.id === "dinheiro";
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFormaPagamento(f.id)}
+                  className={cn(
+                    "relative rounded-lg border px-4 py-3 text-sm",
+                    formaPagamento === f.id
+                      ? "border-gold bg-gold-gradient font-bold text-ink"
+                      : destaque
+                        ? "border-gold/60 text-foreground hover:border-gold"
+                        : "border-border text-muted-foreground hover:border-gold"
+                  )}
+                >
+                  {f.label}
+                  {selo && (
+                    <span
+                      className={cn(
+                        "absolute -top-2 -right-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                        formaPagamento === f.id ? "bg-ink text-gold" : "bg-gold text-ink"
+                      )}
+                    >
+                      {selo}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}

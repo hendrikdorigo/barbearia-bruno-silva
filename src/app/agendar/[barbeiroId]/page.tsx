@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
+import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
@@ -61,7 +62,8 @@ export default function AgendarPage() {
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<Carrinho>({});
-  const [formaPagamento, setFormaPagamento] = useState<string>("pix");
+  const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
+  const [formaPagamento, setFormaPagamento] = useState<string>("dinheiro");
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -113,6 +115,9 @@ export default function AgendarPage() {
         .eq("ativo", true)
         .order("categoria");
       setProdutos(produtosData ?? []);
+
+      const { data: ajustesFpData } = await supabase.from("ajustes_forma_pagamento").select("*");
+      setAjustesFormaPagamento((ajustesFpData ?? []) as any);
 
       // Serviços que ESSE barbeiro oferece, com preço próprio se houver
       const { data: barbeiroServicos } = await supabase
@@ -260,8 +265,9 @@ export default function AgendarPage() {
     return Math.max(0, Math.round(preco * 100) / 100);
   }, [servicoSelecionado, ajustesAtivos]);
 
+  const precoFinalComPagamento = aplicarAjusteFormaPagamento(precoFinal, formaPagamento, ajustesFormaPagamento);
   const totalProdutos = totalCarrinho(carrinho, produtos);
-  const valorTotal = precoFinal + totalProdutos;
+  const valorTotal = precoFinalComPagamento + totalProdutos;
 
   async function entrarNaFila(horaEspecifica: string | null) {
     if (!userId || !servicoSelecionado) return;
@@ -309,7 +315,7 @@ export default function AgendarPage() {
         status: "pendente",
         forma_pagamento: formaPagamento as any,
         pagamento_antecipado: false,
-        valor_servico: precoFinal,
+        valor_servico: precoFinalComPagamento,
       })
       .select()
       .single();
@@ -580,7 +586,7 @@ export default function AgendarPage() {
             R$ {valorTotal.toFixed(2).replace(".", ",")}
             {totalProdutos > 0 && (
               <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
-                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
+                (serviço R$ {precoFinalComPagamento.toFixed(2).replace(".", ",")} + produtos R${" "}
                 {totalProdutos.toFixed(2).replace(".", ",")})
               </span>
             )}
@@ -590,19 +596,36 @@ export default function AgendarPage() {
             Forma de pagamento (no local)
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            {FORMAS_PAGAMENTO.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFormaPagamento(f.id)}
-                className={`rounded-lg border px-4 py-3 text-sm ${
-                  formaPagamento === f.id
-                    ? "border-gold bg-gold-gradient font-bold text-ink"
-                    : "border-border text-muted-foreground hover:border-gold"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+            {FORMAS_PAGAMENTO.map((f) => {
+              const selo = seloAjusteFormaPagamento(f.id, ajustesFormaPagamento);
+              const destaque = f.id === "dinheiro";
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFormaPagamento(f.id)}
+                  className={cn(
+                    "relative rounded-lg border px-4 py-3 text-sm",
+                    formaPagamento === f.id
+                      ? "border-gold bg-gold-gradient font-bold text-ink"
+                      : destaque
+                        ? "border-gold/60 text-foreground hover:border-gold"
+                        : "border-border text-muted-foreground hover:border-gold"
+                  )}
+                >
+                  {f.label}
+                  {selo && (
+                    <span
+                      className={cn(
+                        "absolute -top-2 -right-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                        formaPagamento === f.id ? "bg-ink text-gold" : "bg-gold text-ink"
+                      )}
+                    >
+                      {selo}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <Alert className="mt-6 border-gold/40 bg-gold/10">

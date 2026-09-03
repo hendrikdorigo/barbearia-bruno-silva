@@ -33,6 +33,8 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [servicoId, setServicoId] = useState<string>("");
 
+  const [precoEditado, setPrecoEditado] = useState<string>("");
+
   const [modoCliente, setModoCliente] = useState<"cadastrado" | "avulso">("cadastrado");
   const [buscaCliente, setBuscaCliente] = useState("");
   const [resultadosCliente, setResultadosCliente] = useState<ClienteEncontrado[]>([]);
@@ -108,6 +110,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
 
   function limpar() {
     setServicoId("");
+    setPrecoEditado("");
     setModoCliente("cadastrado");
     setBuscaCliente("");
     setResultadosCliente([]);
@@ -123,7 +126,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     setResultado(null);
   }
 
-  async function criarAgendamento(servico: Servico, dataISO: string) {
+  async function criarAgendamento(servico: Servico, dataISO: string, valor: number) {
     const { data: agendamento, error } = await supabase
       .from("agendamentos")
       .insert({
@@ -136,7 +139,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
         status: "confirmado",
         forma_pagamento: formaPagamento as any,
         pagamento_antecipado: false,
-        valor_servico: servico.preco,
+        valor_servico: valor,
       })
       .select()
       .single();
@@ -167,8 +170,14 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       return;
     }
 
+    const valor = precoEditado.trim() ? Number(precoEditado) : servico.preco;
+    if (Number.isNaN(valor) || valor < 0) {
+      setErro("Valor inválido.");
+      return;
+    }
+
     setEnviando(true);
-    const { error } = await criarAgendamento(servico, data);
+    const { error } = await criarAgendamento(servico, data, valor);
 
     if (error) {
       setEnviando(false);
@@ -197,7 +206,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       if (cursor > repetirAte) break;
       const livres = await calcularSlotsLivres(supabase, barbeiroId, cursor);
       if (livres.includes(horario)) {
-        const { error: erroRepeticao } = await criarAgendamento(servico, cursor);
+        const { error: erroRepeticao } = await criarAgendamento(servico, cursor, valor);
         if (erroRepeticao) pulados++;
         else criados++;
       } else {
@@ -262,7 +271,10 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
                 {servicos.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => setServicoId(s.id)}
+                    onClick={() => {
+                      setServicoId(s.id);
+                      setPrecoEditado(String(s.preco));
+                    }}
                     className={cn(
                       "flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm",
                       servicoId === s.id
@@ -275,6 +287,19 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
                   </button>
                 ))}
               </div>
+              {servicoId && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">Valor</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={precoEditado}
+                    onChange={(e) => setPrecoEditado(e.target.value)}
+                    className="h-8 w-28 bg-background"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
