@@ -90,15 +90,17 @@ async function handlePreAgendamentos(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("cliente_id", cliente.profile_id)
       .in("status", ["pendente", "confirmado"])
-      .gte("data_hora", `${novaData}T00:00:00`)
-      .lte("data_hora", `${novaData}T23:59:59`);
+      .gte("data_hora", `${novaData}T00:00:00-03:00`)
+      .lte("data_hora", `${novaData}T23:59:59-03:00`);
     if ((jaTemHorarioHoje ?? 0) > 0) {
       ignorados++;
       continue;
     }
 
+    // -03:00 explícito: sem isso o Postgres guarda a string como se já fosse
+    // UTC e o horário previsto fica 3h adiantado em relação ao real.
     const horaPrevista = paraHoraSP(ultimaVisita.data_hora);
-    const dataHoraPrevista = `${novaData}T${horaPrevista}:00`;
+    const dataHoraPrevista = `${novaData}T${horaPrevista}:00-03:00`;
 
     const nomeCliente = (cliente as any).profiles?.nome ?? "Tudo bem?";
     const nomeBarbeiro = (ultimaVisita as any).barbeiros?.profiles?.nome ?? "seu barbeiro";

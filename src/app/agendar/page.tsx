@@ -276,7 +276,10 @@ function AgendarConteudo() {
       return;
     }
 
-    const dataHoraISO = `${data}T${horarioSelecionado}:00`;
+    // -03:00 explícito: Brasília não tem horário de verão desde 2019, então
+    // é sempre UTC-3. Sem isso, o Postgres guarda a string como se já fosse
+    // UTC e o horário salvo fica 3h adiantado em relação ao escolhido.
+    const dataHoraISO = `${data}T${horarioSelecionado}:00-03:00`;
 
     const { data: agendamento, error: agendamentoError } = await supabase
       .from("agendamentos")
