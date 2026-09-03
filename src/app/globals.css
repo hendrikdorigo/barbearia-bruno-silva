@@ -144,6 +144,18 @@
   background-size: 3px 3px;
 }
 
+/* Esconde a barra de rolagem nativa em tiras horizontais (ex: seletor de
+   data) - continua rolando normalmente por toque/arrastar, só não mostra
+   a barra cinza feia do navegador. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
