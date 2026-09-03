@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon, ShoppingBagIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -49,6 +49,15 @@ export default function PainelAdminAgendamentos({
   barbeiros: any[];
 }) {
   const [lista, setLista] = useState(agendamentos);
+
+  // O Next só re-renderiza esse componente com os dados novos do servidor
+  // (ex: depois de marcar no-show/concluir pelo painel de detalhes e chamar
+  // router.refresh()) - sem isso, o "lista" ficava congelado no valor inicial
+  // e a tabela não refletia a mudança até recarregar a página inteira.
+  useEffect(() => {
+    setLista(agendamentos);
+  }, [agendamentos]);
+
   const [filtroBarbeiro, setFiltroBarbeiro] = useState("");
   const [filtroData, setFiltroData] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
@@ -132,7 +141,7 @@ export default function PainelAdminAgendamentos({
         </select>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl border border-border">
+      <div className="scrollbar-thin mt-6 overflow-x-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
             <TableRow className="bg-ink-soft hover:bg-ink-soft">

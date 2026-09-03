@@ -38,25 +38,37 @@ export default function AgendamentoDetalhe({
   mostrarLinkComanda?: boolean;
 }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   async function atualizarStatus(status: string) {
     setLoadingId(a.id);
-    await fetch(`/api/agendamentos/${a.id}/status`, {
+    setErro(null);
+    const resp = await fetch(`/api/agendamentos/${a.id}/status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
     setLoadingId(null);
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => null);
+      setErro(body?.error ?? "Não foi possível atualizar o status.");
+      return;
+    }
     router.refresh();
   }
 
   async function marcarNoShow() {
     setLoadingId(a.id);
-    await supabase.rpc("marcar_no_show", { p_agendamento_id: a.id });
-    fetch(`/api/agendamentos/${a.id}/notificar-no-show`, { method: "POST" }).catch(() => {});
+    setErro(null);
+    const { error } = await supabase.rpc("marcar_no_show", { p_agendamento_id: a.id });
     setLoadingId(null);
+    if (error) {
+      setErro(error.message);
+      return;
+    }
+    fetch(`/api/agendamentos/${a.id}/notificar-no-show`, { method: "POST" }).catch(() => {});
     router.refresh();
   }
 
@@ -172,6 +184,9 @@ export default function AgendamentoDetalhe({
           </>
         )}
       </div>
+      {erro && (
+        <p className="text-sm text-destructive">{erro}</p>
+      )}
     </div>
   );
 }
