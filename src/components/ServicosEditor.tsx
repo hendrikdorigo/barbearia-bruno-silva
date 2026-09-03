@@ -45,6 +45,9 @@ export default function ServicosEditor({
   const [duracoes, setDuracoes] = useState<Record<string, number>>(() =>
     Object.fromEntries(servicos.map((s) => [s.id, s.duracao_minutos]))
   );
+  const [precosBase, setPrecosBase] = useState<Record<string, number>>(() =>
+    Object.fromEntries(servicos.map((s) => [s.id, Number(s.preco)]))
+  );
   const [imagens, setImagens] = useState<Record<string, string | null>>(() =>
     Object.fromEntries(servicos.map((s) => [s.id, s.imagem_url ?? null]))
   );
@@ -88,11 +91,13 @@ export default function ServicosEditor({
       .upsert(payload, { onConflict: "barbeiro_id,servico_id" });
 
     if (!error && isAdmin) {
-      const alterados = servicos.filter((s) => duracoes[s.id] !== s.duracao_minutos);
+      const alterados = servicos.filter(
+        (s) => duracoes[s.id] !== s.duracao_minutos || precosBase[s.id] !== Number(s.preco)
+      );
       for (const s of alterados) {
         await supabase
           .from("servicos")
-          .update({ duracao_minutos: duracoes[s.id] })
+          .update({ duracao_minutos: duracoes[s.id], preco: precosBase[s.id] })
           .eq("id", s.id);
       }
     }
@@ -176,6 +181,22 @@ export default function ServicosEditor({
               <span className="text-sm text-muted-foreground">{s.duracao_minutos} min</span>
             )}
 
+            {isAdmin && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Preço padrão R$</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={precosBase[s.id]}
+                  onChange={(e) =>
+                    setPrecosBase((prev) => ({ ...prev, [s.id]: Number(e.target.value) }))
+                  }
+                  className="w-28 bg-background"
+                />
+              </div>
+            )}
+
             {l.ativo ? (
               isAdmin ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -184,7 +205,7 @@ export default function ServicosEditor({
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder={String(s.preco)}
+                    placeholder={String(precosBase[s.id])}
                     value={l.preco_personalizado ?? ""}
                     onChange={(e) =>
                       atualizar(
@@ -195,9 +216,7 @@ export default function ServicosEditor({
                     }
                     className="w-28 bg-background"
                   />
-                  <span className="text-xs text-muted-foreground">
-                    (padrão R$ {Number(s.preco).toFixed(2).replace(".", ",")})
-                  </span>
+                  <span className="text-xs text-muted-foreground">(preço deste barbeiro)</span>
                 </div>
               ) : (
                 <span className="font-mono text-sm text-muted-foreground">
