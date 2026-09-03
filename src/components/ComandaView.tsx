@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import PixCheckout from "@/components/PixCheckout";
 import { cn } from "@/lib/utils";
 
 type Item = {
@@ -59,7 +58,6 @@ export default function ComandaView({
   const [formaPagamento, setFormaPagamento] = useState(comanda.forma_pagamento ?? "pix");
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
-  const [pixAberto, setPixAberto] = useState(false);
   const [valorServico, setValorServico] = useState(Number(comanda.valor_servico));
   const [editandoValor, setEditandoValor] = useState(false);
   const [valorEditado, setValorEditado] = useState(String(comanda.valor_servico));
@@ -104,13 +102,6 @@ export default function ComandaView({
   async function removerItem(itemId: string) {
     await supabase.from("comanda_itens").delete().eq("id", itemId);
     setItens((prev) => prev.filter((i) => i.id !== itemId));
-    router.refresh();
-  }
-
-  function pagamentoPixConfirmado() {
-    setPixAberto(false);
-    setPagoAntecipado(true);
-    setStatus("paga");
     router.refresh();
   }
 
@@ -244,23 +235,13 @@ export default function ComandaView({
           <AlertDescription className="text-amber-400">
             {papel === "barbeiro"
               ? "Fiado — o cliente ainda não pagou esse atendimento."
-              : "Você ainda não pagou esse atendimento. Pode quitar quando puder, pelo app ou na barbearia."}
+              : "Você ainda não pagou esse atendimento. Pode quitar na barbearia quando puder."}
           </AlertDescription>
         </Alert>
       )}
 
       {(podeAdicionar || status === "fiado") && (
         <div className="mt-6">
-          {papel === "cliente" && !pagoAntecipado && (
-            <Button
-              onClick={() => setPixAberto(true)}
-              disabled={processando}
-              className="w-full uppercase tracking-widest"
-            >
-              Pagar agora com Pix
-            </Button>
-          )}
-
           {papel === "barbeiro" && podePagar && (
             <>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
@@ -326,15 +307,6 @@ export default function ComandaView({
           </AlertDescription>
         </Alert>
       )}
-
-      <PixCheckout
-        open={pixAberto}
-        onClose={() => setPixAberto(false)}
-        criarEndpoint="/api/pagamentos/mercadopago/criar-pix-comanda"
-        corpo={{ comandaId: comanda.id }}
-        valor={total}
-        onConfirmado={pagamentoPixConfirmado}
-      />
     </Card>
   );
 }
