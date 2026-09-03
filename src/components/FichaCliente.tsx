@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangleIcon, NotebookTextIcon } from "lucide-react";
+import { AlertTriangleIcon, NotebookTextIcon, ShieldOffIcon, ShieldCheckIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Nota = {
   id: string;
@@ -23,15 +24,22 @@ export default function FichaCliente({
   notasIniciais,
   qtdNoShow,
   autorId,
+  bloqueadoInicial,
+  motivoBloqueioInicial,
 }: {
   clienteId: string;
   notasIniciais: Nota[];
   qtdNoShow: number;
   autorId: string;
+  bloqueadoInicial: boolean;
+  motivoBloqueioInicial: string | null;
 }) {
   const [notas, setNotas] = useState(notasIniciais);
   const [texto, setTexto] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [bloqueado, setBloqueado] = useState(bloqueadoInicial);
+  const [motivoBloqueio, setMotivoBloqueio] = useState(motivoBloqueioInicial ?? "");
+  const [alterandoBloqueio, setAlterandoBloqueio] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -51,12 +59,77 @@ export default function FichaCliente({
     }
   }
 
+  async function alternarBloqueio() {
+    const novoBloqueado = !bloqueado;
+    if (
+      novoBloqueado &&
+      !window.confirm("Bloquear este cliente? Ele não vai conseguir marcar novos horários pelo site.")
+    ) {
+      return;
+    }
+    setAlterandoBloqueio(true);
+    const { error } = await supabase
+      .from("clientes")
+      .update({
+        bloqueado: novoBloqueado,
+        motivo_bloqueio: novoBloqueado ? motivoBloqueio.trim() || null : null,
+      })
+      .eq("profile_id", clienteId);
+    setAlterandoBloqueio(false);
+    if (!error) {
+      setBloqueado(novoBloqueado);
+      if (!novoBloqueado) setMotivoBloqueio("");
+      router.refresh();
+    }
+  }
+
   return (
     <Card className="mt-6 border-border bg-ink-soft p-5">
-      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        <NotebookTextIcon className="size-4" />
-        Ficha do cliente
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <NotebookTextIcon className="size-4" />
+          Ficha do cliente
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={alterandoBloqueio}
+          onClick={alternarBloqueio}
+          className={cn(
+            "rounded-full",
+            bloqueado
+              ? "border-success/40 text-success hover:bg-success/10"
+              : "border-destructive/40 text-destructive hover:bg-destructive/10"
+          )}
+        >
+          {bloqueado ? (
+            <ShieldCheckIcon className="size-3.5" data-icon="inline-start" />
+          ) : (
+            <ShieldOffIcon className="size-3.5" data-icon="inline-start" />
+          )}
+          {bloqueado ? "Desbloquear cliente" : "Bloquear cliente"}
+        </Button>
+      </div>
+
+      {bloqueado && (
+        <div className="mt-3 flex flex-col gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <span className="flex items-center gap-2">
+            <ShieldOffIcon className="size-4 shrink-0" />
+            Cliente bloqueado — não consegue marcar horário pelo site.
+          </span>
+          {motivoBloqueio && <span className="text-destructive/80">Motivo: {motivoBloqueio}</span>}
+        </div>
+      )}
+
+      {!bloqueado && (
+        <Textarea
+          value={motivoBloqueio}
+          onChange={(e) => setMotivoBloqueio(e.target.value)}
+          placeholder="Motivo do bloqueio, se for bloquear (opcional)"
+          className="mt-3 bg-background"
+          rows={1}
+        />
+      )}
 
       {qtdNoShow > 0 && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">

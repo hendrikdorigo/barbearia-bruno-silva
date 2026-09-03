@@ -19,7 +19,7 @@ export default async function ComandaBarbeiroPage({
     supabase
       .from("comandas")
       .select(
-        "*, clientes(profile_id, qtd_no_show, profiles(nome)), agendamentos(cliente_nome_avulso)"
+        "*, clientes(profile_id, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso)"
       )
       .eq("agendamento_id", agendamentoId)
       .eq("barbeiro_id", user.id)
@@ -66,6 +66,8 @@ export default async function ComandaBarbeiroPage({
           notasIniciais={(notas ?? []) as any}
           qtdNoShow={(comanda as any).clientes?.qtd_no_show ?? 0}
           autorId={user.id}
+          bloqueadoInicial={Boolean((comanda as any).clientes?.bloqueado)}
+          motivoBloqueioInicial={(comanda as any).clientes?.motivo_bloqueio ?? null}
         />
       )}
     </div>

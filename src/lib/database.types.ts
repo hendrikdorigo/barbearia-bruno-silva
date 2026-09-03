@@ -421,6 +421,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bloqueado: boolean
           cpf: string
           created_at: string
           data_nascimento: string
@@ -428,11 +429,13 @@ export type Database = {
           exige_pagamento_antecipado: boolean
           foto_url: string | null
           frequencia_dias: number | null
+          motivo_bloqueio: string | null
           pre_agendamento_ativo: boolean
           profile_id: string
           qtd_no_show: number
         }
         Insert: {
+          bloqueado?: boolean
           cpf: string
           created_at?: string
           data_nascimento: string
@@ -440,11 +443,13 @@ export type Database = {
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
           frequencia_dias?: number | null
+          motivo_bloqueio?: string | null
           pre_agendamento_ativo?: boolean
           profile_id: string
           qtd_no_show?: number
         }
         Update: {
+          bloqueado?: boolean
           cpf?: string
           created_at?: string
           data_nascimento?: string
@@ -452,6 +457,7 @@ export type Database = {
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
           frequencia_dias?: number | null
+          motivo_bloqueio?: string | null
           pre_agendamento_ativo?: boolean
           profile_id?: string
           qtd_no_show?: number

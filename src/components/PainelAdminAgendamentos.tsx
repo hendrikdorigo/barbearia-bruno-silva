@@ -1,9 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangleIcon, Trash2Icon } from "lucide-react";
+import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { nomeClienteAgendamento, qtdNoShowAgendamento } from "@/lib/cliente-agendamento";
+import {
+  nomeClienteAgendamento,
+  qtdNoShowAgendamento,
+  clienteBloqueadoAgendamento,
+} from "@/lib/cliente-agendamento";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -67,6 +71,27 @@ export default function PainelAdminAgendamentos({
     setLista((prev) => prev.filter((a) => a.id !== id));
   }
 
+  async function alternarBloqueio(a: any) {
+    const clienteId = a.clientes?.profile_id;
+    if (!clienteId) return;
+    const bloquear = !clienteBloqueadoAgendamento(a);
+    if (bloquear && !window.confirm(`Bloquear ${nomeClienteAgendamento(a)}? Ele não vai conseguir marcar novos horários pelo site.`)) {
+      return;
+    }
+    const { error } = await supabase
+      .from("clientes")
+      .update(bloquear ? { bloqueado: true } : { bloqueado: false, motivo_bloqueio: null })
+      .eq("profile_id", clienteId);
+    if (error) return;
+    setLista((prev) =>
+      prev.map((item) =>
+        item.clientes?.profile_id === clienteId
+          ? { ...item, clientes: { ...item.clientes, bloqueado: bloquear } }
+          : item
+      )
+    );
+  }
+
   return (
     <div className="mt-4">
       <div className="flex flex-wrap gap-3">
@@ -124,6 +149,12 @@ export default function PainelAdminAgendamentos({
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   <span className="flex items-center gap-1">
+                    {clienteBloqueadoAgendamento(a) && (
+                      <ShieldOffIcon
+                        className="size-3.5 shrink-0 text-destructive"
+                        aria-label="Cliente bloqueado"
+                      />
+                    )}
                     {qtdNoShowAgendamento(a) > 0 && (
                       <AlertTriangleIcon
                         className="size-3.5 shrink-0 text-destructive"
@@ -152,14 +183,33 @@ export default function PainelAdminAgendamentos({
                   R$ {Number(a.valor_repasse_bruno).toFixed(2).replace(".", ",")}
                 </TableCell>
                 <TableCell className="text-right">
-                  <button
-                    onClick={() => excluir(a.id)}
-                    disabled={excluindoId === a.id}
-                    aria-label="Excluir agendamento"
-                    className="text-muted-foreground/70 hover:text-destructive disabled:opacity-50"
-                  >
-                    <Trash2Icon className="size-3.5" />
-                  </button>
+                  <div className="flex items-center justify-end gap-3">
+                    {a.clientes?.profile_id && (
+                      <button
+                        onClick={() => alternarBloqueio(a)}
+                        aria-label={clienteBloqueadoAgendamento(a) ? "Desbloquear cliente" : "Bloquear cliente"}
+                        title={clienteBloqueadoAgendamento(a) ? "Desbloquear cliente" : "Bloquear cliente"}
+                        className={cn(
+                          "text-muted-foreground/70 disabled:opacity-50",
+                          clienteBloqueadoAgendamento(a) ? "hover:text-success" : "hover:text-destructive"
+                        )}
+                      >
+                        {clienteBloqueadoAgendamento(a) ? (
+                          <ShieldCheckIcon className="size-3.5" />
+                        ) : (
+                          <ShieldOffIcon className="size-3.5" />
+                        )}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => excluir(a.id)}
+                      disabled={excluindoId === a.id}
+                      aria-label="Excluir agendamento"
+                      className="text-muted-foreground/70 hover:text-destructive disabled:opacity-50"
+                    >
+                      <Trash2Icon className="size-3.5" />
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

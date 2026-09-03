@@ -4,11 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { AlertTriangleIcon } from "lucide-react";
+import { AlertTriangleIcon, ShieldOffIcon } from "lucide-react";
 import {
   nomeClienteAgendamento,
   telefoneClienteAgendamento,
   qtdNoShowAgendamento,
+  clienteBloqueadoAgendamento,
 } from "@/lib/cliente-agendamento";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -55,9 +56,16 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
 
   const loading = loadingId === a.id;
   const qtdNoShow = qtdNoShowAgendamento(a);
+  const bloqueado = clienteBloqueadoAgendamento(a);
 
   return (
     <div className="flex flex-col gap-3">
+      {bloqueado && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <ShieldOffIcon className="size-4 shrink-0" />
+          <span>Cliente bloqueado.</span>
+        </div>
+      )}
       {qtdNoShow > 0 && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertTriangleIcon className="size-4 shrink-0" />

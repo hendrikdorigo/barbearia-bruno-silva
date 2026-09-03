@@ -46,6 +46,7 @@ export default function AgendarPage() {
   const [carregando, setCarregando] = useState(true);
   const [logado, setLogado] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [bloqueado, setBloqueado] = useState(false);
   const [nomeBarbeiro, setNomeBarbeiro] = useState("");
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [servicoSelecionado, setServicoSelecionado] = useState<Servico | null>(null);
@@ -90,6 +91,14 @@ export default function AgendarPage() {
       } = await supabase.auth.getUser();
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
+      if (user) {
+        const { data: clienteData } = await supabase
+          .from("clientes")
+          .select("bloqueado")
+          .eq("profile_id", user.id)
+          .maybeSingle();
+        setBloqueado(Boolean((clienteData as any)?.bloqueado));
+      }
 
       const { data: barbeiro } = await supabase
         .from("barbeiros")
@@ -349,6 +358,18 @@ export default function AgendarPage() {
         >
           Ir para login
         </Button>
+      </div>
+    );
+  }
+
+  if (bloqueado) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <h1 className="font-display text-4xl text-foreground">Agendamento indisponível</h1>
+        <p className="mt-4 text-muted-foreground">
+          Sua conta está temporariamente bloqueada para novos agendamentos. Fale diretamente com a
+          barbearia para mais informações.
+        </p>
       </div>
     );
   }

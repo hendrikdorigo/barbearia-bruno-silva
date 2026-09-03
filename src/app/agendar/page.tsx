@@ -57,6 +57,7 @@ function AgendarConteudo() {
   const [carregando, setCarregando] = useState(true);
   const [logado, setLogado] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [bloqueado, setBloqueado] = useState(false);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [servicoSelecionado, setServicoSelecionado] = useState<Servico | null>(null);
   const [candidatos, setCandidatos] = useState<Candidato[]>([]);
@@ -101,10 +102,14 @@ function AgendarConteudo() {
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
 
-      const [{ data: servicosData }, { data: produtosData }] = await Promise.all([
+      const [{ data: servicosData }, { data: produtosData }, { data: clienteData }] = await Promise.all([
         supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
         supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
+        user
+          ? supabase.from("clientes").select("bloqueado").eq("profile_id", user.id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
+      setBloqueado(Boolean((clienteData as any)?.bloqueado));
       const lista = servicosData ?? [];
       setServicos(lista);
       setProdutos(produtosData ?? []);
@@ -303,6 +308,18 @@ function AgendarConteudo() {
         <Button onClick={() => router.push("/login?next=/agendar")} className="mt-6 uppercase tracking-widest">
           Ir para login
         </Button>
+      </div>
+    );
+  }
+
+  if (bloqueado) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <h1 className="font-display text-4xl text-foreground">Agendamento indisponível</h1>
+        <p className="mt-4 text-muted-foreground">
+          Sua conta está temporariamente bloqueada para novos agendamentos. Fale diretamente com a
+          barbearia para mais informações.
+        </p>
       </div>
     );
   }

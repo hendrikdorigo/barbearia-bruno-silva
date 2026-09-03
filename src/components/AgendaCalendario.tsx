@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon, AlertTriangleIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon, AlertTriangleIcon, ShieldOffIcon } from "lucide-react";
 import { calcularJanelaDiaLocal } from "@/lib/disponibilidade";
-import { nomeClienteAgendamento, qtdNoShowAgendamento } from "@/lib/cliente-agendamento";
+import { nomeClienteAgendamento, qtdNoShowAgendamento, clienteBloqueadoAgendamento } from "@/lib/cliente-agendamento";
 import { paraDataSP, paraHoraSP, somaDias } from "@/lib/timezone-sp";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
@@ -225,6 +225,9 @@ export default function AgendaCalendario({
                   }}
                 >
                   <p className="flex items-center gap-1 truncate text-sm font-semibold">
+                    {clienteBloqueadoAgendamento(a) && (
+                      <ShieldOffIcon className="size-3.5 shrink-0 text-destructive" />
+                    )}
                     {qtdNoShowAgendamento(a) > 0 && (
                       <AlertTriangleIcon className="size-3.5 shrink-0 text-destructive" />
                     )}

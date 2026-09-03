@@ -20,3 +20,8 @@ export function ehClienteAvulso(a: any): boolean {
 export function qtdNoShowAgendamento(a: any): number {
   return a?.clientes?.qtd_no_show ?? 0;
 }
+
+/** Se o cliente desse agendamento está bloqueado para novos agendamentos. */
+export function clienteBloqueadoAgendamento(a: any): boolean {
+  return Boolean(a?.clientes?.bloqueado);
+}
