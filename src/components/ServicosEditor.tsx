@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
+type Servico = {
+  id: string;
+  nome: string;
+  preco: number;
+  duracao_minutos: number;
+  imagem_url?: string | null;
+};
 type BarbeiroServico = {
   servico_id: string;
   ativo: boolean;
@@ -38,6 +45,11 @@ export default function ServicosEditor({
   const [duracoes, setDuracoes] = useState<Record<string, number>>(() =>
     Object.fromEntries(servicos.map((s) => [s.id, s.duracao_minutos]))
   );
+  const [imagens, setImagens] = useState<Record<string, string | null>>(() =>
+    Object.fromEntries(servicos.map((s) => [s.id, s.imagem_url ?? null]))
+  );
+  const [trocandoImagemId, setTrocandoImagemId] = useState<string | null>(null);
+  const inputsImagem = useRef<Record<string, HTMLInputElement | null>>({});
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const router = useRouter();
@@ -47,6 +59,19 @@ export default function ServicosEditor({
     setLinhas((prev) =>
       prev.map((l) => (l.servico_id === servicoId ? { ...l, [campo]: valor } : l))
     );
+  }
+
+  async function trocarImagem(servicoId: string, arquivo: File) {
+    setTrocandoImagemId(servicoId);
+    const path = `${servicoId}/${Date.now()}-${arquivo.name}`;
+    const { error } = await supabase.storage.from("servicos").upload(path, arquivo, { upsert: true });
+    if (!error) {
+      const url = supabase.storage.from("servicos").getPublicUrl(path).data.publicUrl;
+      await supabase.from("servicos").update({ imagem_url: url }).eq("id", servicoId);
+      setImagens((prev) => ({ ...prev, [servicoId]: url }));
+      router.refresh();
+    }
+    setTrocandoImagemId(null);
   }
 
   async function salvar() {
@@ -93,6 +118,38 @@ export default function ServicosEditor({
               !l.ativo && "bg-ink-soft/40"
             )}
           >
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => inputsImagem.current[s.id]?.click()}
+                disabled={trocandoImagemId === s.id}
+                aria-label={`Trocar foto de ${s.nome}`}
+                className="group relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background"
+              >
+                {imagens[s.id] ? (
+                  <img src={imagens[s.id]!} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="size-4 text-muted-foreground" />
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-ink/0 text-transparent transition-colors group-hover:bg-ink/60 group-hover:text-white">
+                  <ImageIcon className="size-4" />
+                </span>
+                <input
+                  ref={(el) => {
+                    inputsImagem.current[s.id] = el;
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const arquivo = e.target.files?.[0];
+                    if (arquivo) trocarImagem(s.id, arquivo);
+                    e.target.value = "";
+                  }}
+                />
+              </button>
+            )}
+
             <label className="flex w-44 items-center gap-2.5 text-sm font-semibold text-foreground/90">
               <Switch
                 checked={l.ativo}

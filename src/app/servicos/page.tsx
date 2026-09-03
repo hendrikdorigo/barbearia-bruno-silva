@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ClockIcon } from "lucide-react";
+import Image from "next/image";
+import { ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 
@@ -23,14 +24,23 @@ export default async function ServicosPage() {
           <Link
             key={s.id}
             href={`/agendar?servico=${s.id}`}
-            className="flex items-center justify-between px-6 py-5 transition-colors hover:bg-gold/5"
+            className="flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-gold/5"
           >
-            <div>
-              <p className="font-display text-xl text-foreground">{s.nome}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                <ClockIcon className="size-3.5" />
-                {s.duracao_minutos} minutos
-              </p>
+            <div className="flex items-center gap-4">
+              <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background">
+                {s.imagem_url ? (
+                  <Image src={s.imagem_url} alt="" fill sizes="56px" className="object-cover" />
+                ) : (
+                  <ScissorsIcon className="size-5 text-muted-foreground" />
+                )}
+              </span>
+              <div>
+                <p className="font-display text-xl text-foreground">{s.nome}</p>
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <ClockIcon className="size-3.5" />
+                  {s.duracao_minutos} minutos
+                </p>
+              </div>
             </div>
             <p className="font-mono text-2xl font-medium text-gold-gradient">
               R$ {Number(s.preco).toFixed(2).replace(".", ",")}
@@ -42,8 +52,7 @@ export default async function ServicosPage() {
         Toque em um serviço para escolher o barbeiro e agendar.
       </p>
       <p className="mt-2 text-sm text-muted-foreground">
-        Formas de pagamento aceitas: Crédito, Débito, Dinheiro e Pix. Você pode
-        optar por pagamento antecipado ao agendar.
+        Formas de pagamento aceitas: Crédito, Débito, Dinheiro e Pix.
       </p>
     </div>
   );

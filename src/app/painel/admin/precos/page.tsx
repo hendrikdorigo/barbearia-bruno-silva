@@ -24,7 +24,11 @@ export default async function PrecosAdminPage() {
     { data: fidelidadeConfigs },
   ] = await Promise.all([
     supabase.from("barbeiros").select("profile_id, is_dono, profiles(nome)").eq("ativo", true),
-    supabase.from("servicos").select("id, nome, preco, duracao_minutos").eq("ativo", true).order("preco"),
+    supabase
+      .from("servicos")
+      .select("id, nome, preco, duracao_minutos, imagem_url")
+      .eq("ativo", true)
+      .order("preco"),
     supabase.from("barbeiro_servicos").select("barbeiro_id, servico_id, ativo, preco_personalizado"),
     supabase.from("servico_ajustes").select("*").order("created_at", { ascending: false }),
     supabase.from("fidelidade_config").select("*").order("meta_atendimentos"),

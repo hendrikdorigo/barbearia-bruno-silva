@@ -136,8 +136,13 @@ export default async function HomePage() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {servicos?.map((s) => (
             <Link key={s.id} href={`/agendar?servico=${s.id}`} className="h-full">
-              <Card className="group h-full gap-0 rounded-2xl border-border bg-ink-soft py-6 transition-colors hover:border-gold">
-                <CardContent className="flex h-full flex-col px-6">
+              <Card className="group h-full gap-0 overflow-hidden rounded-2xl border-border bg-ink-soft py-0 transition-colors hover:border-gold">
+                {s.imagem_url && (
+                  <div className="relative aspect-square w-full">
+                    <Image src={s.imagem_url} alt="" fill sizes="240px" className="object-cover" />
+                  </div>
+                )}
+                <CardContent className="flex h-full flex-col px-6 py-6">
                   <p className="text-sm uppercase tracking-widest text-muted-foreground">
                     {s.duracao_minutos} min
                   </p>

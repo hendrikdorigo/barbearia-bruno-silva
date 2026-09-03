@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ComandaView from "@/components/ComandaView";
+import FichaCliente from "@/components/FichaCliente";
 
 export default async function ComandaBarbeiroPage({
   params,
@@ -17,7 +18,9 @@ export default async function ComandaBarbeiroPage({
   const [{ data: comanda }, { data: produtos }] = await Promise.all([
     supabase
       .from("comandas")
-      .select("*, clientes(profile_id, profiles(nome)), agendamentos(cliente_nome_avulso)")
+      .select(
+        "*, clientes(profile_id, qtd_no_show, profiles(nome)), agendamentos(cliente_nome_avulso)"
+      )
       .eq("agendamento_id", agendamentoId)
       .eq("barbeiro_id", user.id)
       .maybeSingle(),
@@ -26,10 +29,21 @@ export default async function ComandaBarbeiroPage({
 
   if (!comanda) notFound();
 
-  const { data: itens } = await supabase
-    .from("comanda_itens")
-    .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
-    .eq("comanda_id", comanda.id);
+  const clienteId = (comanda as any).cliente_id as string | null;
+
+  const [{ data: itens }, { data: notas }] = await Promise.all([
+    supabase
+      .from("comanda_itens")
+      .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
+      .eq("comanda_id", comanda.id),
+    clienteId
+      ? supabase
+          .from("cliente_notas")
+          .select("id, texto, created_at, profiles(nome)")
+          .eq("cliente_id", clienteId)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+  ]);
 
   return (
     <div className="mx-auto max-w-xl">
@@ -46,6 +60,14 @@ export default async function ComandaBarbeiroPage({
         produtos={(produtos ?? []) as any}
         papel="barbeiro"
       />
+      {clienteId && (
+        <FichaCliente
+          clienteId={clienteId}
+          notasIniciais={(notas ?? []) as any}
+          qtdNoShow={(comanda as any).clientes?.qtd_no_show ?? 0}
+          autorId={user.id}
+        />
+      )}
     </div>
   );
 }

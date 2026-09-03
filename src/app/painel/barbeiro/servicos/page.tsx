@@ -14,7 +14,11 @@ export default async function ServicosBarbeiroPage() {
     await Promise.all([
       supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
       supabase.from("profiles").select("role").eq("id", user.id).single(),
-      supabase.from("servicos").select("id, nome, preco, duracao_minutos").eq("ativo", true).order("preco"),
+      supabase
+        .from("servicos")
+        .select("id, nome, preco, duracao_minutos, imagem_url")
+        .eq("ativo", true)
+        .order("preco"),
       supabase.from("barbeiro_servicos").select("servico_id, ativo, preco_personalizado").eq("barbeiro_id", user.id),
     ]);
 
