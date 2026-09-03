@@ -5,6 +5,9 @@ export const SLOT_STEP_MINUTES = 30;
 // pode ser cancelado como no-show (o cron automático roda uma vez por dia
 // - ver vercel.json -, mas o barbeiro pode marcar manualmente na hora).
 export const TOLERANCIA_ATRASO_MINUTOS = 0;
+// Horário em cima da hora não pode ser marcado - exige pelo menos essa
+// antecedência mínima a partir de agora pra um horário aparecer disponível.
+export const ANTECEDENCIA_MINIMA_MINUTOS = 60;
 
 /** Gera os horarios de 30 em 30 min entre 09:00 e 19:30 (inclusive) — janela padrão global */
 export function gerarSlotsDia(): string[] {

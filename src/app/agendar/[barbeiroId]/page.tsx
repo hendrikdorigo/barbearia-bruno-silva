@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertTriangleIcon, ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
+import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
 import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
 import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
@@ -261,12 +261,12 @@ export default function AgendarPage() {
     [diaAtende, horaInicioDia, horaFimDia]
   );
   // Sem tolerância de atraso: se o dia escolhido é hoje, não deixa marcar
-  // horário que já passou.
-  const agora = new Date().toISOString();
-  const ehHoje = data === paraDataSP(agora);
-  const horaAtual = paraHoraSP(agora);
+  // horário muito em cima da hora (dentro da antecedência mínima).
+  const limite = new Date(Date.now() + ANTECEDENCIA_MINIMA_MINUTOS * 60 * 1000).toISOString();
+  const ehHoje = data === paraDataSP(limite);
+  const horaLimite = paraHoraSP(limite);
   const slotsLivres = slots.filter(
-    (s) => (!ehHoje || s > horaAtual) && !horariosOcupados.includes(s) && !slotBloqueado(s, bloqueiosDia)
+    (s) => (!ehHoje || s > horaLimite) && !horariosOcupados.includes(s) && !slotBloqueado(s, bloqueiosDia)
   );
   const slotsBloqueadosPorAgenda = slots.filter((s) => slotBloqueado(s, bloqueiosDia));
 

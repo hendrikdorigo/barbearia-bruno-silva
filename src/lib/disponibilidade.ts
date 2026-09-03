@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { gerarSlots, slotBloqueado } from "@/lib/constants";
+import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, slotBloqueado } from "@/lib/constants";
 import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
 
 export type JanelaDia = { atende: boolean; horaInicio: string; horaFim: string };
@@ -117,15 +117,16 @@ export async function calcularSlotsLivres(
   const ocupados = (agendamentos ?? []).map((a) => new Date(a.data_hora).toTimeString().slice(0, 5));
   const slots = gerarSlots(janela.horaInicio, janela.horaFim);
 
-  // Sem tolerância de atraso: se o dia escolhido é hoje, horários que já
-  // passaram não podem mais ser marcados (senão o cliente conseguia agendar
-  // pro passado e o agendamento já nascia "atrasado").
-  const agora = new Date().toISOString();
-  const ehHoje = data === paraDataSP(agora);
-  const horaAtual = paraHoraSP(agora);
+  // Sem tolerância de atraso: se o dia escolhido é hoje, horários muito em
+  // cima da hora (dentro da antecedência mínima) não podem mais ser
+  // marcados (senão o cliente agendava pra já-já e o agendamento nascia
+  // praticamente atrasado).
+  const limite = new Date(Date.now() + ANTECEDENCIA_MINIMA_MINUTOS * 60 * 1000).toISOString();
+  const ehHoje = data === paraDataSP(limite);
+  const horaLimite = paraHoraSP(limite);
 
   return slots.filter(
-    (s) => (!ehHoje || s > horaAtual) && !ocupados.includes(s) && !slotBloqueado(s, bloqueios ?? [])
+    (s) => (!ehHoje || s > horaLimite) && !ocupados.includes(s) && !slotBloqueado(s, bloqueios ?? [])
   );
 }
 
