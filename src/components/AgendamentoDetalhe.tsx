@@ -4,7 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { nomeClienteAgendamento, telefoneClienteAgendamento } from "@/lib/cliente-agendamento";
+import { AlertTriangleIcon } from "lucide-react";
+import {
+  nomeClienteAgendamento,
+  telefoneClienteAgendamento,
+  qtdNoShowAgendamento,
+} from "@/lib/cliente-agendamento";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,9 +54,19 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
   }
 
   const loading = loadingId === a.id;
+  const qtdNoShow = qtdNoShowAgendamento(a);
 
   return (
     <div className="flex flex-col gap-3">
+      {qtdNoShow > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertTriangleIcon className="size-4 shrink-0" />
+          <span>
+            Cliente já não compareceu {qtdNoShow}{" "}
+            {qtdNoShow === 1 ? "vez" : "vezes"} antes.
+          </span>
+        </div>
+      )}
       <div>
         <p className="font-semibold text-foreground">
           {nomeClienteAgendamento(a)} · {a.servicos?.nome}

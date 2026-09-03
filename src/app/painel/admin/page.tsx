@@ -16,7 +16,7 @@ export default async function PainelAdminPage() {
     supabase
       .from("agendamentos")
       .select(
-        "*, clientes(profile_id, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome)"
+        "*, clientes(profile_id, qtd_no_show, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome)"
       )
       .order("data_hora", { ascending: false }),
     supabase.from("barbeiros").select("profile_id, profiles(nome)").eq("ativo", true),

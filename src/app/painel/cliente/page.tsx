@@ -65,15 +65,6 @@ export default async function PainelClientePage() {
         ativoInicial={profile?.notif_whatsapp_comunidade ?? false}
       />
 
-      {cliente?.exige_pagamento_antecipado && (
-        <Alert variant="destructive" className="mt-6">
-          <AlertDescription>
-            Sua próxima marcação exigirá pagamento antecipado devido a um
-            cancelamento por atraso.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="mt-8 space-y-4">
         {agendamentos?.length ? (
           agendamentos.map((a: any) => (

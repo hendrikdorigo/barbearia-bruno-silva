@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon, AlertTriangleIcon } from "lucide-react";
 import { calcularJanelaDiaLocal } from "@/lib/disponibilidade";
-import { nomeClienteAgendamento } from "@/lib/cliente-agendamento";
+import { nomeClienteAgendamento, qtdNoShowAgendamento } from "@/lib/cliente-agendamento";
 import { paraDataSP, paraHoraSP, somaDias } from "@/lib/timezone-sp";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
@@ -224,7 +224,10 @@ export default function AgendaCalendario({
                     height: `${Math.max(fim - inicio, 20) * PX_POR_MINUTO}px`,
                   }}
                 >
-                  <p className="truncate text-sm font-semibold">
+                  <p className="flex items-center gap-1 truncate text-sm font-semibold">
+                    {qtdNoShowAgendamento(a) > 0 && (
+                      <AlertTriangleIcon className="size-3.5 shrink-0 text-destructive" />
+                    )}
                     {paraHoraSP(a.data_hora)} · {nomeClienteAgendamento(a)}
                   </p>
                   <p className="truncate text-xs opacity-80">

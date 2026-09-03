@@ -1,7 +1,10 @@
 export const SLOT_START = "09:00";
 export const SLOT_END = "19:30";
 export const SLOT_STEP_MINUTES = 30;
-export const TOLERANCIA_ATRASO_MINUTOS = 15;
+// Sem tolerância de atraso: passou do horário marcado, o agendamento já
+// pode ser cancelado como no-show (o cron automático roda uma vez por dia
+// - ver vercel.json -, mas o barbeiro pode marcar manualmente na hora).
+export const TOLERANCIA_ATRASO_MINUTOS = 0;
 
 /** Gera os horarios de 30 em 30 min entre 09:00 e 19:30 (inclusive) — janela padrão global */
 export function gerarSlotsDia(): string[] {

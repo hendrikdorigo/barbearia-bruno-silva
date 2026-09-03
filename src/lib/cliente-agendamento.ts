@@ -15,3 +15,8 @@ export function telefoneClienteAgendamento(a: any): string | null {
 export function ehClienteAvulso(a: any): boolean {
   return !a?.cliente_id;
 }
+
+/** Quantas vezes esse cliente já deu no-show (0 se avulso ou sem histórico). */
+export function qtdNoShowAgendamento(a: any): number {
+  return a?.clientes?.qtd_no_show ?? 0;
+}

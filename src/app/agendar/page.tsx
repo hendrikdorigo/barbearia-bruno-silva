@@ -3,16 +3,16 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS } from "@/lib/constants";
+import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
 import SeletorDataFaixa from "@/components/SeletorDataFaixa";
-import PixCheckout from "@/components/PixCheckout";
 import ProdutoPicker from "@/components/ProdutoPicker";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
 import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
@@ -25,7 +25,13 @@ const PASSOS = [
   { id: "pagamento", label: "Pagamento" },
 ];
 
-type Servico = { id: string; nome: string; preco: number; duracao_minutos: number };
+type Servico = {
+  id: string;
+  nome: string;
+  preco: number;
+  duracao_minutos: number;
+  imagem_url?: string | null;
+};
 type Candidato = { id: string; nome: string; avatarUrl: string | null; preco: number };
 type Passo = "servico" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
 
@@ -66,15 +72,10 @@ function AgendarConteudo() {
   const [carrinho, setCarrinho] = useState<Carrinho>({});
 
   const [ajustesAtivos, setAjustesAtivos] = useState<any[]>([]);
-  const [descontoAntecipado, setDescontoAntecipado] = useState(0);
-  const [exigePagamentoAntecipado, setExigePagamentoAntecipado] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<string>("pix");
-  const [pagarAntecipado, setPagarAntecipado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
-  const [agendamentoParaPagar, setAgendamentoParaPagar] = useState<string | null>(null);
-  const [comandaIdParaPagar, setComandaIdParaPagar] = useState<string | null>(null);
   const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
 
   function voltarPasso() {
@@ -100,33 +101,19 @@ function AgendarConteudo() {
       setLogado(Boolean(user));
       setUserId(user?.id ?? null);
 
-      const [{ data: servicosData }, { data: produtosData }, { data: configPagamento }] = await Promise.all([
+      const [{ data: servicosData }, { data: produtosData }] = await Promise.all([
         supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
         supabase.from("produtos").select("id, nome, preco, categoria, imagem_url").eq("ativo", true).order("categoria"),
-        supabase.from("configuracoes_pagamento").select("desconto_pagamento_antecipado_percentual").limit(1).maybeSingle(),
       ]);
       const lista = servicosData ?? [];
       setServicos(lista);
       setProdutos(produtosData ?? []);
-      setDescontoAntecipado(Number(configPagamento?.desconto_pagamento_antecipado_percentual ?? 0));
 
       if (servicoPreSelecionadoId) {
         const preSelecionado = lista.find((s: any) => s.id === servicoPreSelecionadoId);
         if (preSelecionado) {
           setServicoSelecionado(preSelecionado);
           setPasso("horario");
-        }
-      }
-
-      if (user) {
-        const { data: cliente } = await supabase
-          .from("clientes")
-          .select("exige_pagamento_antecipado")
-          .eq("profile_id", user.id)
-          .maybeSingle();
-        if ((cliente as any)?.exige_pagamento_antecipado) {
-          setExigePagamentoAntecipado(true);
-          setPagarAntecipado(true);
         }
       }
 
@@ -239,14 +226,8 @@ function AgendarConteudo() {
   }
 
   const precoFinal = barbeiroSelecionado ? precoComAjuste(barbeiroSelecionado) : 0;
-  const precoComDesconto =
-    descontoAntecipado > 0
-      ? Math.max(0, Math.round(precoFinal * (1 - descontoAntecipado / 100) * 100) / 100)
-      : precoFinal;
-  const pagaAntecipadoAgora = exigePagamentoAntecipado || pagarAntecipado;
-  const precoServicoCobrado = pagaAntecipadoAgora ? precoComDesconto : precoFinal;
   const totalProdutos = totalCarrinho(carrinho, produtos);
-  const valorTotal = precoServicoCobrado + totalProdutos;
+  const valorTotal = precoFinal + totalProdutos;
 
   async function confirmarAgendamento() {
     setErro(null);
@@ -264,7 +245,6 @@ function AgendarConteudo() {
     }
 
     const dataHoraISO = `${data}T${horarioSelecionado}:00`;
-    const pagaAntecipado = exigePagamentoAntecipado || pagarAntecipado;
 
     const { data: agendamento, error: agendamentoError } = await supabase
       .from("agendamentos")
@@ -274,9 +254,9 @@ function AgendarConteudo() {
         servico_id: servicoSelecionado.id,
         data_hora: dataHoraISO,
         status: "pendente",
-        forma_pagamento: (pagaAntecipado ? "pix" : formaPagamento) as any,
+        forma_pagamento: formaPagamento as any,
         pagamento_antecipado: false,
-        valor_servico: pagaAntecipado ? precoComDesconto : precoFinal,
+        valor_servico: precoFinal,
       })
       .select()
       .single();
@@ -308,13 +288,6 @@ function AgendarConteudo() {
     if (erroProdutos) setAvisoProdutos(erroProdutos);
 
     setEnviando(false);
-
-    if (pagaAntecipado) {
-      setAgendamentoParaPagar(agendamento.id);
-      setComandaIdParaPagar(comandaId);
-      return;
-    }
-
     setPasso("confirmado");
   }
 
@@ -369,14 +342,23 @@ function AgendarConteudo() {
                 setHorarioSelecionado(null);
                 setPasso("horario");
               }}
-              className="flex items-center justify-between rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
             >
-              <div>
-                <p className="font-semibold text-foreground">{s.nome}</p>
-                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ClockIcon className="size-3.5" />
-                  {s.duracao_minutos} min
-                </p>
+              <div className="flex items-center gap-3">
+                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
+                  {s.imagem_url ? (
+                    <Image src={s.imagem_url} alt="" fill sizes="48px" className="object-cover" />
+                  ) : (
+                    <ScissorsIcon className="size-4 text-muted-foreground" />
+                  )}
+                </span>
+                <div>
+                  <p className="font-semibold text-foreground">{s.nome}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ClockIcon className="size-3.5" />
+                    {s.duracao_minutos} min
+                  </p>
+                </div>
               </div>
               <p className="font-mono text-2xl font-medium text-gold-gradient">
                 R$ {Number(s.preco).toFixed(2).replace(".", ",")}
@@ -434,12 +416,11 @@ function AgendarConteudo() {
           <Alert className="mt-6 border-gold/40 bg-gold/10">
             <ClockIcon className="text-gold" />
             <AlertTitle className="uppercase tracking-wider text-gold">
-              Tolerância de atraso: {TOLERANCIA_ATRASO_MINUTOS} minutos
+              Sem tolerância de atraso
             </AlertTitle>
             <AlertDescription className="text-muted-foreground">
-              Chegando com mais de {TOLERANCIA_ATRASO_MINUTOS} minutos de atraso, seu
-              agendamento será cancelado automaticamente e sua próxima marcação
-              exigirá pagamento antecipado.
+              Chegue no horário marcado — passou da hora, o agendamento pode ser
+              cancelado.
             </AlertDescription>
           </Alert>
         </div>
@@ -516,104 +497,30 @@ function AgendarConteudo() {
             R$ {valorTotal.toFixed(2).replace(".", ",")}
             {totalProdutos > 0 && (
               <span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
-                (serviço R$ {precoServicoCobrado.toFixed(2).replace(".", ",")} + produtos R${" "}
+                (serviço R$ {precoFinal.toFixed(2).replace(".", ",")} + produtos R${" "}
                 {totalProdutos.toFixed(2).replace(".", ",")})
               </span>
             )}
           </p>
 
-          {!exigePagamentoAntecipado && (
-            <>
-              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-                Quando você prefere pagar?
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setPagarAntecipado(false)}
-                  className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
-                    !pagarAntecipado
-                      ? "border-gold bg-gold-gradient text-ink"
-                      : "border-border text-muted-foreground hover:border-gold"
-                  }`}
-                >
-                  Pagar no local
-                </button>
-                <button
-                  onClick={() => {
-                    setPagarAntecipado(true);
-                    setFormaPagamento("pix");
-                  }}
-                  className={`relative rounded-lg border px-4 py-3 text-sm font-semibold ${
-                    pagarAntecipado
-                      ? "border-gold bg-gold-gradient text-ink"
-                      : "border-border text-muted-foreground hover:border-gold"
-                  }`}
-                >
-                  Pagar agora (Pix)
-                  {descontoAntecipado > 0 && (
-                    <span
-                      className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                        pagarAntecipado ? "bg-ink/20 text-ink" : "bg-success/15 text-success"
-                      }`}
-                    >
-                      -{descontoAntecipado}%
-                    </span>
-                  )}
-                </button>
-              </div>
-              {descontoAntecipado > 0 && !pagarAntecipado && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Pagando agora, o serviço sai por R$ {precoComDesconto.toFixed(2).replace(".", ",")} em vez de
-                  R$ {precoFinal.toFixed(2).replace(".", ",")}.
-                </p>
-              )}
-            </>
-          )}
-
-          {exigePagamentoAntecipado || pagarAntecipado ? (
-            <Alert className="mt-6 border-gold/40 bg-gold/10">
-              <AlertDescription className="text-foreground/90">
-                Pagamento antecipado é feito só via <strong>Pix</strong> - depois de
-                confirmar, um QR Code aparece na tela para você escanear ou copiar o código.
-                {descontoAntecipado > 0 && (
-                  <>
-                    {" "}
-                    Já está com <strong>{descontoAntecipado}% de desconto</strong> aplicado no serviço.
-                  </>
-                )}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-                Forma de pagamento (no local)
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {FORMAS_PAGAMENTO.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFormaPagamento(f.id)}
-                    className={`rounded-lg border px-4 py-3 text-sm ${
-                      formaPagamento === f.id
-                        ? "border-gold bg-gold-gradient font-bold text-ink"
-                        : "border-border text-muted-foreground hover:border-gold"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {exigePagamentoAntecipado && (
-            <Alert variant="destructive" className="mt-6">
-              <AlertDescription>
-                Devido a um cancelamento por atraso anterior, esta marcação exige
-                pagamento antecipado obrigatório.
-              </AlertDescription>
-            </Alert>
-          )}
+          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
+            Forma de pagamento (no local)
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {FORMAS_PAGAMENTO.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFormaPagamento(f.id)}
+                className={`rounded-lg border px-4 py-3 text-sm ${
+                  formaPagamento === f.id
+                    ? "border-gold bg-gold-gradient font-bold text-ink"
+                    : "border-border text-muted-foreground hover:border-gold"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
 
           {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}
 
@@ -622,31 +529,10 @@ function AgendarConteudo() {
             onClick={confirmarAgendamento}
             className="mt-6 w-full uppercase tracking-widest"
           >
-            {enviando
-              ? "Confirmando..."
-              : exigePagamentoAntecipado || pagarAntecipado
-                ? "Gerar Pix"
-                : "Confirmar agendamento"}
+            {enviando ? "Confirmando..." : "Confirmar agendamento"}
           </Button>
         </div>
       )}
-
-      <PixCheckout
-        open={Boolean(agendamentoParaPagar)}
-        onClose={() => setAgendamentoParaPagar(null)}
-        criarEndpoint={
-          comandaIdParaPagar
-            ? "/api/pagamentos/mercadopago/criar-pix-comanda"
-            : "/api/pagamentos/mercadopago/criar-pix"
-        }
-        corpo={comandaIdParaPagar ? { comandaId: comandaIdParaPagar } : { agendamentoId: agendamentoParaPagar }}
-        valor={valorTotal}
-        onConfirmado={() => {
-          setPasso("confirmado");
-          setAgendamentoParaPagar(null);
-          setComandaIdParaPagar(null);
-        }}
-      />
 
       {passo === "confirmado" && (
         <>
@@ -668,8 +554,7 @@ function AgendarConteudo() {
             {avisoProdutos && <p className="mt-3 text-sm text-destructive">{avisoProdutos}</p>}
             <Alert variant="destructive" className="mt-4 text-left">
               <AlertDescription>
-                Lembrete: tolerância de atraso de {TOLERANCIA_ATRASO_MINUTOS} minutos.
-                Após esse tempo o horário será cancelado.
+                Lembrete: não há tolerância de atraso — chegue no horário marcado.
               </AlertDescription>
             </Alert>
             <Button onClick={() => router.push("/painel/cliente")} className="mt-6 uppercase tracking-widest">

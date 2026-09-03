@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Trash2Icon } from "lucide-react";
+import { AlertTriangleIcon, Trash2Icon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { nomeClienteAgendamento } from "@/lib/cliente-agendamento";
+import { nomeClienteAgendamento, qtdNoShowAgendamento } from "@/lib/cliente-agendamento";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -123,7 +123,15 @@ export default function PainelAdminAgendamentos({
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {nomeClienteAgendamento(a)}
+                  <span className="flex items-center gap-1">
+                    {qtdNoShowAgendamento(a) > 0 && (
+                      <AlertTriangleIcon
+                        className="size-3.5 shrink-0 text-destructive"
+                        aria-label={`Já não compareceu ${qtdNoShowAgendamento(a)}x antes`}
+                      />
+                    )}
+                    {nomeClienteAgendamento(a)}
+                  </span>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {a.barbeiros?.profiles?.nome}

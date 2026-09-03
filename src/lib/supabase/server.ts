@@ -9,6 +9,13 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Next.js 14 cacheia fetch() por padrão mesmo em rotas dinâmicas -
+      // sem isso, dados como preço de serviço ficavam presos no valor de
+      // quando a página foi renderizada pela primeira vez após o deploy,
+      // só atualizando num redeploy novo.
+      global: {
+        fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" }),
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();
