@@ -465,6 +465,7 @@ export type Database = {
           cpf: string
           created_at: string
           data_nascimento: string
+          divida_no_show: number
           email: string | null
           exige_pagamento_antecipado: boolean
           foto_url: string | null
@@ -479,6 +480,7 @@ export type Database = {
           cpf: string
           created_at?: string
           data_nascimento: string
+          divida_no_show?: number
           email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
@@ -493,6 +495,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_nascimento?: string
+          divida_no_show?: number
           email?: string | null
           exige_pagamento_antecipado?: boolean
           foto_url?: string | null
@@ -568,6 +571,7 @@ export type Database = {
           pago_antecipado: boolean
           status: Database["public"]["Enums"]["comanda_status"]
           updated_at: string
+          valor_debito_no_show: number
           valor_produtos: number
           valor_servico: number
         }
@@ -586,6 +590,7 @@ export type Database = {
           pago_antecipado?: boolean
           status?: Database["public"]["Enums"]["comanda_status"]
           updated_at?: string
+          valor_debito_no_show?: number
           valor_produtos?: number
           valor_servico?: number
         }
@@ -604,6 +609,7 @@ export type Database = {
           pago_antecipado?: boolean
           status?: Database["public"]["Enums"]["comanda_status"]
           updated_at?: string
+          valor_debito_no_show?: number
           valor_produtos?: number
           valor_servico?: number
         }

@@ -80,7 +80,8 @@ export default function AgendamentoDetalhe({
     (s: number, i: any) => s + i.quantidade * Number(i.preco_unitario),
     0
   );
-  const totalGeral = Number(a.valor_servico) + totalProdutos;
+  const valorDebitoNoShow = Number(a.comandas?.valor_debito_no_show ?? 0);
+  const totalGeral = Number(a.valor_servico) + totalProdutos + valorDebitoNoShow;
 
   return (
     <div className="flex flex-col gap-3">
@@ -121,21 +122,31 @@ export default function AgendamentoDetalhe({
         <p className="mt-1.5 font-mono text-sm text-muted-foreground">
           Serviço: R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}
         </p>
-        {itensComanda.length > 0 && (
+        {(itensComanda.length > 0 || valorDebitoNoShow > 0) && (
           <div className="mt-2 rounded-lg border border-border bg-ink-soft px-3 py-2">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Produtos da loja</p>
-            <div className="mt-1.5 flex flex-col gap-1 font-mono text-sm text-muted-foreground">
-              {itensComanda.map((i: any, idx: number) => (
-                <div key={idx} className="flex justify-between">
-                  <span>
-                    {i.quantidade}x {i.produtos?.nome ?? "Produto"}
-                  </span>
-                  <span>R$ {(i.quantidade * Number(i.preco_unitario)).toFixed(2).replace(".", ",")}</span>
+            {itensComanda.length > 0 && (
+              <>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Produtos da loja</p>
+                <div className="mt-1.5 flex flex-col gap-1 font-mono text-sm text-muted-foreground">
+                  {itensComanda.map((i: any, idx: number) => (
+                    <div key={idx} className="flex justify-between">
+                      <span>
+                        {i.quantidade}x {i.produtos?.nome ?? "Produto"}
+                      </span>
+                      <span>R$ {(i.quantidade * Number(i.preco_unitario)).toFixed(2).replace(".", ",")}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
+            {valorDebitoNoShow > 0 && (
+              <div className="mt-1.5 flex justify-between font-mono text-sm text-amber-400">
+                <span>Débito de não comparecimento anterior</span>
+                <span>R$ {valorDebitoNoShow.toFixed(2).replace(".", ",")}</span>
+              </div>
+            )}
             <p className="mt-2 flex justify-between border-t border-border pt-1.5 font-mono text-sm font-semibold text-foreground">
-              <span className="font-sans">Total (serviço + produtos)</span>
+              <span className="font-sans">Total</span>
               <span className="text-gold-gradient">R$ {totalGeral.toFixed(2).replace(".", ",")}</span>
             </p>
           </div>

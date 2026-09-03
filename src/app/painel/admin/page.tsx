@@ -16,7 +16,7 @@ export default async function PainelAdminPage() {
     supabase
       .from("agendamentos")
       .select(
-        "*, clientes(profile_id, qtd_no_show, bloqueado, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome, preco, duracao_minutos), comandas(id, status, valor_produtos, comanda_itens(quantidade, preco_unitario, produtos(nome)))"
+        "*, clientes(profile_id, qtd_no_show, bloqueado, profiles(nome)), barbeiros(profile_id, is_dono, profiles(nome)), servicos(nome, preco, duracao_minutos), comandas(id, status, valor_produtos, valor_debito_no_show, comanda_itens(quantidade, preco_unitario, produtos(nome)))"
       )
       .order("data_hora", { ascending: false }),
     supabase.from("barbeiros").select("profile_id, profiles(nome)").eq("ativo", true),

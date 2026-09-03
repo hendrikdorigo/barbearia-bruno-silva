@@ -8,14 +8,16 @@ export type EstatisticasPeriodo = { hoje: PeriodoStats; semana: PeriodoStats; me
  * semana (seg-dom) e deste mes, sempre no horario de Brasilia -
  * independente do fuso onde o servidor roda (Vercel roda em UTC).
  * Faturamento inclui o valor do serviço + produtos da loja levados naquele
- * atendimento (comandas.valor_produtos).
+ * atendimento (comandas.valor_produtos) + eventual débito de não
+ * comparecimento de um agendamento anterior cobrado junto (comandas.
+ * valor_debito_no_show).
  */
 export function calcularEstatisticas(
   agendamentos: {
     data_hora: string;
     valor_servico: number;
     status: string;
-    comandas?: { valor_produtos: number } | null;
+    comandas?: { valor_produtos: number; valor_debito_no_show?: number } | null;
   }[]
 ): EstatisticasPeriodo {
   const hoje = paraDataSP(new Date().toISOString());
@@ -30,7 +32,10 @@ export function calcularEstatisticas(
   for (const a of agendamentos) {
     if (a.status !== "confirmado" && a.status !== "concluido") continue;
     const dataAgendamento = paraDataSP(a.data_hora);
-    const valor = Number(a.valor_servico) + Number(a.comandas?.valor_produtos ?? 0);
+    const valor =
+      Number(a.valor_servico) +
+      Number(a.comandas?.valor_produtos ?? 0) +
+      Number(a.comandas?.valor_debito_no_show ?? 0);
 
     if (dataAgendamento.slice(0, 7) === prefixoMes) {
       stats.mes.atendimentos += 1;

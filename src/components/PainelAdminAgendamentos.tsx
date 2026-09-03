@@ -221,9 +221,20 @@ export default function PainelAdminAgendamentos({
                     ? `R$ ${Number(a.comandas.valor_produtos).toFixed(2).replace(".", ",")}`
                     : "—"}
                 </TableCell>
-                <TableCell className="text-right font-mono font-semibold text-foreground">
+                <TableCell
+                  className="text-right font-mono font-semibold text-foreground"
+                  title={
+                    Number(a.comandas?.valor_debito_no_show ?? 0) > 0
+                      ? `Inclui R$ ${Number(a.comandas.valor_debito_no_show).toFixed(2).replace(".", ",")} de débito de não comparecimento anterior`
+                      : undefined
+                  }
+                >
                   R${" "}
-                  {(Number(a.valor_servico) + Number(a.comandas?.valor_produtos ?? 0))
+                  {(
+                    Number(a.valor_servico) +
+                    Number(a.comandas?.valor_produtos ?? 0) +
+                    Number(a.comandas?.valor_debito_no_show ?? 0)
+                  )
                     .toFixed(2)
                     .replace(".", ",")}
                 </TableCell>

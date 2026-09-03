@@ -26,7 +26,7 @@ export default async function PainelBarbeiroPage() {
     supabase
       .from("agendamentos")
       .select(
-        "*, clientes(profile_id, qtd_no_show, bloqueado, profiles(nome, telefone)), servicos(nome, preco, duracao_minutos), comandas(id, status, valor_produtos, comanda_itens(quantidade, preco_unitario, produtos(nome)))"
+        "*, clientes(profile_id, qtd_no_show, bloqueado, profiles(nome, telefone)), servicos(nome, preco, duracao_minutos), comandas(id, status, valor_produtos, valor_debito_no_show, comanda_itens(quantidade, preco_unitario, produtos(nome)))"
       )
       .eq("barbeiro_id", user.id)
       .order("data_hora", { ascending: true }),

@@ -27,6 +27,7 @@ type Comanda = {
   status: "aberta" | "aguardando_pagamento" | "paga" | "fechada" | "fiado";
   valor_servico: number;
   valor_produtos: number;
+  valor_debito_no_show: number;
   forma_pagamento: string | null;
   pago_antecipado: boolean;
 };
@@ -65,7 +66,11 @@ export default function ComandaView({
   const router = useRouter();
   const supabase = createClient();
 
-  const total = valorServico + itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
+  const valorDebitoNoShow = Number(comanda.valor_debito_no_show);
+  const total =
+    valorServico +
+    valorDebitoNoShow +
+    itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
   const podeAdicionar = status === "aberta" || status === "aguardando_pagamento";
   const podePagar = status === "aguardando_pagamento" || status === "fiado";
 
@@ -183,6 +188,12 @@ export default function ComandaView({
             </span>
           )}
         </div>
+        {valorDebitoNoShow > 0 && (
+          <div className="flex items-center justify-between text-amber-400">
+            <span>Débito de não comparecimento anterior</span>
+            <span>R$ {valorDebitoNoShow.toFixed(2).replace(".", ",")}</span>
+          </div>
+        )}
         {itens.map((i) => (
           <div key={i.id} className="flex items-center justify-between text-muted-foreground">
             <span>

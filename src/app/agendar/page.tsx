@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
+import { AlertTriangleIcon, ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
@@ -616,6 +616,16 @@ function AgendarConteudo() {
             </>
           )}
 
+          <Alert variant="destructive" className="mt-6 text-left">
+            <AlertTriangleIcon />
+            <AlertTitle className="uppercase tracking-wider">Atenção: atraso cancela o horário</AlertTitle>
+            <AlertDescription>
+              Se você atrasar ou não comparecer, o agendamento é cancelado automaticamente e o
+              valor do serviço é somado à sua próxima visita — e assim por diante, se acontecer de
+              novo.
+            </AlertDescription>
+          </Alert>
+
           {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}
 
           <Button
@@ -648,7 +658,8 @@ function AgendarConteudo() {
             {avisoProdutos && <p className="mt-3 text-sm text-destructive">{avisoProdutos}</p>}
             <Alert variant="destructive" className="mt-4 text-left">
               <AlertDescription>
-                Lembrete: não há tolerância de atraso — chegue no horário marcado.
+                Lembrete: não há tolerância de atraso — chegue no horário marcado. Faltar cancela o
+                agendamento e soma o valor na sua próxima visita.
               </AlertDescription>
             </Alert>
             <Button onClick={() => router.push("/painel/cliente")} className="mt-6 uppercase tracking-widest">
