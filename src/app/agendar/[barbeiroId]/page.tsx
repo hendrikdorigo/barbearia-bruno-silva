@@ -338,7 +338,7 @@ export default function AgendarPage() {
         barbeiro_id: barbeiroId,
         servico_id: servicoSelecionado.id,
         data_hora: dataHoraISO,
-        status: "pendente",
+        status: "confirmado",
         forma_pagamento: usarPacote && pacoteUsavel ? null : (formaPagamento as any),
         pagamento_antecipado: Boolean(usarPacote && pacoteUsavel),
         valor_servico: precoFinalComPagamento,

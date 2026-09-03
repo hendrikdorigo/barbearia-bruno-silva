@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       barbeiro_id: preAgendamento.barbeiro_id,
       servico_id: preAgendamento.servico_id,
       data_hora: preAgendamento.data_hora_prevista,
-      status: "pendente",
+      status: "confirmado",
       pagamento_antecipado: false,
       valor_servico: (preAgendamento as any).servicos?.preco ?? 0,
     })

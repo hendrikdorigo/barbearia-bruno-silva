@@ -7,9 +7,16 @@ export type EstatisticasPeriodo = { hoje: PeriodoStats; semana: PeriodoStats; me
  * Conta atendimentos (confirmado/concluido) e faturamento de hoje, desta
  * semana (seg-dom) e deste mes, sempre no horario de Brasilia -
  * independente do fuso onde o servidor roda (Vercel roda em UTC).
+ * Faturamento inclui o valor do serviço + produtos da loja levados naquele
+ * atendimento (comandas.valor_produtos).
  */
 export function calcularEstatisticas(
-  agendamentos: { data_hora: string; valor_servico: number; status: string }[]
+  agendamentos: {
+    data_hora: string;
+    valor_servico: number;
+    status: string;
+    comandas?: { valor_produtos: number } | null;
+  }[]
 ): EstatisticasPeriodo {
   const hoje = paraDataSP(new Date().toISOString());
   const diaSemana = new Date(`${hoje}T12:00:00Z`).getUTCDay(); // 0=domingo
@@ -23,7 +30,7 @@ export function calcularEstatisticas(
   for (const a of agendamentos) {
     if (a.status !== "confirmado" && a.status !== "concluido") continue;
     const dataAgendamento = paraDataSP(a.data_hora);
-    const valor = Number(a.valor_servico);
+    const valor = Number(a.valor_servico) + Number(a.comandas?.valor_produtos ?? 0);
 
     if (dataAgendamento.slice(0, 7) === prefixoMes) {
       stats.mes.atendimentos += 1;

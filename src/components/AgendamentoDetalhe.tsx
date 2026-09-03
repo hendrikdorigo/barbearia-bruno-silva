@@ -140,17 +140,6 @@ export default function AgendamentoDetalhe({
         )}
         {(a.status === "pendente" || a.status === "confirmado") && (
           <>
-            {a.status === "pendente" && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={loading}
-                onClick={() => atualizarStatus("confirmado")}
-                className="rounded-full border-success/40 text-success hover:bg-success/10"
-              >
-                Confirmar
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"

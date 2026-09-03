@@ -141,7 +141,9 @@ export default function PainelAdminAgendamentos({
               <TableHead>Barbeiro</TableHead>
               <TableHead>Serviço</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">Serviço (R$)</TableHead>
+              <TableHead className="text-right">Produtos</TableHead>
+              <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Repasse Bruno</TableHead>
               <TableHead />
             </TableRow>
@@ -194,6 +196,17 @@ export default function PainelAdminAgendamentos({
                 <TableCell className="text-right font-mono text-muted-foreground">
                   R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}
                 </TableCell>
+                <TableCell className="text-right font-mono text-muted-foreground">
+                  {Number(a.comandas?.valor_produtos ?? 0) > 0
+                    ? `R$ ${Number(a.comandas.valor_produtos).toFixed(2).replace(".", ",")}`
+                    : "—"}
+                </TableCell>
+                <TableCell className="text-right font-mono font-semibold text-foreground">
+                  R${" "}
+                  {(Number(a.valor_servico) + Number(a.comandas?.valor_produtos ?? 0))
+                    .toFixed(2)
+                    .replace(".", ",")}
+                </TableCell>
                 <TableCell className="text-right font-mono text-gold">
                   R$ {Number(a.valor_repasse_bruno).toFixed(2).replace(".", ",")}
                 </TableCell>
@@ -230,7 +243,7 @@ export default function PainelAdminAgendamentos({
             ))}
             {filtrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={10} className="py-6 text-center text-muted-foreground">
                   Nenhum agendamento encontrado.
                 </TableCell>
               </TableRow>
