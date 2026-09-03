@@ -423,6 +423,7 @@ export type Database = {
           cliente_id: string
           created_at: string
           id: string
+          imagem_url: string | null
           texto: string
         }
         Insert: {
@@ -430,6 +431,7 @@ export type Database = {
           cliente_id: string
           created_at?: string
           id?: string
+          imagem_url?: string | null
           texto: string
         }
         Update: {
@@ -437,6 +439,7 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           id?: string
+          imagem_url?: string | null
           texto?: string
         }
         Relationships: [

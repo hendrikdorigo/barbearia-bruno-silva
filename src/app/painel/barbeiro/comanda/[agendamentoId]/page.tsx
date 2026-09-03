@@ -39,7 +39,7 @@ export default async function ComandaBarbeiroPage({
     clienteId
       ? supabase
           .from("cliente_notas")
-          .select("id, texto, created_at, profiles(nome)")
+          .select("id, texto, imagem_url, created_at, autor_id, profiles(nome)")
           .eq("cliente_id", clienteId)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
