@@ -1,13 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { paraDataSP, somaDias } from "@/lib/timezone-sp";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const DIAS_ABREV = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 const MESES_ABREV = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+function ymdParaDate(ymd: string): Date {
+  return new Date(`${ymd}T12:00:00`);
+}
+
+function dateParaYmd(d: Date): string {
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
 
 // Tira horizontal de dias pra escolher a data de agendamento — troca o
 // <input type="date"> nativo por algo tocável/arrastável, no mesmo padrão
@@ -23,6 +37,7 @@ export default function SeletorDataFaixa({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const hoje = useMemo(() => paraDataSP(new Date().toISOString()), []);
+  const [calendarioAberto, setCalendarioAberto] = useState(false);
 
   const opcoes = useMemo(
     () =>
@@ -93,6 +108,36 @@ export default function SeletorDataFaixa({
       >
         <ChevronRightIcon />
       </Button>
+
+      <Popover open={calendarioAberto} onOpenChange={setCalendarioAberto}>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="shrink-0 rounded-full"
+              aria-label="Escolher data no calendário"
+            >
+              <CalendarIcon />
+            </Button>
+          }
+        />
+        <PopoverContent align="end" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            locale={ptBR}
+            selected={ymdParaDate(value)}
+            defaultMonth={ymdParaDate(value)}
+            disabled={{ before: ymdParaDate(hoje) }}
+            onSelect={(data) => {
+              if (!data) return;
+              onChange(dateParaYmd(data));
+              setCalendarioAberto(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
