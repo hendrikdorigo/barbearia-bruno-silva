@@ -7,6 +7,7 @@ import Image from "next/image";
 import { AlertTriangleIcon, ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
+import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
 import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { Button } from "@/components/ui/button";
@@ -259,8 +260,13 @@ export default function AgendarPage() {
     () => (diaAtende ? gerarSlots(horaInicioDia, horaFimDia) : []),
     [diaAtende, horaInicioDia, horaFimDia]
   );
+  // Sem tolerância de atraso: se o dia escolhido é hoje, não deixa marcar
+  // horário que já passou.
+  const agora = new Date().toISOString();
+  const ehHoje = data === paraDataSP(agora);
+  const horaAtual = paraHoraSP(agora);
   const slotsLivres = slots.filter(
-    (s) => !horariosOcupados.includes(s) && !slotBloqueado(s, bloqueiosDia)
+    (s) => (!ehHoje || s > horaAtual) && !horariosOcupados.includes(s) && !slotBloqueado(s, bloqueiosDia)
   );
   const slotsBloqueadosPorAgenda = slots.filter((s) => slotBloqueado(s, bloqueiosDia));
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { gerarSlots, slotBloqueado } from "@/lib/constants";
+import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
 
 export type JanelaDia = { atende: boolean; horaInicio: string; horaFim: string };
 
@@ -115,7 +116,17 @@ export async function calcularSlotsLivres(
 
   const ocupados = (agendamentos ?? []).map((a) => new Date(a.data_hora).toTimeString().slice(0, 5));
   const slots = gerarSlots(janela.horaInicio, janela.horaFim);
-  return slots.filter((s) => !ocupados.includes(s) && !slotBloqueado(s, bloqueios ?? []));
+
+  // Sem tolerância de atraso: se o dia escolhido é hoje, horários que já
+  // passaram não podem mais ser marcados (senão o cliente conseguia agendar
+  // pro passado e o agendamento já nascia "atrasado").
+  const agora = new Date().toISOString();
+  const ehHoje = data === paraDataSP(agora);
+  const horaAtual = paraHoraSP(agora);
+
+  return slots.filter(
+    (s) => (!ehHoje || s > horaAtual) && !ocupados.includes(s) && !slotBloqueado(s, bloqueios ?? [])
+  );
 }
 
 /** Horários livres de vários barbeiros na mesma data, em paralelo. */
