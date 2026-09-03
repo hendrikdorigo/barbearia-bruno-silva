@@ -30,7 +30,13 @@ export const PAGAMENTO_LABEL: Record<string, string> = {
   pix: "Pix",
 };
 
-export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: any }) {
+export default function AgendamentoDetalhe({
+  agendamento: a,
+  mostrarLinkComanda = true,
+}: {
+  agendamento: any;
+  mostrarLinkComanda?: boolean;
+}) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -57,6 +63,12 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
   const loading = loadingId === a.id;
   const qtdNoShow = qtdNoShowAgendamento(a);
   const bloqueado = clienteBloqueadoAgendamento(a);
+  const itensComanda = a.comandas?.comanda_itens ?? [];
+  const totalProdutos = itensComanda.reduce(
+    (s: number, i: any) => s + i.quantidade * Number(i.preco_unitario),
+    0
+  );
+  const totalGeral = Number(a.valor_servico) + totalProdutos;
 
   return (
     <div className="flex flex-col gap-3">
@@ -94,14 +106,38 @@ export default function AgendamentoDetalhe({ agendamento: a }: { agendamento: an
             {a.pagamento_antecipado ? "(antecipado, já pago)" : "(vai pagar no local)"}
           </p>
         )}
+        <p className="mt-1.5 font-mono text-sm text-muted-foreground">
+          Serviço: R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}
+        </p>
+        {itensComanda.length > 0 && (
+          <div className="mt-2 rounded-lg border border-border bg-ink-soft px-3 py-2">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Produtos da loja</p>
+            <div className="mt-1.5 flex flex-col gap-1 font-mono text-sm text-muted-foreground">
+              {itensComanda.map((i: any, idx: number) => (
+                <div key={idx} className="flex justify-between">
+                  <span>
+                    {i.quantidade}x {i.produtos?.nome ?? "Produto"}
+                  </span>
+                  <span>R$ {(i.quantidade * Number(i.preco_unitario)).toFixed(2).replace(".", ",")}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 flex justify-between border-t border-border pt-1.5 font-mono text-sm font-semibold text-foreground">
+              <span className="font-sans">Total (serviço + produtos)</span>
+              <span className="text-gold-gradient">R$ {totalGeral.toFixed(2).replace(".", ",")}</span>
+            </p>
+          </div>
+        )}
       </div>
       <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/painel/barbeiro/comanda/${a.id}`}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
-        >
-          Ver comanda
-        </Link>
+        {mostrarLinkComanda && (
+          <Link
+            href={`/painel/barbeiro/comanda/${a.id}`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
+          >
+            Ver comanda
+          </Link>
+        )}
         {(a.status === "pendente" || a.status === "confirmado") && (
           <>
             {a.status === "pendente" && (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon } from "lucide-react";
+import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon, ShoppingBagIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   nomeClienteAgendamento,
@@ -18,6 +18,8 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import AgendamentoDetalhe from "@/components/AgendamentoDetalhe";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -51,7 +53,10 @@ export default function PainelAdminAgendamentos({
   const [filtroData, setFiltroData] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
+  const [agendamentoAbertoId, setAgendamentoAbertoId] = useState<string | null>(null);
   const supabase = createClient();
+
+  const agendamentoAberto = lista.find((a) => a.id === agendamentoAbertoId) ?? null;
 
   const filtrados = useMemo(() => {
     return lista.filter((a) => {
@@ -143,7 +148,11 @@ export default function PainelAdminAgendamentos({
           </TableHeader>
           <TableBody>
             {filtrados.map((a) => (
-              <TableRow key={a.id}>
+              <TableRow
+                key={a.id}
+                onClick={() => setAgendamentoAbertoId(a.id)}
+                className="cursor-pointer"
+              >
                 <TableCell className="text-muted-foreground">
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
                 </TableCell>
@@ -159,6 +168,12 @@ export default function PainelAdminAgendamentos({
                       <AlertTriangleIcon
                         className="size-3.5 shrink-0 text-destructive"
                         aria-label={`Já não compareceu ${qtdNoShowAgendamento(a)}x antes`}
+                      />
+                    )}
+                    {(a.comandas?.comanda_itens?.length ?? 0) > 0 && (
+                      <ShoppingBagIcon
+                        className="size-3.5 shrink-0 text-gold"
+                        aria-label="Levou produtos da loja"
                       />
                     )}
                     {nomeClienteAgendamento(a)}
@@ -182,7 +197,7 @@ export default function PainelAdminAgendamentos({
                 <TableCell className="text-right font-mono text-gold">
                   R$ {Number(a.valor_repasse_bruno).toFixed(2).replace(".", ",")}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-3">
                     {a.clientes?.profile_id && (
                       <button
@@ -223,6 +238,19 @@ export default function PainelAdminAgendamentos({
           </TableBody>
         </Table>
       </div>
+
+      <Sheet open={!!agendamentoAbertoId} onOpenChange={(open) => !open && setAgendamentoAbertoId(null)}>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Detalhes do agendamento</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-4">
+            {agendamentoAberto && (
+              <AgendamentoDetalhe agendamento={agendamentoAberto} mostrarLinkComanda={false} />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

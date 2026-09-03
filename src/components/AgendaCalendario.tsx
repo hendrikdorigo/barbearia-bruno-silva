@@ -89,8 +89,18 @@ export default function AgendaCalendario({
 
   const agendamentoAberto = agendamentos.find((a) => a.id === agendamentoAbertoId) ?? null;
 
-  const inicioMin = horaParaMinutos(janela.horaInicio);
-  const fimMin = horaParaMinutos(janela.horaFim);
+  // A grade cobre o horário configurado do barbeiro, mas nunca pode cortar
+  // fora da tela um agendamento real desse dia (ex: reservado manualmente
+  // num horário fora do expediente padrão) - por isso a janela se expande
+  // pra sempre incluir o início/fim de todo agendamento do dia.
+  const inicioMin = Math.min(
+    horaParaMinutos(janela.horaInicio),
+    ...agendamentosDoDia.map((a) => horaParaMinutos(paraHoraSP(a.data_hora)))
+  );
+  const fimMin = Math.max(
+    horaParaMinutos(janela.horaFim),
+    ...agendamentosDoDia.map((a) => horaParaMinutos(paraHoraSP(a.data_hora)) + (a.servicos?.duracao_minutos ?? 30))
+  );
   const alturaTotal = Math.max(0, (fimMin - inicioMin) * PX_POR_MINUTO);
 
   const horasGrade: number[] = [];
@@ -153,7 +163,7 @@ export default function AgendaCalendario({
         })}
       </div>
 
-      {!janela.atende ? (
+      {!janela.atende && agendamentosDoDia.length === 0 ? (
         <Empty className="mt-6 border border-dashed border-border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
