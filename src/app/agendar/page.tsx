@@ -8,10 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
+import SeletorDataFaixa from "@/components/SeletorDataFaixa";
 import PixCheckout from "@/components/PixCheckout";
 import ProdutoPicker from "@/components/ProdutoPicker";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
@@ -374,17 +374,16 @@ function AgendarConteudo() {
       {passo === "data" && (
         <div className="mt-8">
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Data</label>
-          <Input
-            type="date"
-            value={data}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => {
-              setData(e.target.value);
-              setHorarioSelecionado(null);
-              setBarbeiroSelecionado(null);
-            }}
-            className="mt-2 h-11 bg-ink-soft"
-          />
+          <div className="mt-3">
+            <SeletorDataFaixa
+              value={data}
+              onChange={(novaData) => {
+                setData(novaData);
+                setHorarioSelecionado(null);
+                setBarbeiroSelecionado(null);
+              }}
+            />
+          </div>
           <Button
             disabled={buscandoCandidatos}
             onClick={() => setPasso("horario")}

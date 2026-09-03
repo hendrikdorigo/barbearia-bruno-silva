@@ -7,10 +7,10 @@ import { ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, TOLERANCIA_ATRASO_MINUTOS, slotBloqueado } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import PixCheckout from "@/components/PixCheckout";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
+import SeletorDataFaixa from "@/components/SeletorDataFaixa";
 import ProdutoPicker from "@/components/ProdutoPicker";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
 import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
@@ -422,17 +422,16 @@ export default function AgendarPage() {
       {passo === "horario" && (
         <div className="mt-8">
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Data</label>
-          <Input
-            type="date"
-            value={data}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => {
-              setData(e.target.value);
-              setHorarioSelecionado(null);
-              setFilaMensagem(null);
-            }}
-            className="mt-2 h-11 bg-ink-soft"
-          />
+          <div className="mt-3">
+            <SeletorDataFaixa
+              value={data}
+              onChange={(novaData) => {
+                setData(novaData);
+                setHorarioSelecionado(null);
+                setFilaMensagem(null);
+              }}
+            />
+          </div>
 
           {precoFinal !== Number(servicoSelecionado?.preco) && (
             <p className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-gold">
