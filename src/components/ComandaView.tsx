@@ -25,7 +25,7 @@ type Item = {
 type Comanda = {
   id: string;
   agendamento_id: string;
-  status: "aberta" | "aguardando_pagamento" | "paga" | "fechada";
+  status: "aberta" | "aguardando_pagamento" | "paga" | "fechada" | "fiado";
   valor_servico: number;
   valor_produtos: number;
   forma_pagamento: string | null;
@@ -39,6 +39,7 @@ const STATUS_LABEL: Record<Comanda["status"], string> = {
   aguardando_pagamento: "Aguardando pagamento",
   paga: "Paga (aguardando fechamento)",
   fechada: "Fechada",
+  fiado: "Fiado (a receber)",
 };
 
 export default function ComandaView({
@@ -68,6 +69,7 @@ export default function ComandaView({
 
   const total = valorServico + itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
   const podeAdicionar = status === "aberta" || status === "aguardando_pagamento";
+  const podePagar = status === "aguardando_pagamento" || status === "fiado";
 
   async function salvarValorServico() {
     const novoValor = Number(valorEditado);
@@ -110,6 +112,17 @@ export default function ComandaView({
     setPagoAntecipado(true);
     setStatus("paga");
     router.refresh();
+  }
+
+  async function deixarFiado() {
+    if (!window.confirm("Deixar esse valor em aberto? O cliente vai poder pagar depois.")) return;
+    setProcessando(true);
+    const { error } = await supabase.from("comandas").update({ status: "fiado" }).eq("id", comanda.id);
+    setProcessando(false);
+    if (!error) {
+      setStatus("fiado");
+      router.refresh();
+    }
   }
 
   async function confirmarPagamentoCaixa() {
@@ -226,7 +239,17 @@ export default function ComandaView({
         </div>
       )}
 
-      {podeAdicionar && (
+      {status === "fiado" && (
+        <Alert className="mt-6 border-amber-500/40 bg-amber-500/10">
+          <AlertDescription className="text-amber-400">
+            {papel === "barbeiro"
+              ? "Fiado — o cliente ainda não pagou esse atendimento."
+              : "Você ainda não pagou esse atendimento. Pode quitar quando puder, pelo app ou na barbearia."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {(podeAdicionar || status === "fiado") && (
         <div className="mt-6">
           {papel === "cliente" && !pagoAntecipado && (
             <Button
@@ -238,7 +261,7 @@ export default function ComandaView({
             </Button>
           )}
 
-          {papel === "barbeiro" && (
+          {papel === "barbeiro" && podePagar && (
             <>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -260,13 +283,28 @@ export default function ComandaView({
             </>
           )}
 
-          {papel === "barbeiro" && status === "aguardando_pagamento" && (
+          {papel === "barbeiro" && podePagar && (
             <Button
               onClick={confirmarPagamentoCaixa}
               disabled={processando}
               className="mt-4 w-full uppercase tracking-widest"
             >
-              {processando ? "Confirmando..." : "Confirmar pagamento no caixa e fechar comanda"}
+              {processando
+                ? "Confirmando..."
+                : status === "fiado"
+                  ? "Marcar como pago agora"
+                  : "Confirmar pagamento no caixa e fechar comanda"}
+            </Button>
+          )}
+
+          {papel === "barbeiro" && status === "aguardando_pagamento" && (
+            <Button
+              onClick={deixarFiado}
+              disabled={processando}
+              variant="outline"
+              className="mt-2 w-full uppercase tracking-widest"
+            >
+              Deixar fiado (cliente paga depois)
             </Button>
           )}
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangleIcon, NotebookTextIcon, ShieldOffIcon, ShieldCheckIcon, PackageIcon } from "lucide-react";
+import { AlertTriangleIcon, NotebookTextIcon, ShieldOffIcon, ShieldCheckIcon, PackageIcon, WalletIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,7 @@ export default function FichaCliente({
   bloqueadoInicial,
   motivoBloqueioInicial,
   pacotes,
+  valorFiadoAberto,
 }: {
   clienteId: string;
   notasIniciais: Nota[];
@@ -37,6 +38,7 @@ export default function FichaCliente({
   bloqueadoInicial: boolean;
   motivoBloqueioInicial: string | null;
   pacotes: PacoteCliente[];
+  valorFiadoAberto?: number;
 }) {
   const [notas, setNotas] = useState(notasIniciais);
   const [texto, setTexto] = useState("");
@@ -122,6 +124,15 @@ export default function FichaCliente({
             Cliente bloqueado — não consegue marcar horário pelo site.
           </span>
           {motivoBloqueio && <span className="text-destructive/80">Motivo: {motivoBloqueio}</span>}
+        </div>
+      )}
+
+      {Boolean(valorFiadoAberto && valorFiadoAberto > 0) && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          <WalletIcon className="size-4 shrink-0" />
+          <span>
+            Fiado em aberto com você: R$ {valorFiadoAberto!.toFixed(2).replace(".", ",")}
+          </span>
         </div>
       )}
 

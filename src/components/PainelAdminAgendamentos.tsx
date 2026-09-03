@@ -189,9 +189,16 @@ export default function PainelAdminAgendamentos({
                 </TableCell>
                 <TableCell className="text-muted-foreground">{a.servicos?.nome}</TableCell>
                 <TableCell>
-                  <Badge className={cn("uppercase", STATUS_CLASS[a.status])}>
-                    {STATUS_LABEL[a.status]}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge className={cn("uppercase", STATUS_CLASS[a.status])}>
+                      {STATUS_LABEL[a.status]}
+                    </Badge>
+                    {a.comandas?.status === "fiado" && (
+                      <Badge className="border-transparent bg-amber-500/15 uppercase text-amber-400">
+                        Fiado
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right font-mono text-muted-foreground">
                   R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}

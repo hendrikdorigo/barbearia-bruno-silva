@@ -31,7 +31,7 @@ export default async function ComandaBarbeiroPage({
 
   const clienteId = (comanda as any).cliente_id as string | null;
 
-  const [{ data: itens }, { data: notas }, { data: pacotes }] = await Promise.all([
+  const [{ data: itens }, { data: notas }, { data: pacotes }, { data: fiados }] = await Promise.all([
     supabase
       .from("comanda_itens")
       .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
@@ -50,6 +50,15 @@ export default async function ComandaBarbeiroPage({
           .eq("cliente_id", clienteId)
           .eq("ativo", true)
           .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    // Só enxerga fiados dos atendimentos feitos por este barbeiro (RLS) -
+    // é um indicativo, o admin tem a visão completa no painel dele.
+    clienteId
+      ? supabase
+          .from("comandas")
+          .select("id, valor_servico, valor_produtos")
+          .eq("cliente_id", clienteId)
+          .eq("status", "fiado")
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -77,6 +86,10 @@ export default async function ComandaBarbeiroPage({
           bloqueadoInicial={Boolean((comanda as any).clientes?.bloqueado)}
           motivoBloqueioInicial={(comanda as any).clientes?.motivo_bloqueio ?? null}
           pacotes={(pacotes ?? []) as any}
+          valorFiadoAberto={(fiados ?? []).reduce(
+            (s, f: any) => s + Number(f.valor_servico) + Number(f.valor_produtos),
+            0
+          )}
         />
       )}
     </div>

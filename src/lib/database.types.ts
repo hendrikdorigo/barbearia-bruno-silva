@@ -1548,7 +1548,12 @@ export type Database = {
         | "concluido"
       ajuste_tipo: "desconto" | "acrescimo"
       ajuste_valor_tipo: "percentual" | "fixo"
-      comanda_status: "aberta" | "aguardando_pagamento" | "paga" | "fechada"
+      comanda_status:
+        | "aberta"
+        | "aguardando_pagamento"
+        | "paga"
+        | "fechada"
+        | "fiado"
       envio_status: "agendado" | "enviado" | "falhou" | "cancelado"
       fila_status:
         | "aguardando"
@@ -1698,7 +1703,13 @@ export const Constants = {
       ],
       ajuste_tipo: ["desconto", "acrescimo"],
       ajuste_valor_tipo: ["percentual", "fixo"],
-      comanda_status: ["aberta", "aguardando_pagamento", "paga", "fechada"],
+      comanda_status: [
+        "aberta",
+        "aguardando_pagamento",
+        "paga",
+        "fechada",
+        "fiado",
+      ],
       envio_status: ["agendado", "enviado", "falhou", "cancelado"],
       fila_status: [
         "aguardando",
