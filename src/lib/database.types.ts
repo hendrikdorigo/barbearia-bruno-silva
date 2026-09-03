@@ -29,6 +29,7 @@ export type Database = {
           google_event_id: string | null
           id: string
           observacao: string | null
+          pacote_cliente_id: string | null
           pagamento_antecipado: boolean
           servico_id: string
           status: Database["public"]["Enums"]["agendamento_status"]
@@ -52,6 +53,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           observacao?: string | null
+          pacote_cliente_id?: string | null
           pagamento_antecipado?: boolean
           servico_id: string
           status?: Database["public"]["Enums"]["agendamento_status"]
@@ -75,6 +77,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           observacao?: string | null
+          pacote_cliente_id?: string | null
           pagamento_antecipado?: boolean
           servico_id?: string
           status?: Database["public"]["Enums"]["agendamento_status"]
@@ -96,6 +99,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clientes"
             referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "agendamentos_pacote_cliente_id_fkey"
+            columns: ["pacote_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "pacotes_cliente"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agendamentos_servico_id_fkey"
@@ -1002,7 +1012,10 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          qtd_visitas_incluidas: number | null
           updated_at: string
+          valor_total: number | null
+          visitas_usadas: number
         }
         Insert: {
           ativo?: boolean
@@ -1015,7 +1028,10 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          qtd_visitas_incluidas?: number | null
           updated_at?: string
+          valor_total?: number | null
+          visitas_usadas?: number
         }
         Update: {
           ativo?: boolean
@@ -1028,7 +1044,10 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          qtd_visitas_incluidas?: number | null
           updated_at?: string
+          valor_total?: number | null
+          visitas_usadas?: number
         }
         Relationships: [
           {

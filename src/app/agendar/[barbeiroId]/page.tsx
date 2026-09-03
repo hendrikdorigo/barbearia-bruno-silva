@@ -4,10 +4,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
 import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
+import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
@@ -63,6 +64,8 @@ export default function AgendarPage() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<Carrinho>({});
   const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
+  const [pacotes, setPacotes] = useState<PacoteCliente[]>([]);
+  const [usarPacote, setUsarPacote] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<string>("dinheiro");
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
@@ -100,6 +103,13 @@ export default function AgendarPage() {
           .eq("profile_id", user.id)
           .maybeSingle();
         setBloqueado(Boolean((clienteData as any)?.bloqueado));
+
+        const { data: pacotesData } = await supabase
+          .from("pacotes_cliente")
+          .select("*")
+          .eq("cliente_id", user.id)
+          .eq("ativo", true);
+        setPacotes((pacotesData ?? []) as any);
       }
 
       const { data: barbeiro } = await supabase
@@ -265,7 +275,20 @@ export default function AgendarPage() {
     return Math.max(0, Math.round(preco * 100) / 100);
   }, [servicoSelecionado, ajustesAtivos]);
 
-  const precoFinalComPagamento = aplicarAjusteFormaPagamento(precoFinal, formaPagamento, ajustesFormaPagamento);
+  const pacoteUsavel = useMemo(
+    () => pacotes.find((p) => pacoteUsavelNaData(p, data)) ?? null,
+    [pacotes, data]
+  );
+
+  useEffect(() => {
+    setUsarPacote(Boolean(pacoteUsavel));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pacoteUsavel?.id]);
+
+  const precoFinalComPagamento =
+    usarPacote && pacoteUsavel
+      ? valorPorVisita(pacoteUsavel)
+      : aplicarAjusteFormaPagamento(precoFinal, formaPagamento, ajustesFormaPagamento);
   const totalProdutos = totalCarrinho(carrinho, produtos);
   const valorTotal = precoFinalComPagamento + totalProdutos;
 
@@ -313,9 +336,10 @@ export default function AgendarPage() {
         servico_id: servicoSelecionado.id,
         data_hora: dataHoraISO,
         status: "pendente",
-        forma_pagamento: formaPagamento as any,
-        pagamento_antecipado: false,
+        forma_pagamento: usarPacote && pacoteUsavel ? null : (formaPagamento as any),
+        pagamento_antecipado: Boolean(usarPacote && pacoteUsavel),
         valor_servico: precoFinalComPagamento,
+        pacote_cliente_id: usarPacote && pacoteUsavel ? pacoteUsavel.id : null,
       })
       .select()
       .single();
@@ -592,41 +616,70 @@ export default function AgendarPage() {
             )}
           </p>
 
-          <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-            Forma de pagamento (no local)
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {FORMAS_PAGAMENTO.map((f) => {
-              const selo = seloAjusteFormaPagamento(f.id, ajustesFormaPagamento);
-              const destaque = f.id === "dinheiro";
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setFormaPagamento(f.id)}
-                  className={cn(
-                    "relative rounded-lg border px-4 py-3 text-sm",
-                    formaPagamento === f.id
-                      ? "border-gold bg-gold-gradient font-bold text-ink"
-                      : destaque
-                        ? "border-gold/60 text-foreground hover:border-gold"
-                        : "border-border text-muted-foreground hover:border-gold"
-                  )}
-                >
-                  {f.label}
-                  {selo && (
-                    <span
+          {pacoteUsavel && (
+            <div className="mt-6 rounded-xl border border-gold/50 bg-gold/10 p-4">
+              <label className="flex items-start justify-between gap-3">
+                <span className="flex items-start gap-2">
+                  <PackageIcon className="mt-0.5 size-4 shrink-0 text-gold" />
+                  <span>
+                    <span className="block font-semibold text-foreground">
+                      Usar o pacote {pacoteUsavel.nome}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {pacoteUsavel.visitas_usadas} de {pacoteUsavel.qtd_visitas_incluidas} visitas usadas · R${" "}
+                      {valorPorVisita(pacoteUsavel).toFixed(2).replace(".", ",")} nesse agendamento
+                    </span>
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={usarPacote}
+                  onChange={(e) => setUsarPacote(e.target.checked)}
+                  className="mt-1 size-4 accent-gold"
+                />
+              </label>
+            </div>
+          )}
+
+          {!(usarPacote && pacoteUsavel) && (
+            <>
+              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
+                Forma de pagamento (no local)
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {FORMAS_PAGAMENTO.map((f) => {
+                  const selo = seloAjusteFormaPagamento(f.id, ajustesFormaPagamento);
+                  const destaque = f.id === "dinheiro";
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setFormaPagamento(f.id)}
                       className={cn(
-                        "absolute -top-2 -right-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                        formaPagamento === f.id ? "bg-ink text-gold" : "bg-gold text-ink"
+                        "relative rounded-lg border px-4 py-3 text-sm",
+                        formaPagamento === f.id
+                          ? "border-gold bg-gold-gradient font-bold text-ink"
+                          : destaque
+                            ? "border-gold/60 text-foreground hover:border-gold"
+                            : "border-border text-muted-foreground hover:border-gold"
                       )}
                     >
-                      {selo}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                      {f.label}
+                      {selo && (
+                        <span
+                          className={cn(
+                            "absolute -top-2 -right-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                            formaPagamento === f.id ? "bg-ink text-gold" : "bg-gold text-ink"
+                          )}
+                        >
+                          {selo}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <Alert className="mt-6 border-gold/40 bg-gold/10">
             <ClockIcon className="text-gold" />

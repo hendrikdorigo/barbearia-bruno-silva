@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { pacoteVigente, textoDiasSemana } from "@/lib/pacotes-cliente";
+import { pacoteVigente, textoDiasSemana, pacoteTemRateio, valorPorVisita } from "@/lib/pacotes-cliente";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -96,6 +96,12 @@ export default async function PainelClientePage() {
                   </>
                 )}
               </p>
+              {pacoteTemRateio(p) && (
+                <p className="mt-1.5 font-mono text-xs text-gold">
+                  {p.visitas_usadas} de {p.qtd_visitas_incluidas} visitas usadas · R${" "}
+                  {valorPorVisita(p).toFixed(2).replace(".", ",")}/visita
+                </p>
+              )}
               {p.observacoes && (
                 <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/90">{p.observacoes}</p>
               )}

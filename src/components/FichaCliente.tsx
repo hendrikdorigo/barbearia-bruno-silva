@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { pacoteVigente, textoDiasSemana, type PacoteCliente } from "@/lib/pacotes-cliente";
+import { pacoteVigente, textoDiasSemana, pacoteTemRateio, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { cn } from "@/lib/utils";
 
 type Nota = {
@@ -158,6 +158,11 @@ export default function FichaCliente({
                 </Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Válido: {textoDiasSemana(p.dias_semana)}</p>
+              {pacoteTemRateio(p) && (
+                <p className="mt-0.5 font-mono text-xs text-gold">
+                  {p.visitas_usadas} de {p.qtd_visitas_incluidas} usadas · R$ {valorPorVisita(p).toFixed(2).replace(".", ",")}/visita
+                </p>
+              )}
             </div>
           ))}
         </div>

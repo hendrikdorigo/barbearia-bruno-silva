@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calcularSlotsLivres } from "@/lib/disponibilidade";
 import { somaDias } from "@/lib/timezone-sp";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
+import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -41,6 +42,8 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
   const [clienteSelecionado, setClienteSelecionado] = useState<ClienteEncontrado | null>(null);
   const [nomeAvulso, setNomeAvulso] = useState("");
   const [telefoneAvulso, setTelefoneAvulso] = useState("");
+  const [pacotesCliente, setPacotesCliente] = useState<PacoteCliente[]>([]);
+  const [usarPacote, setUsarPacote] = useState(false);
 
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
   const [horarios, setHorarios] = useState<string[]>([]);
@@ -108,6 +111,29 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buscaCliente]);
 
+  useEffect(() => {
+    if (modoCliente !== "cadastrado" || !clienteSelecionado) {
+      setPacotesCliente([]);
+      return;
+    }
+    supabase
+      .from("pacotes_cliente")
+      .select("*")
+      .eq("cliente_id", clienteSelecionado.id)
+      .eq("ativo", true)
+      .then(({ data }) => setPacotesCliente((data ?? []) as any));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteSelecionado, modoCliente]);
+
+  const pacoteUsavel =
+    !repetir && pacotesCliente.find((p) => pacoteUsavelNaData(p, data)) ? pacotesCliente.find((p) => pacoteUsavelNaData(p, data))! : null;
+
+  useEffect(() => {
+    setUsarPacote(Boolean(pacoteUsavel));
+    if (pacoteUsavel) setPrecoEditado(String(valorPorVisita(pacoteUsavel)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pacoteUsavel?.id]);
+
   function limpar() {
     setServicoId("");
     setPrecoEditado("");
@@ -117,6 +143,8 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     setClienteSelecionado(null);
     setNomeAvulso("");
     setTelefoneAvulso("");
+    setPacotesCliente([]);
+    setUsarPacote(false);
     setHorario(null);
     setFormaPagamento("dinheiro");
     setRepetir(false);
@@ -126,7 +154,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     setResultado(null);
   }
 
-  async function criarAgendamento(servico: Servico, dataISO: string, valor: number) {
+  async function criarAgendamento(servico: Servico, dataISO: string, valor: number, pacoteId: string | null) {
     const { data: agendamento, error } = await supabase
       .from("agendamentos")
       .insert({
@@ -137,9 +165,10 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
         cliente_telefone_avulso: modoCliente === "avulso" ? telefoneAvulso.trim() || null : null,
         data_hora: `${dataISO}T${horario}:00`,
         status: "confirmado",
-        forma_pagamento: formaPagamento as any,
-        pagamento_antecipado: false,
+        forma_pagamento: pacoteId ? null : (formaPagamento as any),
+        pagamento_antecipado: Boolean(pacoteId),
         valor_servico: valor,
+        pacote_cliente_id: pacoteId,
       })
       .select()
       .single();
@@ -176,8 +205,10 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       return;
     }
 
+    const pacoteId = usarPacote && pacoteUsavel ? pacoteUsavel.id : null;
+
     setEnviando(true);
-    const { error } = await criarAgendamento(servico, data, valor);
+    const { error } = await criarAgendamento(servico, data, valor, pacoteId);
 
     if (error) {
       setEnviando(false);
@@ -206,7 +237,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       if (cursor > repetirAte) break;
       const livres = await calcularSlotsLivres(supabase, barbeiroId, cursor);
       if (livres.includes(horario)) {
-        const { error: erroRepeticao } = await criarAgendamento(servico, cursor, valor);
+        const { error: erroRepeticao } = await criarAgendamento(servico, cursor, valor, null);
         if (erroRepeticao) pulados++;
         else criados++;
       } else {
@@ -295,6 +326,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
                     min="0"
                     step="0.5"
                     value={precoEditado}
+                    disabled={usarPacote && Boolean(pacoteUsavel)}
                     onChange={(e) => setPrecoEditado(e.target.value)}
                     className="h-8 w-28 bg-background"
                   />
@@ -398,6 +430,37 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
               )}
             </div>
 
+            {pacoteUsavel && (
+              <label className="flex items-start justify-between gap-3 rounded-lg border border-gold/50 bg-gold/10 px-3 py-2.5">
+                <span className="flex items-start gap-2">
+                  <PackageIcon className="mt-0.5 size-4 shrink-0 text-gold" />
+                  <span>
+                    <span className="block text-sm font-semibold text-foreground">
+                      Usar pacote: {pacoteUsavel.nome}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {pacoteUsavel.visitas_usadas} de {pacoteUsavel.qtd_visitas_incluidas} usadas · R${" "}
+                      {valorPorVisita(pacoteUsavel).toFixed(2).replace(".", ",")}/visita
+                    </span>
+                  </span>
+                </span>
+                <Switch
+                  checked={usarPacote}
+                  onCheckedChange={(v) => {
+                    setUsarPacote(v);
+                    const servico = servicos.find((s) => s.id === servicoId);
+                    if (v) setPrecoEditado(String(valorPorVisita(pacoteUsavel)));
+                    else if (servico) setPrecoEditado(String(servico.preco));
+                  }}
+                />
+              </label>
+            )}
+            {repetir && pacotesCliente.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Repetição não usa pacote automaticamente — cada data extra é cobrada pelo valor normal.
+              </p>
+            )}
+
             <div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Data</p>
               <Input
@@ -478,25 +541,27 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
               )}
             </div>
 
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {FORMAS_PAGAMENTO.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFormaPagamento(f.id)}
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-sm",
-                      formaPagamento === f.id
-                        ? "border-gold bg-gold-gradient font-bold text-ink"
-                        : "border-border text-muted-foreground hover:border-gold"
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+            {!(usarPacote && pacoteUsavel) && (
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Forma de pagamento</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {FORMAS_PAGAMENTO.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setFormaPagamento(f.id)}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-sm",
+                        formaPagamento === f.id
+                          ? "border-gold bg-gold-gradient font-bold text-ink"
+                          : "border-border text-muted-foreground hover:border-gold"
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {erro && <p className="text-sm text-destructive">{erro}</p>}
 

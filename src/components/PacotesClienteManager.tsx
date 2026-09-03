@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { DIAS_SEMANA_ABREV, pacoteVigente, textoDiasSemana, type PacoteCliente } from "@/lib/pacotes-cliente";
+import {
+  DIAS_SEMANA_ABREV,
+  pacoteVigente,
+  textoDiasSemana,
+  pacoteTemRateio,
+  valorPorVisita,
+  type PacoteCliente,
+} from "@/lib/pacotes-cliente";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +27,8 @@ const PACOTE_VAZIO = {
   observacoes: "",
   dataInicio: "",
   dataFim: "",
+  valorTotal: "",
+  qtdVisitas: "",
 };
 
 export default function PacotesClienteManager({ autorId }: { autorId: string }) {
@@ -86,6 +95,8 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
       observacoes: p.observacoes ?? "",
       dataInicio: p.data_inicio ?? "",
       dataFim: p.data_fim ?? "",
+      valorTotal: p.valor_total != null ? String(p.valor_total) : "",
+      qtdVisitas: p.qtd_visitas_incluidas != null ? String(p.qtd_visitas_incluidas) : "",
     });
   }
 
@@ -96,6 +107,10 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
       setErro("Dê um nome pro pacote (ex: Assinatura Mensal).");
       return;
     }
+    if ((form.valorTotal.trim() !== "") !== (form.qtdVisitas.trim() !== "")) {
+      setErro("Pra gerar valor por visita automaticamente, preencha o valor total E a quantidade de visitas juntos.");
+      return;
+    }
     setSalvando(true);
     const payload = {
       nome: form.nome.trim(),
@@ -103,6 +118,8 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
       observacoes: form.observacoes.trim() || null,
       data_inicio: form.dataInicio || null,
       data_fim: form.dataFim || null,
+      valor_total: form.valorTotal.trim() ? Number(form.valorTotal) : null,
+      qtd_visitas_incluidas: form.qtdVisitas.trim() ? Number(form.qtdVisitas) : null,
     };
 
     if (editandoId) {
@@ -221,6 +238,17 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
                         </>
                       )}
                     </p>
+                    {pacoteTemRateio(p) ? (
+                      <p className="mt-1.5 font-mono text-xs text-gold">
+                        R$ {Number(p.valor_total).toFixed(2).replace(".", ",")} total · R${" "}
+                        {valorPorVisita(p).toFixed(2).replace(".", ",")}/visita · {p.visitas_usadas} de{" "}
+                        {p.qtd_visitas_incluidas} usadas
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        Sem valor/quantidade configurados — não entra automático nos agendamentos, só informativo.
+                      </p>
+                    )}
                     {p.observacoes && (
                       <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">{p.observacoes}</p>
                     )}
@@ -292,6 +320,39 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Valor total e visitas incluídas (opcional — preencha os dois pra gerar o valor de cada
+                  visita automaticamente e contar no controle de repasses)
+                </p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Valor total (R$)"
+                    value={form.valorTotal}
+                    onChange={(e) => setForm((prev) => ({ ...prev, valorTotal: e.target.value }))}
+                    className="bg-background"
+                  />
+                  <span className="text-xs text-muted-foreground">em</span>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Nº de visitas"
+                    value={form.qtdVisitas}
+                    onChange={(e) => setForm((prev) => ({ ...prev, qtdVisitas: e.target.value }))}
+                    className="bg-background"
+                  />
+                </div>
+                {form.valorTotal.trim() && form.qtdVisitas.trim() && Number(form.qtdVisitas) > 0 && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    = R$ {(Number(form.valorTotal) / Number(form.qtdVisitas)).toFixed(2).replace(".", ",")} por
+                    visita
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
