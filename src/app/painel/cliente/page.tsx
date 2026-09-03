@@ -1,4 +1,4 @@
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, PackageIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AgendamentoClienteAcoes from "@/components/AgendamentoClienteAcoes";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { pacoteVigente, textoDiasSemana } from "@/lib/pacotes-cliente";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -33,7 +34,7 @@ export default async function PainelClientePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: cliente }, { data: agendamentos }, { data: profile }] = await Promise.all([
+  const [{ data: cliente }, { data: agendamentos }, { data: profile }, { data: pacotes }] = await Promise.all([
     supabase.from("clientes").select("*").eq("profile_id", user.id).maybeSingle(),
     supabase
       .from("agendamentos")
@@ -41,6 +42,12 @@ export default async function PainelClientePage() {
       .eq("cliente_id", user.id)
       .order("data_hora", { ascending: false }),
     supabase.from("profiles").select("nome, avatar_url, notif_whatsapp_comunidade").eq("id", user.id).single(),
+    supabase
+      .from("pacotes_cliente")
+      .select("*")
+      .eq("cliente_id", user.id)
+      .eq("ativo", true)
+      .order("created_at", { ascending: false }),
   ]);
 
   return (
@@ -64,6 +71,38 @@ export default async function PainelClientePage() {
         profileId={user.id}
         ativoInicial={profile?.notif_whatsapp_comunidade ?? false}
       />
+
+      {pacotes && pacotes.length > 0 && (
+        <div className="mt-8 space-y-3">
+          {pacotes.map((p: any) => (
+            <Card key={p.id} className="gap-0 border-gold/40 bg-gold/10 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="flex items-center gap-2 font-display text-xl text-foreground">
+                  <PackageIcon className="size-5 text-gold" />
+                  {p.nome}
+                </p>
+                <Badge variant="outline" className={pacoteVigente(p) ? "text-success" : "text-muted-foreground"}>
+                  {pacoteVigente(p) ? "Vigente" : "Fora da validade"}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Válido: {textoDiasSemana(p.dias_semana)}
+                {(p.data_inicio || p.data_fim) && (
+                  <>
+                    {" · "}
+                    {p.data_inicio ? new Date(`${p.data_inicio}T00:00:00`).toLocaleDateString("pt-BR") : "sem início"}
+                    {" até "}
+                    {p.data_fim ? new Date(`${p.data_fim}T00:00:00`).toLocaleDateString("pt-BR") : "sem fim"}
+                  </>
+                )}
+              </p>
+              {p.observacoes && (
+                <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/90">{p.observacoes}</p>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="mt-8 space-y-4">
         {agendamentos?.length ? (

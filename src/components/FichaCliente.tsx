@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangleIcon, NotebookTextIcon, ShieldOffIcon, ShieldCheckIcon } from "lucide-react";
+import { AlertTriangleIcon, NotebookTextIcon, ShieldOffIcon, ShieldCheckIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { pacoteVigente, textoDiasSemana, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { cn } from "@/lib/utils";
 
 type Nota = {
@@ -26,6 +28,7 @@ export default function FichaCliente({
   autorId,
   bloqueadoInicial,
   motivoBloqueioInicial,
+  pacotes,
 }: {
   clienteId: string;
   notasIniciais: Nota[];
@@ -33,6 +36,7 @@ export default function FichaCliente({
   autorId: string;
   bloqueadoInicial: boolean;
   motivoBloqueioInicial: string | null;
+  pacotes: PacoteCliente[];
 }) {
   const [notas, setNotas] = useState(notasIniciais);
   const [texto, setTexto] = useState("");
@@ -137,6 +141,25 @@ export default function FichaCliente({
           <span>
             Já não compareceu {qtdNoShow} {qtdNoShow === 1 ? "vez" : "vezes"} antes.
           </span>
+        </div>
+      )}
+
+      {pacotes.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2">
+          {pacotes.map((p) => (
+            <div key={p.id} className="rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                  <PackageIcon className="size-3.5 text-gold" />
+                  {p.nome}
+                </span>
+                <Badge variant="outline" className={pacoteVigente(p) ? "text-success" : "text-muted-foreground"}>
+                  {pacoteVigente(p) ? "Vigente" : "Fora da validade"}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Válido: {textoDiasSemana(p.dias_semana)}</p>
+            </div>
+          ))}
         </div>
       )}
 

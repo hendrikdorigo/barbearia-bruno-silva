@@ -990,6 +990,63 @@ export type Database = {
           },
         ]
       }
+      pacotes_cliente: {
+        Row: {
+          ativo: boolean
+          cliente_id: string
+          created_at: string
+          criado_por: string
+          data_fim: string | null
+          data_inicio: string | null
+          dias_semana: number[] | null
+          id: string
+          nome: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_id: string
+          created_at?: string
+          criado_por: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          dias_semana?: number[] | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cliente_id?: string
+          created_at?: string
+          criado_por?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          dias_semana?: number[] | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pacotes_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "pacotes_cliente_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           agendamento_id: string

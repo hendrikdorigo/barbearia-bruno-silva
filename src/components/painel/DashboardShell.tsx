@@ -18,6 +18,7 @@ import {
   WalletIcon,
   PercentIcon,
   TagIcon,
+  PackageIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -51,6 +52,7 @@ const ADMIN_GROUPS = [
       { href: "/painel/admin", label: "Agendamentos", icon: LayoutDashboardIcon },
       { href: "/painel/admin/barbeiros", label: "Barbeiros", icon: UsersIcon },
       { href: "/painel/admin/precos", label: "Preços e fidelidade", icon: TagIcon },
+      { href: "/painel/admin/pacotes", label: "Pacotes e assinaturas", icon: PackageIcon },
     ],
   },
   {

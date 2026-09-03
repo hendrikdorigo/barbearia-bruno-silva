@@ -31,7 +31,7 @@ export default async function ComandaBarbeiroPage({
 
   const clienteId = (comanda as any).cliente_id as string | null;
 
-  const [{ data: itens }, { data: notas }] = await Promise.all([
+  const [{ data: itens }, { data: notas }, { data: pacotes }] = await Promise.all([
     supabase
       .from("comanda_itens")
       .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
@@ -41,6 +41,14 @@ export default async function ComandaBarbeiroPage({
           .from("cliente_notas")
           .select("id, texto, created_at, profiles(nome)")
           .eq("cliente_id", clienteId)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    clienteId
+      ? supabase
+          .from("pacotes_cliente")
+          .select("*")
+          .eq("cliente_id", clienteId)
+          .eq("ativo", true)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
   ]);
@@ -68,6 +76,7 @@ export default async function ComandaBarbeiroPage({
           autorId={user.id}
           bloqueadoInicial={Boolean((comanda as any).clientes?.bloqueado)}
           motivoBloqueioInicial={(comanda as any).clientes?.motivo_bloqueio ?? null}
+          pacotes={(pacotes ?? []) as any}
         />
       )}
     </div>
