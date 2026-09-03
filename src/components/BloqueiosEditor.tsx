@@ -17,6 +17,8 @@ const DIAS = [
   "Sexta",
   "Sábado",
 ];
+const DIAS_ABREV = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DIAS_UTEIS = [1, 2, 3, 4, 5];
 
 type Bloqueio = {
   id: string;
@@ -36,7 +38,7 @@ export default function BloqueiosEditor({
 }) {
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>(bloqueiosIniciais);
   const [recorrencia, setRecorrencia] = useState<"semanal" | "data">("semanal");
-  const [diaSemana, setDiaSemana] = useState(1);
+  const [diasSelecionados, setDiasSelecionados] = useState<number[]>([1]);
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
   const [horaInicio, setHoraInicio] = useState("12:00");
   const [horaFim, setHoraFim] = useState("13:00");
@@ -46,45 +48,56 @@ export default function BloqueiosEditor({
   const router = useRouter();
   const supabase = createClient();
 
+  function alternarDia(dia: number) {
+    setDiasSelecionados((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia].sort()
+    );
+  }
+
   async function adicionar() {
     setErro(null);
     if (horaFim <= horaInicio) {
       setErro("O horário final precisa ser depois do inicial.");
       return;
     }
+    if (recorrencia === "semanal" && diasSelecionados.length === 0) {
+      setErro("Escolha pelo menos um dia da semana.");
+      return;
+    }
     setSalvando(true);
 
     const payload =
       recorrencia === "semanal"
-        ? {
+        ? diasSelecionados.map((dia) => ({
             barbeiro_id: barbeiroId,
-            dia_semana: diaSemana,
+            dia_semana: dia,
             data: null,
             hora_inicio: horaInicio,
             hora_fim: horaFim,
             motivo: motivo || null,
-          }
-        : {
-            barbeiro_id: barbeiroId,
-            dia_semana: null,
-            data,
-            hora_inicio: horaInicio,
-            hora_fim: horaFim,
-            motivo: motivo || null,
-          };
+          }))
+        : [
+            {
+              barbeiro_id: barbeiroId,
+              dia_semana: null,
+              data,
+              hora_inicio: horaInicio,
+              hora_fim: horaFim,
+              motivo: motivo || null,
+            },
+          ];
 
-    const { data: salvo, error } = await supabase
+    const { data: salvos, error } = await supabase
       .from("barbeiro_bloqueios")
       .insert(payload)
-      .select()
-      .single();
+      .select();
 
     setSalvando(false);
-    if (error || !salvo) {
+    if (error || !salvos) {
       setErro(error?.message ?? "Não foi possível salvar o bloqueio.");
       return;
     }
-    setBloqueios((prev) => [...prev, salvo as Bloqueio]);
+    setBloqueios((prev) => [...prev, ...(salvos as Bloqueio[])]);
     setMotivo("");
     router.refresh();
   }
@@ -129,17 +142,33 @@ export default function BloqueiosEditor({
         </div>
 
         {recorrencia === "semanal" ? (
-          <select
-            value={diaSemana}
-            onChange={(e) => setDiaSemana(Number(e.target.value))}
-            className="mt-3 h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-gold focus:outline-none"
-          >
-            {DIAS.map((label, i) => (
-              <option key={i} value={i}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <div className="mt-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {DIAS_ABREV.map((label, i) => (
+                <button
+                  key={i}
+                  onClick={() => alternarDia(i)}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+                    diasSelecionados.includes(i)
+                      ? "border-gold bg-gold-gradient text-ink"
+                      : "border-border text-muted-foreground hover:border-gold"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                onClick={() => setDiasSelecionados(DIAS_UTEIS)}
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-gold hover:text-gold"
+              >
+                Dias úteis (seg–sex)
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Selecione um ou mais dias — o mesmo horário é bloqueado em todos eles de uma vez.
+            </p>
+          </div>
         ) : (
           <Input
             type="date"

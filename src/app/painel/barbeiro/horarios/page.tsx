@@ -29,13 +29,19 @@ export default async function HorariosBarbeiroPage() {
       </h1>
 
       <Tabs defaultValue="horarios" className="mt-8">
-        <TabsList className="w-full max-w-full overflow-x-auto sm:w-fit">
-          <TabsTrigger value="horarios">Horário semanal</TabsTrigger>
-          <TabsTrigger value="excecoes">Folgas e exceções</TabsTrigger>
-          <TabsTrigger value="bloqueios">Almoço e compromissos</TabsTrigger>
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1.5 sm:w-fit">
+          <TabsTrigger value="horarios" className="rounded-md px-4 py-2 text-sm font-semibold">
+            Horário semanal
+          </TabsTrigger>
+          <TabsTrigger value="excecoes" className="rounded-md px-4 py-2 text-sm font-semibold">
+            Folgas e exceções
+          </TabsTrigger>
+          <TabsTrigger value="bloqueios" className="rounded-md px-4 py-2 text-sm font-semibold">
+            Almoço e compromissos
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="horarios">
+        <TabsContent value="horarios" className="mt-6">
           <p className="text-muted-foreground">
             Escolha os dias em que você atende e o horário de início/fim de cada
             um. Os clientes só vão poder agendar dentro dessa janela.
@@ -43,7 +49,7 @@ export default async function HorariosBarbeiroPage() {
           <HorariosEditor barbeiroId={user.id} horariosIniciais={horarios ?? []} />
         </TabsContent>
 
-        <TabsContent value="excecoes">
+        <TabsContent value="excecoes" className="mt-6">
           <p className="text-muted-foreground">
             Vai tirar uma folga num dia específico (ex: 10/08) ou tem um
             compromisso que muda seu horário só naquele dia (ex: 25/07)? Cadastre
@@ -52,7 +58,7 @@ export default async function HorariosBarbeiroPage() {
           <ExcecoesEditor barbeiroId={user.id} excecoesIniciais={excecoes ?? []} />
         </TabsContent>
 
-        <TabsContent value="bloqueios">
+        <TabsContent value="bloqueios" className="mt-6">
           <p className="text-muted-foreground">
             Bloqueie uma janela de horário toda semana (ex: almoço 12h–13h) ou em
             uma data específica (ex: dentista às 15h). Esses horários somem da
