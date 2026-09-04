@@ -125,7 +125,7 @@ export default async function HomePage() {
       </section>
 
       {/* SERVIÇOS */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <RazorDivider className="mb-14" />
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
           Tabela de preços
@@ -133,7 +133,7 @@ export default async function HomePage() {
         <h2 className="mt-2 font-display text-4xl tracking-wide text-foreground sm:text-5xl">
           Nossos serviços
         </h2>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
           {servicos?.map((s) => (
             <Link key={s.id} href={`/agendar?servico=${s.id}`} className="h-full">
               <Card className="group h-full gap-0 overflow-hidden rounded-2xl border-border bg-ink-soft py-0 transition-colors hover:border-gold">
@@ -143,17 +143,17 @@ export default async function HomePage() {
                       src={s.imagem_url}
                       alt=""
                       fill
-                      sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
+                      sizes="(min-width: 1024px) 280px, 45vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                 )}
-                <CardContent className="flex h-full flex-col px-6 py-6">
-                  <p className="text-sm uppercase tracking-widest text-muted-foreground">
+                <CardContent className="flex h-full flex-col px-4 py-4 sm:px-6 sm:py-6">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground sm:text-sm">
                     {s.duracao_minutos} min
                   </p>
-                  <p className="mt-2 font-display text-2xl text-foreground">{s.nome}</p>
-                  <p className="mt-auto pt-4 font-mono text-3xl font-medium text-gold-gradient">
+                  <p className="mt-2 font-display text-lg text-foreground sm:text-2xl">{s.nome}</p>
+                  <p className="mt-auto pt-3 font-mono text-2xl font-medium text-gold-gradient sm:pt-4 sm:text-3xl">
                     R$ {Number(s.preco).toFixed(2).replace(".", ",")}
                   </p>
                 </CardContent>

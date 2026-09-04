@@ -447,14 +447,14 @@ export default function AgendarPage() {
                 setServicoSelecionado(s);
                 setPasso("horario");
               }}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
+              className="flex items-center justify-between gap-4 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
             >
-              <div className="flex items-center gap-3">
-                <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
+              <div className="flex items-center gap-4">
+                <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
                   {s.imagem_url ? (
-                    <Image src={s.imagem_url} alt="" fill sizes="48px" className="object-cover" />
+                    <Image src={s.imagem_url} alt="" fill sizes="80px" className="object-cover" />
                   ) : (
-                    <ScissorsIcon className="size-4 text-muted-foreground" />
+                    <ScissorsIcon className="size-6 text-muted-foreground" />
                   )}
                 </span>
                 <div>
