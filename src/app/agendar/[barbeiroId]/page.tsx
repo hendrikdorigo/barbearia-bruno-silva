@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { AlertTriangleIcon, ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, FORMAS_PAGAMENTO, slotBloqueado } from "@/lib/constants";
+import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, slotBloqueado, type FormaPagamento } from "@/lib/constants";
 import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
-import { aplicarAjusteFormaPagamento, seloAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
+import { aplicarAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
+import SeletorFormaPagamento from "@/components/agendar/SeletorFormaPagamento";
+import AvisoAtraso from "@/components/agendar/AvisoAtraso";
 import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -66,7 +68,7 @@ export default function AgendarPage() {
   const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
   const [pacotes, setPacotes] = useState<PacoteCliente[]>([]);
   const [usarPacote, setUsarPacote] = useState(false);
-  const [formaPagamento, setFormaPagamento] = useState<string>("dinheiro");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("dinheiro");
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -651,48 +653,18 @@ export default function AgendarPage() {
 
           {!(usarPacote && pacoteUsavel) && (
             <>
-              <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-                Forma de pagamento (no local)
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {FORMAS_PAGAMENTO.map((f) => {
-                  const selo = seloAjusteFormaPagamento(f.id, ajustesFormaPagamento);
-                  const destaque = f.id === "dinheiro";
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => setFormaPagamento(f.id)}
-                      className={cn(
-                        "relative rounded-lg border px-4 py-3 text-sm",
-                        formaPagamento === f.id
-                          ? "border-gold bg-gold-gradient font-bold text-ink"
-                          : destaque
-                            ? "border-gold/60 text-foreground hover:border-gold"
-                            : "border-border text-muted-foreground hover:border-gold"
-                      )}
-                    >
-                      {f.label}
-                      {selo && (
-                        <span
-                          className={cn(
-                            "absolute -top-2 -right-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                            formaPagamento === f.id ? "bg-ink text-gold" : "bg-gold text-ink"
-                          )}
-                        >
-                          {selo}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <SeletorFormaPagamento
+                valor={formaPagamento}
+                onChange={setFormaPagamento}
+                ajustes={ajustesFormaPagamento}
+              />
             </>
           )}
 
           <Alert className="mt-6 border-gold/40 bg-gold/10">
             <ClockIcon className="text-gold" />
             <AlertTitle className="uppercase tracking-wider text-gold">
-              Lembrete: sem tolerância de atraso
+              Pagamento no atendimento
             </AlertTitle>
             <AlertDescription className="text-muted-foreground">
               O barbeiro verá sua forma de pagamento escolhida na comanda do
@@ -700,15 +672,7 @@ export default function AgendarPage() {
             </AlertDescription>
           </Alert>
 
-          <Alert variant="destructive" className="mt-6 text-left">
-            <AlertTriangleIcon />
-            <AlertTitle className="uppercase tracking-wider">Atenção: atraso cancela o horário</AlertTitle>
-            <AlertDescription>
-              Se você atrasar ou não comparecer, o agendamento é cancelado automaticamente e o
-              valor do serviço é somado à sua próxima visita — e assim por diante, se acontecer de
-              novo.
-            </AlertDescription>
-          </Alert>
+          <AvisoAtraso className="mt-6" />
 
           {erro && <p className="mt-4 text-sm text-destructive">{erro}</p>}
 
