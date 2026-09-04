@@ -133,13 +133,19 @@ export default async function HomePage() {
         <h2 className="mt-2 font-display text-4xl tracking-wide text-foreground sm:text-5xl">
           Nossos serviços
         </h2>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {servicos?.map((s) => (
             <Link key={s.id} href={`/agendar?servico=${s.id}`} className="h-full">
               <Card className="group h-full gap-0 overflow-hidden rounded-2xl border-border bg-ink-soft py-0 transition-colors hover:border-gold">
                 {s.imagem_url && (
-                  <div className="relative aspect-square w-full">
-                    <Image src={s.imagem_url} alt="" fill sizes="240px" className="object-cover" />
+                  <div className="relative aspect-[4/3] w-full">
+                    <Image
+                      src={s.imagem_url}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
                 )}
                 <CardContent className="flex h-full flex-col px-6 py-6">

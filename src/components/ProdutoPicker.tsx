@@ -44,8 +44,8 @@ export default function ProdutoPicker({
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       {p.imagem_url && (
-                        <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border">
-                          <Image src={p.imagem_url} alt="" fill sizes="48px" className="object-cover" />
+                        <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border">
+                          <Image src={p.imagem_url} alt="" fill sizes="64px" className="object-cover" />
                         </div>
                       )}
                       <div className="min-w-0">

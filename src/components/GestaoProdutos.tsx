@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
+import ImageCropDialog from "@/components/ImageCropDialog";
 import { cn } from "@/lib/utils";
 
 type Produto = {
@@ -31,6 +32,9 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
   const [erro, setErro] = useState<string | null>(null);
   const [trocandoImagemId, setTrocandoImagemId] = useState<string | null>(null);
   const inputsImagemExistente = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewImagemNova, setPreviewImagemNova] = useState<string | null>(null);
+  const [recorteNovo, setRecorteNovo] = useState<string | null>(null);
+  const [recorteExistente, setRecorteExistente] = useState<{ produtoId: string; src: string } | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -74,6 +78,7 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
     setDescricao("");
     setPreco("");
     setImagem(null);
+    setPreviewImagemNova(null);
     router.refresh();
   }
 
@@ -124,12 +129,25 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
         <label className="mt-3 block text-xs uppercase tracking-widest text-muted-foreground">
           Foto do produto (opcional)
         </label>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImagem(e.target.files?.[0] ?? null)}
-          className="mt-1.5 bg-background"
-        />
+        <div className="mt-1.5 flex items-center gap-3">
+          {previewImagemNova && (
+            <img
+              src={previewImagemNova}
+              alt=""
+              className="size-14 shrink-0 rounded-lg border border-border object-cover"
+            />
+          )}
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const arquivo = e.target.files?.[0];
+              if (arquivo) setRecorteNovo(URL.createObjectURL(arquivo));
+              e.target.value = "";
+            }}
+            className="bg-background"
+          />
+        </div>
         {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
         <Button onClick={adicionar} disabled={salvando} size="sm" className="mt-4 w-fit uppercase tracking-widest">
           {salvando ? "Salvando..." : "Adicionar produto"}
@@ -170,7 +188,7 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
                   className="hidden"
                   onChange={(e) => {
                     const arquivo = e.target.files?.[0];
-                    if (arquivo) trocarImagemExistente(p.id, arquivo);
+                    if (arquivo) setRecorteExistente({ produtoId: p.id, src: URL.createObjectURL(arquivo) });
                     e.target.value = "";
                   }}
                 />
@@ -197,6 +215,42 @@ export default function GestaoProdutos({ produtosIniciais }: { produtosIniciais:
           </Card>
         ))}
       </div>
+
+      <ImageCropDialog
+        open={!!recorteNovo}
+        imageSrc={recorteNovo}
+        nomeArquivo="produto"
+        aspect={4 / 3}
+        onCancel={() => {
+          if (recorteNovo) URL.revokeObjectURL(recorteNovo);
+          setRecorteNovo(null);
+        }}
+        onConfirm={(arquivo) => {
+          setImagem(arquivo);
+          setPreviewImagemNova(URL.createObjectURL(arquivo));
+          if (recorteNovo) URL.revokeObjectURL(recorteNovo);
+          setRecorteNovo(null);
+        }}
+      />
+
+      <ImageCropDialog
+        open={!!recorteExistente}
+        imageSrc={recorteExistente?.src ?? null}
+        nomeArquivo="produto"
+        aspect={4 / 3}
+        salvando={!!recorteExistente && trocandoImagemId === recorteExistente.produtoId}
+        onCancel={() => {
+          if (recorteExistente) URL.revokeObjectURL(recorteExistente.src);
+          setRecorteExistente(null);
+        }}
+        onConfirm={async (arquivo) => {
+          if (!recorteExistente) return;
+          const { produtoId, src } = recorteExistente;
+          await trocarImagemExistente(produtoId, arquivo);
+          URL.revokeObjectURL(src);
+          setRecorteExistente(null);
+        }}
+      />
     </div>
   );
 }

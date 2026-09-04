@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ImageCropDialog from "@/components/ImageCropDialog";
 import { cn } from "@/lib/utils";
 
 type Servico = {
@@ -53,6 +54,7 @@ export default function ServicosEditor({
   );
   const [trocandoImagemId, setTrocandoImagemId] = useState<string | null>(null);
   const inputsImagem = useRef<Record<string, HTMLInputElement | null>>({});
+  const [recorteAberto, setRecorteAberto] = useState<{ servicoId: string; src: string } | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const router = useRouter();
@@ -75,6 +77,11 @@ export default function ServicosEditor({
       router.refresh();
     }
     setTrocandoImagemId(null);
+  }
+
+  function fecharRecorte() {
+    if (recorteAberto) URL.revokeObjectURL(recorteAberto.src);
+    setRecorteAberto(null);
   }
 
   async function salvar() {
@@ -148,7 +155,7 @@ export default function ServicosEditor({
                   className="hidden"
                   onChange={(e) => {
                     const arquivo = e.target.files?.[0];
-                    if (arquivo) trocarImagem(s.id, arquivo);
+                    if (arquivo) setRecorteAberto({ servicoId: s.id, src: URL.createObjectURL(arquivo) });
                     e.target.value = "";
                   }}
                 />
@@ -243,6 +250,20 @@ export default function ServicosEditor({
       <Button onClick={salvar} disabled={salvando} className="mt-2 w-fit uppercase tracking-widest">
         {salvando ? "Salvando..." : "Salvar serviços"}
       </Button>
+
+      <ImageCropDialog
+        open={!!recorteAberto}
+        imageSrc={recorteAberto?.src ?? null}
+        nomeArquivo="servico"
+        aspect={4 / 3}
+        salvando={!!recorteAberto && trocandoImagemId === recorteAberto.servicoId}
+        onCancel={fecharRecorte}
+        onConfirm={async (arquivo) => {
+          if (!recorteAberto) return;
+          await trocarImagem(recorteAberto.servicoId, arquivo);
+          fecharRecorte();
+        }}
+      />
     </div>
   );
 }
