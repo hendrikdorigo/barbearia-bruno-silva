@@ -49,3 +49,13 @@ export const FORMAS_PAGAMENTO = [
 
 /** Mesmos valores do enum forma_pagamento no banco - evita salvar string solta. */
 export type FormaPagamento = (typeof FORMAS_PAGAMENTO)[number]["id"];
+
+/** Formato de serviço usado nas telas de agendamento (preço já pode vir
+ * ajustado pelo preço personalizado do barbeiro). */
+export type Servico = {
+  id: string;
+  nome: string;
+  preco: number;
+  duracao_minutos: number;
+  imagem_url?: string | null;
+};

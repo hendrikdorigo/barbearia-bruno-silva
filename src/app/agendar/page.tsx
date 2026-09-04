@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { FormaPagamento } from "@/lib/constants";
+import type { FormaPagamento, Servico } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
 import { aplicarAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import SeletorFormaPagamento from "@/components/agendar/SeletorFormaPagamento";
@@ -20,7 +20,8 @@ import AgendamentoStepper from "@/components/AgendamentoStepper";
 import SeletorDataFaixa from "@/components/SeletorDataFaixa";
 import ProdutoPicker from "@/components/ProdutoPicker";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
-import { type Produto, type Carrinho, itensCarrinho, totalCarrinho, salvarProdutosNaComanda } from "@/lib/produtos-carrinho";
+import { type Produto, type Carrinho, itensCarrinho, totalCarrinho } from "@/lib/produtos-carrinho";
+import { useConfirmarAgendamento } from "@/lib/use-confirmar-agendamento";
 import { cn } from "@/lib/utils";
 
 const PASSOS = [
@@ -31,13 +32,6 @@ const PASSOS = [
   { id: "pagamento", label: "Pagamento" },
 ];
 
-type Servico = {
-  id: string;
-  nome: string;
-  preco: number;
-  duracao_minutos: number;
-  imagem_url?: string | null;
-};
 type Candidato = { id: string; nome: string; avatarUrl: string | null; preco: number };
 type Passo = "servico" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
 
@@ -82,10 +76,6 @@ function AgendarConteudo() {
   const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
   const [pacotes, setPacotes] = useState<PacoteCliente[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("dinheiro");
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [perguntarFrequencia, setPerguntarFrequencia] = useState(false);
 
   function voltarPasso() {
     const i = ORDEM_PASSOS.indexOf(passo as any);
@@ -255,71 +245,20 @@ function AgendarConteudo() {
   const totalProdutos = totalCarrinho(carrinho, produtos);
   const valorTotal = precoFinalComPagamento + totalProdutos;
 
-  async function confirmarAgendamento() {
-    setErro(null);
-    setAvisoProdutos(null);
-    setEnviando(true);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user || !servicoSelecionado || !horarioSelecionado || !barbeiroSelecionado) {
-      setErro("Dados incompletos.");
-      setEnviando(false);
-      return;
-    }
-
-    // -03:00 explícito: Brasília não tem horário de verão desde 2019, então
-    // é sempre UTC-3. Sem isso, o Postgres guarda a string como se já fosse
-    // UTC e o horário salvo fica 3h adiantado em relação ao escolhido.
-    const dataHoraISO = `${data}T${horarioSelecionado}:00-03:00`;
-
-    const { data: agendamento, error: agendamentoError } = await supabase
-      .from("agendamentos")
-      .insert({
-        cliente_id: user.id,
-        barbeiro_id: barbeiroSelecionado.id,
-        servico_id: servicoSelecionado.id,
-        data_hora: dataHoraISO,
-        status: "confirmado",
-        forma_pagamento: usarPacote && pacoteUsavel ? null : (formaPagamento as any),
-        pagamento_antecipado: Boolean(usarPacote && pacoteUsavel),
-        valor_servico: precoFinalComPagamento,
-        pacote_cliente_id: usarPacote && pacoteUsavel ? pacoteUsavel.id : null,
-      })
-      .select()
-      .single();
-
-    if (agendamentoError || !agendamento) {
-      setErro(
-        agendamentoError?.message ??
-          "Não foi possível criar o agendamento. Talvez esse horário já tenha sido reservado - volte e escolha outro."
-      );
-      setEnviando(false);
-      return;
-    }
-
-    fetch(`/api/agendamentos/${agendamento.id}/criar`, { method: "POST" }).catch(() => {});
-
-    const { data: clienteFrequencia } = await supabase
-      .from("clientes")
-      .select("frequencia_dias")
-      .eq("profile_id", user.id)
-      .maybeSingle();
-    setPerguntarFrequencia((clienteFrequencia as any)?.frequencia_dias == null);
-
-    const { comandaId, erro: erroProdutos } = await salvarProdutosNaComanda(
-      supabase,
-      agendamento.id,
-      carrinho,
-      produtos
-    );
-    if (erroProdutos) setAvisoProdutos(erroProdutos);
-
-    setEnviando(false);
-    setPasso("confirmado");
-  }
+  const { confirmarAgendamento, erro, avisoProdutos, enviando, perguntarFrequencia } = useConfirmarAgendamento({
+    supabase,
+    barbeiroId: barbeiroSelecionado?.id ?? null,
+    data,
+    horarioSelecionado,
+    servicoSelecionado,
+    usarPacote,
+    pacoteUsavel,
+    formaPagamento,
+    precoFinalComPagamento,
+    carrinho,
+    produtos,
+    onSucesso: () => setPasso("confirmado"),
+  });
 
   if (carregando) {
     return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-muted-foreground">Carregando...</div>;
