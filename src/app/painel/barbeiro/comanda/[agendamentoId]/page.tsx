@@ -109,8 +109,9 @@ export default async function ComandaBarbeiroPage({
           )}
         />
       )}
-      {!clienteId && telefoneAvulso && (
+      {!clienteId && (
         <FichaAvulso
+          agendamentoId={agendamentoId}
           telefone={telefoneAvulso}
           notasIniciais={(notasAvulso ?? []) as any}
           qtdNoShow={noShowAvulso ?? 0}

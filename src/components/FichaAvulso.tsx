@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AlertTriangleIcon, ImageIcon, NotebookTextIcon, PencilIcon, Trash2Icon, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useConfirmacao } from "@/components/ConfirmacaoProvider";
@@ -24,12 +25,14 @@ type Nota = {
 // anotações e o contador de no-show por telefone, num registro mais simples
 // (sem bloqueio de site nem pacotes, que exigem cadastro de verdade).
 export default function FichaAvulso({
+  agendamentoId,
   telefone,
   notasIniciais,
   qtdNoShow,
   autorId,
 }: {
-  telefone: string;
+  agendamentoId: string;
+  telefone: string | null;
   notasIniciais: Nota[];
   qtdNoShow: number;
   autorId: string;
@@ -42,10 +45,28 @@ export default function FichaAvulso({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [textoEditado, setTextoEditado] = useState("");
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
+  const [telefoneNovo, setTelefoneNovo] = useState("");
+  const [salvandoTelefone, setSalvandoTelefone] = useState(false);
   const inputImagemNova = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const confirmar = useConfirmacao();
+
+  async function salvarTelefone() {
+    if (!telefoneNovo.trim()) return;
+    setSalvandoTelefone(true);
+    const { error } = await supabase
+      .from("agendamentos")
+      .update({ cliente_telefone_avulso: telefoneNovo.trim() })
+      .eq("id", agendamentoId);
+    setSalvandoTelefone(false);
+    if (error) {
+      toast.error("Não foi possível salvar o telefone", { description: error.message });
+      return;
+    }
+    toast.success("Telefone salvo.");
+    router.refresh();
+  }
 
   async function enviarImagem(arquivo: File) {
     const path = `avulso/${telefone}/${Date.now()}-${arquivo.name}`;
@@ -60,7 +81,7 @@ export default function FichaAvulso({
   }
 
   async function adicionar() {
-    if (!texto.trim() && !imagemNova) return;
+    if ((!texto.trim() && !imagemNova) || !telefone) return;
     setSalvando(true);
     const imagemUrl = imagemNova ? await enviarImagem(imagemNova) : null;
     const { data, error } = await supabase
@@ -121,8 +142,30 @@ export default function FichaAvulso({
         Ficha do cliente avulso
       </p>
       <p className="mt-1 text-xs text-muted-foreground/70">
-        Cliente sem cadastro — anotações e no-show ficam vinculados ao telefone ({telefone}).
+        Cliente sem cadastro — anotações e no-show ficam vinculados ao telefone{telefone ? ` (${telefone})` : ""}.
       </p>
+
+      {!telefone && (
+        <div className="mt-3 flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          <span>Esse agendamento foi feito sem telefone, então não dá pra guardar anotações. Informe um telefone pra liberar a ficha:</span>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Telefone"
+              value={telefoneNovo}
+              onChange={(e) => setTelefoneNovo(e.target.value)}
+              className="h-9 bg-background text-foreground"
+            />
+            <Button
+              size="sm"
+              onClick={salvarTelefone}
+              disabled={salvandoTelefone || !telefoneNovo.trim()}
+              className="w-fit uppercase tracking-widest"
+            >
+              {salvandoTelefone ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {qtdNoShow > 0 && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -133,6 +176,8 @@ export default function FichaAvulso({
         </div>
       )}
 
+      {telefone && (
+      <>
       <div className="mt-4 flex flex-col gap-2">
         <Textarea
           value={texto}
@@ -250,6 +295,8 @@ export default function FichaAvulso({
           );
         })}
       </div>
+      </>
+      )}
     </Card>
   );
 }
