@@ -955,16 +955,19 @@ export type Database = {
           cpf: string
           criado_em: string
           id: string
+          ip: string | null
         }
         Insert: {
           cpf: string
           criado_em?: string
           id?: string
+          ip?: string | null
         }
         Update: {
           cpf?: string
           criado_em?: string
           id?: string
+          ip?: string | null
         }
         Relationships: []
       }
