@@ -197,10 +197,6 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
       setErro("Informe o nome do cliente.");
       return;
     }
-    if (modoCliente === "avulso" && !telefoneAvulso.trim()) {
-      setErro("Informe o telefone do cliente (é o que guarda a ficha dele entre visitas).");
-      return;
-    }
     if (repetir && !repetirAte) {
       setErro("Escolha até quando repetir.");
       return;
@@ -428,7 +424,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
                     className="bg-background"
                   />
                   <Input
-                    placeholder="Telefone"
+                    placeholder="Telefone (opcional)"
                     value={telefoneAvulso}
                     onChange={(e) => setTelefoneAvulso(e.target.value)}
                     className="bg-background"
