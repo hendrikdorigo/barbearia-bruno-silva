@@ -153,7 +153,7 @@ export default function CadastroPage() {
               <Field>
                 <FieldLabel>Data de nascimento</FieldLabel>
                 <div className="grid grid-cols-3 gap-2">
-                  <Select value={diaNasc} onValueChange={setDiaNasc}>
+                  <Select value={diaNasc} onValueChange={(v) => setDiaNasc(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Dia" />
                     </SelectTrigger>
@@ -165,7 +165,7 @@ export default function CadastroPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={mesNasc} onValueChange={setMesNasc}>
+                  <Select value={mesNasc} onValueChange={(v) => setMesNasc(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Mês" />
                     </SelectTrigger>
@@ -177,7 +177,7 @@ export default function CadastroPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={anoNasc} onValueChange={setAnoNasc}>
+                  <Select value={anoNasc} onValueChange={(v) => setAnoNasc(v ?? "")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Ano" />
                     </SelectTrigger>

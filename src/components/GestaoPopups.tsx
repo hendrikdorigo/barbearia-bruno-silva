@@ -14,7 +14,13 @@ import { cn } from "@/lib/utils";
 const selectClass =
   "h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-gold focus:outline-none";
 
-type AudienciaLogin = "logados" | "deslogados" | "ambos";
+export type AudienciaLogin = "logados" | "deslogados" | "ambos";
+
+/** A coluna audiencia_login é texto livre no banco; isso garante que só um
+ * dos três valores esperados chegue no componente. */
+export function normalizarAudienciaLogin(valor: string): AudienciaLogin {
+  return valor === "logados" || valor === "deslogados" || valor === "ambos" ? valor : "ambos";
+}
 
 type Popup = {
   id: string;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XIcon, PencilIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { FORMAS_PAGAMENTO } from "@/lib/constants";
+import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,9 @@ export default function ComandaView({
   const [itens, setItens] = useState<Item[]>(itensIniciais);
   const [status, setStatus] = useState(comanda.status);
   const [pagoAntecipado, setPagoAntecipado] = useState(comanda.pago_antecipado);
-  const [formaPagamento, setFormaPagamento] = useState(comanda.forma_pagamento ?? "pix");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>(
+    (comanda.forma_pagamento as FormaPagamento | null) ?? "pix"
+  );
   const [adicionando, setAdicionando] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
   const [valorServico, setValorServico] = useState(Number(comanda.valor_servico));
@@ -300,7 +302,7 @@ export default function ComandaView({
             </Button>
           )}
 
-          {papel === "cliente" && pagoAntecipado && status !== "fechada" && (
+          {papel === "cliente" && pagoAntecipado && (
             <Alert className="mt-4 border-success/30 bg-success/10">
               <AlertDescription className="text-success">
                 Pago pelo app. Aguardando o barbeiro fechar a comanda ao fim do

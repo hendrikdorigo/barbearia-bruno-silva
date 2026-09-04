@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import PopupDisplay from "@/components/PopupDisplay";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmacaoProvider } from "@/components/ConfirmacaoProvider";
 import { cn } from "@/lib/utils";
 
 const display = Bebas_Neue({
@@ -102,12 +103,14 @@ export default function RootLayout({
       className={cn(display.variable, body.variable, serif.variable, mono.variable)}
     >
       <body className="flex min-h-screen flex-col">
-        <TooltipProvider delayDuration={150}>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <PopupDisplay />
-          <Toaster theme="dark" position="top-center" />
+        <TooltipProvider delay={150}>
+          <ConfirmacaoProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <PopupDisplay />
+            <Toaster theme="dark" position="top-center" />
+          </ConfirmacaoProvider>
         </TooltipProvider>
       </body>
     </html>

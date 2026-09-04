@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { FORMAS_PAGAMENTO } from "@/lib/constants";
+import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 type Ajuste = {
-  forma_pagamento: string;
+  forma_pagamento: FormaPagamento;
   ativo: boolean;
   tipo: "desconto" | "acrescimo";
   valor_tipo: "percentual" | "fixo";
@@ -24,11 +24,11 @@ export default function AjustesFormaPagamentoEditor({ ajustesIniciais }: { ajust
   const router = useRouter();
   const supabase = createClient();
 
-  function atualizarLocal(forma: string, patch: Partial<Ajuste>) {
+  function atualizarLocal(forma: FormaPagamento, patch: Partial<Ajuste>) {
     setAjustes((prev) => prev.map((a) => (a.forma_pagamento === forma ? { ...a, ...patch } : a)));
   }
 
-  async function salvar(forma: string) {
+  async function salvar(forma: FormaPagamento) {
     const a = ajustes.find((x) => x.forma_pagamento === forma);
     if (!a) return;
     setSalvandoId(forma);

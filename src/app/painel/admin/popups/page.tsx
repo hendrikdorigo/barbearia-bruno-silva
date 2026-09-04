@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import GestaoPopups from "@/components/GestaoPopups";
+import GestaoPopups, { normalizarAudienciaLogin } from "@/components/GestaoPopups";
 
 export default async function GestaoPopupsPage() {
   const supabase = await createClient();
@@ -31,7 +31,13 @@ export default async function GestaoPopupsPage() {
         barbeiro abre o app. Marque como &quot;boas-vindas&quot; para exibir
         automaticamente no primeiro acesso de cada novo cliente.
       </p>
-      <GestaoPopups popupsIniciais={popups ?? []} userId={user.id} />
+      <GestaoPopups
+        popupsIniciais={(popups ?? []).map((p) => ({
+          ...p,
+          audiencia_login: normalizarAudienciaLogin(p.audiencia_login),
+        }))}
+        userId={user.id}
+      />
     </div>
   );
 }

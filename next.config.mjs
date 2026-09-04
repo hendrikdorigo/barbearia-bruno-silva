@@ -6,12 +6,10 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
-  typescript: {
-    // Pre-existing type-inference issue with the Supabase generated types
-    // (query builder resolves to "never" in some chained .select() calls).
-    // Does not affect runtime behavior; unblocks production builds.
-    ignoreBuildErrors: true,
-  },
+  // Sem ignoreBuildErrors: os erros de "never" vinham de @supabase/ssr 0.5.2
+  // (assinatura antiga do SupabaseClient) brigando com o supabase-js novo que
+  // vinha instalado junto. Com as duas versões alinhadas o build valida tipo
+  // de novo - e é isso que segura bug antes de ir pro ar.
   env: {
     // Fallback placeholders so build-time static prerendering of Server
     // Components (which call createClient()) doesn't throw when the real

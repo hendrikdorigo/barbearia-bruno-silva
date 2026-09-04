@@ -1,11 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
 /**
  * Extrai menções do tipo @Nome do texto e resolve para profile_id.
  * Ex: "Ficou top @Bruno Silva, valeu!" -> procura profile "Bruno Silva".
  */
 export async function extrairMencoes(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   texto: string
 ): Promise<string[]> {
   const tokens = texto.match(/@([\p{L}0-9_.]+(?:\s[\p{L}0-9_.]+)?)/gu);

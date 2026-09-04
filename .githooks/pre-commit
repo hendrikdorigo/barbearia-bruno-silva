@@ -1,0 +1,18 @@
+#!/bin/sh
+# Barra o commit se aparecer erro de TypeScript.
+#
+# Por que isso existe: o projeto rodou um bom tempo com "ignoreBuildErrors" e
+# dois arquivos com @ts-nocheck, acumulando 193 erros escondidos - entre eles
+# um tooltip que nunca funcionou e uma comparação que nunca era verdadeira.
+# Com o tipo valendo de novo, essa trava evita que a dívida volte a crescer.
+#
+# Pra pular numa emergência: git commit --no-verify
+
+echo "Checando tipos (tsc --noEmit)..."
+if ! npx tsc --noEmit; then
+  echo ""
+  echo "Commit barrado: existem erros de TypeScript acima."
+  echo "Corrija, ou use 'git commit --no-verify' se for mesmo necessário."
+  exit 1
+fi
+echo "Tipos OK."

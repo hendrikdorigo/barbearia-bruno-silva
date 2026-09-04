@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/database.types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { CalendarOffIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type ExcecaoInsert = Database["public"]["Tables"]["barbeiro_excecoes"]["Insert"];
 
 type Excecao = {
   id: string;
@@ -43,7 +46,7 @@ export default function ExcecoesEditor({
     setErro(null);
     setSalvando(true);
 
-    const payload =
+    const payload: ExcecaoInsert =
       tipo === "folga"
         ? {
             barbeiro_id: barbeiroId,

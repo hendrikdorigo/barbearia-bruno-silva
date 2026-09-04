@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/database.types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+type BloqueioInsert = Database["public"]["Tables"]["barbeiro_bloqueios"]["Insert"];
 
 const DIAS = [
   "Domingo",
@@ -66,7 +69,7 @@ export default function BloqueiosEditor({
     }
     setSalvando(true);
 
-    const payload =
+    const payload: BloqueioInsert[] =
       recorrencia === "semanal"
         ? diasSelecionados.map((dia) => ({
             barbeiro_id: barbeiroId,

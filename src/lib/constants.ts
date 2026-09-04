@@ -46,3 +46,6 @@ export const FORMAS_PAGAMENTO = [
   { id: "dinheiro", label: "Dinheiro" },
   { id: "pix", label: "Pix" },
 ] as const;
+
+/** Mesmos valores do enum forma_pagamento no banco - evita salvar string solta. */
+export type FormaPagamento = (typeof FORMAS_PAGAMENTO)[number]["id"];

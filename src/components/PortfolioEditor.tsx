@@ -24,8 +24,8 @@ export default function PortfolioEditor({
   itensPortfolioIniciais: { url: string; legenda: string | null }[];
 }) {
   const [bio, setBio] = useState(barbeiro.bio ?? "");
-  const [especialidades, setEspecialidades] = useState(
-    (barbeiro.especialidades ?? []).join(", ")
+  const [especialidades, setEspecialidades] = useState<string>(
+    ((barbeiro.especialidades ?? []) as string[]).join(", ")
   );
   const [itens, setItens] = useState<ItemPortfolio[]>(
     itensPortfolioIniciais.map((i) => ({ url: i.url, legenda: i.legenda ?? "" }))
