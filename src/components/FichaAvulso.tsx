@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AlertTriangleIcon, ImageIcon, NotebookTextIcon, PencilIcon, Trash2Icon, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { normalizarCPF, formatarCPF, validarCPF } from "@/lib/cpf";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,19 +21,21 @@ type Nota = {
   profiles: { nome: string } | null;
 };
 
-// Ficha de cliente avulso (agendado na hora, sem cadastro): não tem CPF nem
-// conta, então não dá pra usar `clientes`/`cliente_notas`. Guardamos as
-// anotações e o contador de no-show por telefone, num registro mais simples
-// (sem bloqueio de site nem pacotes, que exigem cadastro de verdade).
+// Ficha de cliente avulso (agendado na hora, sem cadastro): não exige nada
+// pra marcar horário, mas guardar anotações/no-show precisa de uma chave que
+// sobreviva o cliente virando cadastrado de verdade depois — por isso usamos
+// CPF (não telefone, que pode trocar de dono) e não `clientes`/`cliente_notas`,
+// que exigem conta. Se ele se cadastrar com o mesmo CPF, o FichaCliente busca
+// essas notas antigas automaticamente (ver FichaCliente.tsx).
 export default function FichaAvulso({
   agendamentoId,
-  telefone,
+  cpf,
   notasIniciais,
   qtdNoShow,
   autorId,
 }: {
   agendamentoId: string;
-  telefone: string | null;
+  cpf: string | null;
   notasIniciais: Nota[];
   qtdNoShow: number;
   autorId: string;
@@ -45,31 +48,37 @@ export default function FichaAvulso({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [textoEditado, setTextoEditado] = useState("");
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
-  const [telefoneNovo, setTelefoneNovo] = useState("");
-  const [salvandoTelefone, setSalvandoTelefone] = useState(false);
+  const [cpfNovo, setCpfNovo] = useState("");
+  const [erroCpf, setErroCpf] = useState<string | null>(null);
+  const [salvandoCpf, setSalvandoCpf] = useState(false);
   const inputImagemNova = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const confirmar = useConfirmacao();
 
-  async function salvarTelefone() {
-    if (!telefoneNovo.trim()) return;
-    setSalvandoTelefone(true);
-    const { error } = await supabase
-      .from("agendamentos")
-      .update({ cliente_telefone_avulso: telefoneNovo.trim() })
-      .eq("id", agendamentoId);
-    setSalvandoTelefone(false);
-    if (error) {
-      toast.error("Não foi possível salvar o telefone", { description: error.message });
+  async function salvarCpf() {
+    const digits = normalizarCPF(cpfNovo);
+    if (!validarCPF(digits)) {
+      setErroCpf("CPF inválido.");
       return;
     }
-    toast.success("Telefone salvo.");
+    setErroCpf(null);
+    setSalvandoCpf(true);
+    const { error } = await supabase
+      .from("agendamentos")
+      .update({ cliente_cpf_avulso: digits })
+      .eq("id", agendamentoId);
+    setSalvandoCpf(false);
+    if (error) {
+      toast.error("Não foi possível salvar o CPF", { description: error.message });
+      return;
+    }
+    toast.success("CPF salvo.");
     router.refresh();
   }
 
   async function enviarImagem(arquivo: File) {
-    const path = `avulso/${telefone}/${Date.now()}-${arquivo.name}`;
+    const path = `avulso/${cpf}/${Date.now()}-${arquivo.name}`;
     const { error } = await supabase.storage.from("cliente-notas").upload(path, arquivo);
     if (error) return null;
     return supabase.storage.from("cliente-notas").getPublicUrl(path).data.publicUrl;
@@ -81,12 +90,12 @@ export default function FichaAvulso({
   }
 
   async function adicionar() {
-    if ((!texto.trim() && !imagemNova) || !telefone) return;
+    if ((!texto.trim() && !imagemNova) || !cpf) return;
     setSalvando(true);
     const imagemUrl = imagemNova ? await enviarImagem(imagemNova) : null;
     const { data, error } = await supabase
       .from("notas_avulso")
-      .insert({ telefone, autor_id: autorId, texto: texto.trim(), imagem_url: imagemUrl })
+      .insert({ cpf, autor_id: autorId, texto: texto.trim(), imagem_url: imagemUrl })
       .select("id, texto, imagem_url, created_at, autor_id, profiles(nome)")
       .single();
     setSalvando(false);
@@ -142,28 +151,31 @@ export default function FichaAvulso({
         Ficha do cliente avulso
       </p>
       <p className="mt-1 text-xs text-muted-foreground/70">
-        Cliente sem cadastro — anotações e no-show ficam vinculados ao telefone{telefone ? ` (${telefone})` : ""}.
+        Cliente sem cadastro — anotações e no-show ficam vinculados ao CPF{cpf ? ` (${formatarCPF(cpf)})` : ""}.
+        Se ele se cadastrar depois com esse CPF, essas anotações aparecem na ficha da conta dele.
       </p>
 
-      {!telefone && (
+      {!cpf && (
         <div className="mt-3 flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
-          <span>Esse agendamento foi feito sem telefone, então não dá pra guardar anotações. Informe um telefone pra liberar a ficha:</span>
+          <span>Esse agendamento foi feito sem CPF, então não dá pra guardar anotações. Informe o CPF pra liberar a ficha:</span>
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Telefone"
-              value={telefoneNovo}
-              onChange={(e) => setTelefoneNovo(e.target.value)}
+              placeholder="CPF"
+              value={cpfNovo}
+              onChange={(e) => setCpfNovo(formatarCPF(e.target.value))}
+              maxLength={14}
               className="h-9 bg-background text-foreground"
             />
             <Button
               size="sm"
-              onClick={salvarTelefone}
-              disabled={salvandoTelefone || !telefoneNovo.trim()}
+              onClick={salvarCpf}
+              disabled={salvandoCpf || !cpfNovo.trim()}
               className="w-fit uppercase tracking-widest"
             >
-              {salvandoTelefone ? "Salvando..." : "Salvar"}
+              {salvandoCpf ? "Salvando..." : "Salvar"}
             </Button>
           </div>
+          {erroCpf && <p className="text-xs text-destructive">{erroCpf}</p>}
         </div>
       )}
 
@@ -176,126 +188,126 @@ export default function FichaAvulso({
         </div>
       )}
 
-      {telefone && (
-      <>
-      <div className="mt-4 flex flex-col gap-2">
-        <Textarea
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Ex: último corte navalhado nas laterais, gosta de conversar, prefere de manhã..."
-          className="bg-background"
-          rows={2}
-        />
-        {previewNova && (
-          <div className="relative w-fit">
-            <img src={previewNova} alt="" className="h-24 w-24 rounded-lg object-cover" />
-            <button
-              type="button"
-              onClick={() => escolherImagemNova(null)}
-              aria-label="Remover imagem"
-              className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-destructive text-white"
-            >
-              <XIcon className="size-3" />
-            </button>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => inputImagemNova.current?.click()}
-            className="w-fit uppercase tracking-widest"
-          >
-            <ImageIcon className="size-3.5" data-icon="inline-start" />
-            {previewNova ? "Trocar foto" : "Anexar foto"}
-          </Button>
-          <input
-            ref={inputImagemNova}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => escolherImagemNova(e.target.files?.[0] ?? null)}
-          />
-          <Button
-            onClick={adicionar}
-            disabled={salvando || (!texto.trim() && !imagemNova)}
-            size="sm"
-            className="w-fit uppercase tracking-widest"
-          >
-            {salvando ? "Salvando..." : "Adicionar registro"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-col gap-3">
-        {notas.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
-        )}
-        {notas.map((n) => {
-          const podeEditar = n.autor_id === autorId;
-          return (
-            <div key={n.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
-              {editandoId === n.id ? (
-                <div className="flex flex-col gap-2">
-                  <Textarea
-                    value={textoEditado}
-                    onChange={(e) => setTextoEditado(e.target.value)}
-                    className="bg-background"
-                    rows={2}
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => salvarEdicao(n.id)} className="uppercase tracking-widest">
-                      Salvar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditandoId(null)}
-                      className="uppercase tracking-widest"
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm text-foreground/90">{n.texto}</p>
-                    {podeEditar && (
-                      <div className="flex shrink-0 items-center gap-2">
-                        <button
-                          onClick={() => iniciarEdicao(n)}
-                          aria-label="Editar registro"
-                          className="text-muted-foreground/70 hover:text-gold"
-                        >
-                          <PencilIcon className="size-3.5" />
-                        </button>
-                        <button
-                          onClick={() => excluir(n.id)}
-                          disabled={excluindoId === n.id}
-                          aria-label="Excluir registro"
-                          className="text-muted-foreground/70 hover:text-destructive disabled:opacity-50"
-                        >
-                          <Trash2Icon className="size-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {n.imagem_url && (
-                    <img src={n.imagem_url} alt="" className="mt-2 h-32 w-32 rounded-lg object-cover" />
-                  )}
-                </>
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">
-                {n.profiles?.nome ?? "Equipe"} · {new Date(n.created_at).toLocaleDateString("pt-BR")}
-              </p>
+      {cpf && (
+        <>
+          <div className="mt-4 flex flex-col gap-2">
+            <Textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Ex: último corte navalhado nas laterais, gosta de conversar, prefere de manhã..."
+              className="bg-background"
+              rows={2}
+            />
+            {previewNova && (
+              <div className="relative w-fit">
+                <img src={previewNova} alt="" className="h-24 w-24 rounded-lg object-cover" />
+                <button
+                  type="button"
+                  onClick={() => escolherImagemNova(null)}
+                  aria-label="Remover imagem"
+                  className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-destructive text-white"
+                >
+                  <XIcon className="size-3" />
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => inputImagemNova.current?.click()}
+                className="w-fit uppercase tracking-widest"
+              >
+                <ImageIcon className="size-3.5" data-icon="inline-start" />
+                {previewNova ? "Trocar foto" : "Anexar foto"}
+              </Button>
+              <input
+                ref={inputImagemNova}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => escolherImagemNova(e.target.files?.[0] ?? null)}
+              />
+              <Button
+                onClick={adicionar}
+                disabled={salvando || (!texto.trim() && !imagemNova)}
+                size="sm"
+                className="w-fit uppercase tracking-widest"
+              >
+                {salvando ? "Salvando..." : "Adicionar registro"}
+              </Button>
             </div>
-          );
-        })}
-      </div>
-      </>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3">
+            {notas.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
+            )}
+            {notas.map((n) => {
+              const podeEditar = n.autor_id === autorId;
+              return (
+                <div key={n.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                  {editandoId === n.id ? (
+                    <div className="flex flex-col gap-2">
+                      <Textarea
+                        value={textoEditado}
+                        onChange={(e) => setTextoEditado(e.target.value)}
+                        className="bg-background"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => salvarEdicao(n.id)} className="uppercase tracking-widest">
+                          Salvar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditandoId(null)}
+                          className="uppercase tracking-widest"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-foreground/90">{n.texto}</p>
+                        {podeEditar && (
+                          <div className="flex shrink-0 items-center gap-2">
+                            <button
+                              onClick={() => iniciarEdicao(n)}
+                              aria-label="Editar registro"
+                              className="text-muted-foreground/70 hover:text-gold"
+                            >
+                              <PencilIcon className="size-3.5" />
+                            </button>
+                            <button
+                              onClick={() => excluir(n.id)}
+                              disabled={excluindoId === n.id}
+                              aria-label="Excluir registro"
+                              className="text-muted-foreground/70 hover:text-destructive disabled:opacity-50"
+                            >
+                              <Trash2Icon className="size-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {n.imagem_url && (
+                        <img src={n.imagem_url} alt="" className="mt-2 h-32 w-32 rounded-lg object-cover" />
+                      )}
+                    </>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {n.profiles?.nome ?? "Equipe"} · {new Date(n.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </Card>
   );

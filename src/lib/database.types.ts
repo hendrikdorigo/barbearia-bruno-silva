@@ -20,6 +20,7 @@ export type Database = {
           atendimento_iniciado_em: string | null
           barbeiro_id: string
           checkin_at: string | null
+          cliente_cpf_avulso: string | null
           cliente_id: string | null
           cliente_nome_avulso: string | null
           cliente_telefone_avulso: string | null
@@ -43,6 +44,7 @@ export type Database = {
           atendimento_iniciado_em?: string | null
           barbeiro_id: string
           checkin_at?: string | null
+          cliente_cpf_avulso?: string | null
           cliente_id?: string | null
           cliente_nome_avulso?: string | null
           cliente_telefone_avulso?: string | null
@@ -68,6 +70,7 @@ export type Database = {
           atendimento_iniciado_em?: string | null
           barbeiro_id?: string
           checkin_at?: string | null
+          cliente_cpf_avulso?: string | null
           cliente_id?: string | null
           cliente_nome_avulso?: string | null
           cliente_telefone_avulso?: string | null
@@ -977,26 +980,26 @@ export type Database = {
       notas_avulso: {
         Row: {
           autor_id: string
+          cpf: string
           created_at: string
           id: string
           imagem_url: string | null
-          telefone: string
           texto: string
         }
         Insert: {
           autor_id: string
+          cpf: string
           created_at?: string
           id?: string
           imagem_url?: string | null
-          telefone: string
           texto: string
         }
         Update: {
           autor_id?: string
+          cpf?: string
           created_at?: string
           id?: string
           imagem_url?: string | null
-          telefone?: string
           texto?: string
         }
         Relationships: [

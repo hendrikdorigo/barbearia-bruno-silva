@@ -39,6 +39,7 @@ type Nota = {
 export default function FichaCliente({
   clienteId,
   notasIniciais,
+  notasAvulsoAntigas,
   qtdNoShow,
   autorId,
   bloqueadoInicial,
@@ -48,6 +49,7 @@ export default function FichaCliente({
 }: {
   clienteId: string;
   notasIniciais: Nota[];
+  notasAvulsoAntigas?: Nota[];
   qtdNoShow: number;
   autorId: string;
   bloqueadoInicial: boolean;
@@ -381,6 +383,27 @@ export default function FichaCliente({
           );
         })}
       </div>
+
+      {notasAvulsoAntigas && notasAvulsoAntigas.length > 0 && (
+        <div className="mt-5 border-t border-border pt-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            De quando ainda era atendido como avulso
+          </p>
+          <div className="mt-3 flex flex-col gap-3">
+            {notasAvulsoAntigas.map((n) => (
+              <div key={n.id} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                <p className="text-sm text-foreground/80">{n.texto}</p>
+                {n.imagem_url && (
+                  <img src={n.imagem_url} alt="" className="mt-2 h-32 w-32 rounded-lg object-cover" />
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {n.profiles?.nome ?? "Equipe"} · {new Date(n.created_at).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

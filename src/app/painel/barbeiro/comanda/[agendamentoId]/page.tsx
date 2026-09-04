@@ -20,7 +20,7 @@ export default async function ComandaBarbeiroPage({
     supabase
       .from("comandas")
       .select(
-        "*, clientes(profile_id, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_telefone_avulso)"
+        "*, clientes(profile_id, cpf, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_cpf_avulso)"
       )
       .eq("agendamento_id", agendamentoId)
       .eq("barbeiro_id", user.id)
@@ -31,9 +31,18 @@ export default async function ComandaBarbeiroPage({
   if (!comanda) notFound();
 
   const clienteId = (comanda as any).cliente_id as string | null;
-  const telefoneAvulso = (comanda as any).agendamentos?.cliente_telefone_avulso as string | null;
+  const cpfCliente = (comanda as any).clientes?.cpf as string | undefined;
+  const cpfAvulso = (comanda as any).agendamentos?.cliente_cpf_avulso as string | null;
 
-  const [{ data: itens }, { data: notas }, { data: pacotes }, { data: fiados }, { data: notasAvulso }, { count: noShowAvulso }] = await Promise.all([
+  const [
+    { data: itens },
+    { data: notas },
+    { data: pacotes },
+    { data: fiados },
+    { data: notasAvulso },
+    { count: noShowAvulso },
+    { data: notasAvulsoAntigas },
+  ] = await Promise.all([
     supabase
       .from("comanda_itens")
       .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
@@ -62,21 +71,30 @@ export default async function ComandaBarbeiroPage({
           .eq("cliente_id", clienteId)
           .eq("status", "fiado")
       : Promise.resolve({ data: [] }),
-    telefoneAvulso
+    cpfAvulso
       ? supabase
           .from("notas_avulso")
           .select("id, texto, imagem_url, created_at, autor_id, profiles(nome)")
-          .eq("telefone", telefoneAvulso)
+          .eq("cpf", cpfAvulso)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
-    telefoneAvulso
+    cpfAvulso
       ? supabase
           .from("agendamentos")
           .select("id", { count: "exact", head: true })
-          .eq("cliente_telefone_avulso", telefoneAvulso)
+          .eq("cliente_cpf_avulso", cpfAvulso)
           .eq("barbeiro_id", user.id)
           .eq("status", "no_show")
       : Promise.resolve({ count: 0 }),
+    // Cliente cadastrado que já tinha vindo como avulso antes (mesmo CPF):
+    // traz as anotações daquela época pra dentro da ficha de verdade dele.
+    clienteId && cpfCliente
+      ? supabase
+          .from("notas_avulso")
+          .select("id, texto, imagem_url, created_at, autor_id, profiles(nome)")
+          .eq("cpf", cpfCliente)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
   return (
@@ -98,6 +116,7 @@ export default async function ComandaBarbeiroPage({
         <FichaCliente
           clienteId={clienteId}
           notasIniciais={(notas ?? []) as any}
+          notasAvulsoAntigas={(notasAvulsoAntigas ?? []) as any}
           qtdNoShow={(comanda as any).clientes?.qtd_no_show ?? 0}
           autorId={user.id}
           bloqueadoInicial={Boolean((comanda as any).clientes?.bloqueado)}
@@ -112,7 +131,7 @@ export default async function ComandaBarbeiroPage({
       {!clienteId && (
         <FichaAvulso
           agendamentoId={agendamentoId}
-          telefone={telefoneAvulso}
+          cpf={cpfAvulso}
           notasIniciais={(notasAvulso ?? []) as any}
           qtdNoShow={noShowAvulso ?? 0}
           autorId={user.id}
