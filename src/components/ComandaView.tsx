@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { XIcon, PencilIcon } from "lucide-react";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import { createClient } from "@/lib/supabase/client";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
@@ -67,6 +69,7 @@ export default function ComandaView({
   const [salvandoValor, setSalvandoValor] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const confirmar = useConfirmacao();
 
   const valorDebitoNoShow = Number(comanda.valor_debito_no_show);
   const total =
@@ -113,14 +116,22 @@ export default function ComandaView({
   }
 
   async function deixarFiado() {
-    if (!window.confirm("Deixar esse valor em aberto? O cliente vai poder pagar depois.")) return;
+    const ok = await confirmar({
+      titulo: "Deixar esse valor em aberto?",
+      descricao: "O cliente vai poder pagar depois.",
+      confirmar: "Deixar fiado",
+    });
+    if (!ok) return;
     setProcessando(true);
     const { error } = await supabase.from("comandas").update({ status: "fiado" }).eq("id", comanda.id);
     setProcessando(false);
-    if (!error) {
-      setStatus("fiado");
-      router.refresh();
+    if (error) {
+      toast.error("Não foi possível deixar fiado", { description: error.message });
+      return;
     }
+    setStatus("fiado");
+    toast.success("Valor deixado em aberto.");
+    router.refresh();
   }
 
   async function confirmarPagamentoCaixa() {

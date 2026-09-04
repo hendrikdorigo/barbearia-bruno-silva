@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import { AlertTriangleIcon, Trash2Icon, ShieldOffIcon, ShieldCheckIcon, ShoppingBagIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -66,6 +68,7 @@ export default function PainelAdminAgendamentos({
   const [agendamentoAbertoId, setAgendamentoAbertoId] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
+  const confirmar = useConfirmacao();
 
   const agendamentoAberto = lista.find((a) => a.id === agendamentoAbertoId) ?? null;
 
@@ -79,12 +82,22 @@ export default function PainelAdminAgendamentos({
   }, [lista, filtroBarbeiro, filtroData, filtroStatus]);
 
   async function excluir(id: string) {
-    if (!window.confirm("Excluir este agendamento? Essa ação não pode ser desfeita.")) return;
+    const ok = await confirmar({
+      titulo: "Excluir este agendamento?",
+      descricao: "Essa ação não pode ser desfeita.",
+      confirmar: "Excluir",
+      destrutivo: true,
+    });
+    if (!ok) return;
     setExcluindoId(id);
     const { error } = await supabase.from("agendamentos").delete().eq("id", id);
     setExcluindoId(null);
-    if (error) return;
+    if (error) {
+      toast.error("Não foi possível excluir", { description: error.message });
+      return;
+    }
     setLista((prev) => prev.filter((a) => a.id !== id));
+    toast.success("Agendamento excluído.");
     router.refresh();
   }
 
@@ -92,14 +105,24 @@ export default function PainelAdminAgendamentos({
     const clienteId = a.clientes?.profile_id;
     if (!clienteId) return;
     const bloquear = !clienteBloqueadoAgendamento(a);
-    if (bloquear && !window.confirm(`Bloquear ${nomeClienteAgendamento(a)}? Ele não vai conseguir marcar novos horários pelo site.`)) {
-      return;
+    if (bloquear) {
+      const ok = await confirmar({
+        titulo: `Bloquear ${nomeClienteAgendamento(a)}?`,
+        descricao: "Ele não vai conseguir marcar novos horários pelo site.",
+        confirmar: "Bloquear",
+        destrutivo: true,
+      });
+      if (!ok) return;
     }
     const { error } = await supabase
       .from("clientes")
       .update(bloquear ? { bloqueado: true } : { bloqueado: false, motivo_bloqueio: null })
       .eq("profile_id", clienteId);
-    if (error) return;
+    if (error) {
+      toast.error("Não foi possível alterar o bloqueio", { description: error.message });
+      return;
+    }
+    toast.success(bloquear ? "Cliente bloqueado." : "Cliente desbloqueado.");
     setLista((prev) =>
       prev.map((item) =>
         item.clientes?.profile_id === clienteId

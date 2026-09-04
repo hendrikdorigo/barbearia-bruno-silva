@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Trash2Icon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +54,7 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const router = useRouter();
+  const confirmar = useConfirmacao();
   const supabase = createClient();
 
   async function criar() {
@@ -110,10 +113,20 @@ export default function GestaoPopups({ popupsIniciais, userId }: { popupsIniciai
   }
 
   async function excluir(id: string) {
-    if (!window.confirm("Excluir este pop-up? Essa ação não pode ser desfeita.")) return;
+    const ok = await confirmar({
+      titulo: "Excluir este pop-up?",
+      descricao: "Essa ação não pode ser desfeita.",
+      confirmar: "Excluir",
+      destrutivo: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("app_popups").delete().eq("id", id);
-    if (error) return;
+    if (error) {
+      toast.error("Não foi possível excluir o pop-up", { description: error.message });
+      return;
+    }
     setPopups((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Pop-up excluído.");
     router.refresh();
   }
 

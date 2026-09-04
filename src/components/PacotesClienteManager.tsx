@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import {
   DIAS_SEMANA_ABREV,
   pacoteVigente,
@@ -34,6 +36,7 @@ const PACOTE_VAZIO = {
 export default function PacotesClienteManager({ autorId }: { autorId: string }) {
   const supabase = createClient();
   const router = useRouter();
+  const confirmar = useConfirmacao();
 
   const [busca, setBusca] = useState("");
   const [resultados, setResultados] = useState<ClienteEncontrado[]>([]);
@@ -157,13 +160,24 @@ export default function PacotesClienteManager({ autorId }: { autorId: string }) 
   }
 
   async function remover(id: string) {
-    if (!window.confirm("Remover esse pacote? Essa ação não pode ser desfeita.")) return;
-    await supabase.from("pacotes_cliente").delete().eq("id", id);
+    const ok = await confirmar({
+      titulo: "Remover esse pacote?",
+      descricao: "Essa ação não pode ser desfeita.",
+      confirmar: "Remover",
+      destrutivo: true,
+    });
+    if (!ok) return;
+    const { error } = await supabase.from("pacotes_cliente").delete().eq("id", id);
+    if (error) {
+      toast.error("Não foi possível remover o pacote", { description: error.message });
+      return;
+    }
     setPacotes((prev) => prev.filter((p) => p.id !== id));
     if (editandoId === id) {
       setEditandoId(null);
       setForm(PACOTE_VAZIO);
     }
+    toast.success("Pacote removido.");
     router.refresh();
   }
 

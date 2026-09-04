@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangleIcon,
   ImageIcon,
@@ -20,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { pacoteVigente, textoDiasSemana, pacoteTemRateio, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import { cn } from "@/lib/utils";
 
 type Nota = {
@@ -67,6 +69,7 @@ export default function FichaCliente({
   const inputImagemNova = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const supabase = createClient();
+  const confirmar = useConfirmacao();
 
   async function enviarImagem(arquivo: File) {
     const path = `${clienteId}/${Date.now()}-${arquivo.name}`;
@@ -117,23 +120,34 @@ export default function FichaCliente({
   }
 
   async function excluir(notaId: string) {
-    if (!window.confirm("Excluir este registro?")) return;
+    const ok = await confirmar({
+      titulo: "Excluir este registro?",
+      confirmar: "Excluir",
+      destrutivo: true,
+    });
+    if (!ok) return;
     setExcluindoId(notaId);
     const { error } = await supabase.from("cliente_notas").delete().eq("id", notaId);
     setExcluindoId(null);
-    if (!error) {
-      setNotas((prev) => prev.filter((n) => n.id !== notaId));
-      router.refresh();
+    if (error) {
+      toast.error("Não foi possível excluir", { description: error.message });
+      return;
     }
+    setNotas((prev) => prev.filter((n) => n.id !== notaId));
+    toast.success("Registro excluído.");
+    router.refresh();
   }
 
   async function alternarBloqueio() {
     const novoBloqueado = !bloqueado;
-    if (
-      novoBloqueado &&
-      !window.confirm("Bloquear este cliente? Ele não vai conseguir marcar novos horários pelo site.")
-    ) {
-      return;
+    if (novoBloqueado) {
+      const ok = await confirmar({
+        titulo: "Bloquear este cliente?",
+        descricao: "Ele não vai conseguir marcar novos horários pelo site.",
+        confirmar: "Bloquear",
+        destrutivo: true,
+      });
+      if (!ok) return;
     }
     setAlterandoBloqueio(true);
     const { error } = await supabase
@@ -144,9 +158,13 @@ export default function FichaCliente({
       })
       .eq("profile_id", clienteId);
     setAlterandoBloqueio(false);
+    if (error) {
+      toast.error("Não foi possível alterar o bloqueio", { description: error.message });
+    }
     if (!error) {
       setBloqueado(novoBloqueado);
       if (!novoBloqueado) setMotivoBloqueio("");
+      toast.success(novoBloqueado ? "Cliente bloqueado." : "Cliente desbloqueado.");
       router.refresh();
     }
   }
