@@ -10,6 +10,8 @@ import {
   nomeClienteAgendamento,
   qtdNoShowAgendamento,
   clienteBloqueadoAgendamento,
+  ehClienteAvulso,
+  criadoPeloBarbeiro,
 } from "@/lib/cliente-agendamento";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +66,7 @@ export default function PainelAdminAgendamentos({
   const [filtroBarbeiro, setFiltroBarbeiro] = useState("");
   const [filtroData, setFiltroData] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [filtroOrigem, setFiltroOrigem] = useState<"" | "avulso" | "manual">("");
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
   const [agendamentoAbertoId, setAgendamentoAbertoId] = useState<string | null>(null);
   const supabase = createClient();
@@ -77,9 +80,11 @@ export default function PainelAdminAgendamentos({
       if (filtroBarbeiro && a.barbeiro_id !== filtroBarbeiro) return false;
       if (filtroStatus && a.status !== filtroStatus) return false;
       if (filtroData && !a.data_hora.startsWith(filtroData)) return false;
+      if (filtroOrigem === "avulso" && !ehClienteAvulso(a)) return false;
+      if (filtroOrigem === "manual" && !criadoPeloBarbeiro(a)) return false;
       return true;
     });
-  }, [lista, filtroBarbeiro, filtroData, filtroStatus]);
+  }, [lista, filtroBarbeiro, filtroData, filtroStatus, filtroOrigem]);
 
   async function excluir(id: string) {
     const ok = await confirmar({
@@ -166,6 +171,15 @@ export default function PainelAdminAgendamentos({
             </option>
           ))}
         </select>
+        <select
+          value={filtroOrigem}
+          onChange={(e) => setFiltroOrigem(e.target.value as "" | "avulso" | "manual")}
+          className={selectClass}
+        >
+          <option value="">Cliente cadastrado ou avulso</option>
+          <option value="avulso">Só avulsos (sem cadastro)</option>
+          <option value="manual">Só criados pelo barbeiro</option>
+        </select>
       </div>
 
       <div className="scrollbar-thin mt-6 overflow-x-auto rounded-xl border border-border">
@@ -195,27 +209,43 @@ export default function PainelAdminAgendamentos({
                   {new Date(a.data_hora).toLocaleString("pt-BR")}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    {clienteBloqueadoAgendamento(a) && (
-                      <ShieldOffIcon
-                        className="size-3.5 shrink-0 text-destructive"
-                        aria-label="Cliente bloqueado"
-                      />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="flex items-center gap-1">
+                      {clienteBloqueadoAgendamento(a) && (
+                        <ShieldOffIcon
+                          className="size-3.5 shrink-0 text-destructive"
+                          aria-label="Cliente bloqueado"
+                        />
+                      )}
+                      {qtdNoShowAgendamento(a) > 0 && (
+                        <AlertTriangleIcon
+                          className="size-3.5 shrink-0 text-destructive"
+                          aria-label={`Já não compareceu ${qtdNoShowAgendamento(a)}x antes`}
+                        />
+                      )}
+                      {(a.comandas?.comanda_itens?.length ?? 0) > 0 && (
+                        <ShoppingBagIcon
+                          className="size-3.5 shrink-0 text-gold"
+                          aria-label="Levou produtos da loja"
+                        />
+                      )}
+                      {nomeClienteAgendamento(a)}
+                    </span>
+                    {ehClienteAvulso(a) && (
+                      <Badge variant="outline" className="text-[10px] uppercase text-muted-foreground">
+                        Avulso
+                      </Badge>
                     )}
-                    {qtdNoShowAgendamento(a) > 0 && (
-                      <AlertTriangleIcon
-                        className="size-3.5 shrink-0 text-destructive"
-                        aria-label={`Já não compareceu ${qtdNoShowAgendamento(a)}x antes`}
-                      />
+                    {criadoPeloBarbeiro(a) && (
+                      <Badge
+                        variant="outline"
+                        className="border-sky-500/40 text-[10px] uppercase text-sky-400"
+                        title="Criado manualmente pelo barbeiro no painel"
+                      >
+                        Manual
+                      </Badge>
                     )}
-                    {(a.comandas?.comanda_itens?.length ?? 0) > 0 && (
-                      <ShoppingBagIcon
-                        className="size-3.5 shrink-0 text-gold"
-                        aria-label="Levou produtos da loja"
-                      />
-                    )}
-                    {nomeClienteAgendamento(a)}
-                  </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {a.barbeiros?.profiles?.nome}

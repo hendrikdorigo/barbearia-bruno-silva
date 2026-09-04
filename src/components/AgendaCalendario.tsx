@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, CalendarOffIcon, AlertTriangleIcon, ShieldOffIcon } from "lucide-react";
 import { calcularJanelaDiaLocal } from "@/lib/disponibilidade";
-import { nomeClienteAgendamento, qtdNoShowAgendamento, clienteBloqueadoAgendamento } from "@/lib/cliente-agendamento";
+import {
+  nomeClienteAgendamento,
+  qtdNoShowAgendamento,
+  clienteBloqueadoAgendamento,
+  ehClienteAvulso,
+  criadoPeloBarbeiro,
+} from "@/lib/cliente-agendamento";
 import { paraDataSP, paraHoraSP, somaDias } from "@/lib/timezone-sp";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
@@ -242,9 +248,13 @@ export default function AgendaCalendario({
                       <AlertTriangleIcon className="size-3.5 shrink-0 text-destructive" />
                     )}
                     {paraHoraSP(a.data_hora)} · {nomeClienteAgendamento(a)}
+                    {ehClienteAvulso(a) && (
+                      <span className="shrink-0 text-[10px] font-normal uppercase opacity-70">avulso</span>
+                    )}
                   </p>
                   <p className="truncate text-xs opacity-80">
                     {a.servicos?.nome} · {STATUS_LABEL[a.status]}
+                    {criadoPeloBarbeiro(a) && " · manual"}
                   </p>
                 </button>
               );

@@ -10,6 +10,8 @@ import {
   telefoneClienteAgendamento,
   qtdNoShowAgendamento,
   clienteBloqueadoAgendamento,
+  ehClienteAvulso,
+  criadoPeloBarbeiro,
 } from "@/lib/cliente-agendamento";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -103,16 +105,25 @@ export default function AgendamentoDetalhe({
       <div>
         <p className="font-semibold text-foreground">
           {nomeClienteAgendamento(a)} · {a.servicos?.nome}
-          {!a.cliente_id && (
-            <span className="ml-1.5 text-xs font-normal text-muted-foreground">(avulso)</span>
-          )}
         </p>
         <p className="text-sm text-muted-foreground">
           {new Date(a.data_hora).toLocaleString("pt-BR")} · {telefoneClienteAgendamento(a) ?? "sem telefone"}
         </p>
-        <Badge variant="outline" className="mt-1.5 uppercase tracking-widest text-gold">
-          {STATUS_LABEL[a.status]}
-        </Badge>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <Badge variant="outline" className="uppercase tracking-widest text-gold">
+            {STATUS_LABEL[a.status]}
+          </Badge>
+          {ehClienteAvulso(a) && (
+            <Badge variant="outline" className="uppercase text-muted-foreground">
+              Cliente avulso
+            </Badge>
+          )}
+          {criadoPeloBarbeiro(a) && (
+            <Badge variant="outline" className="border-sky-500/40 uppercase text-sky-400">
+              Criado pelo barbeiro
+            </Badge>
+          )}
+        </div>
         {a.forma_pagamento && (
           <p className="mt-1.5 text-xs text-muted-foreground">
             Pagamento: {PAGAMENTO_LABEL[a.forma_pagamento] ?? a.forma_pagamento}{" "}

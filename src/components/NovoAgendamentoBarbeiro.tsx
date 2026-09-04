@@ -163,6 +163,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
         cliente_id: modoCliente === "cadastrado" ? clienteSelecionado!.id : null,
         cliente_nome_avulso: modoCliente === "avulso" ? nomeAvulso.trim() : null,
         cliente_telefone_avulso: modoCliente === "avulso" ? telefoneAvulso.trim() || null : null,
+        criado_por_barbeiro: true,
         // -03:00 explícito: sem isso o Postgres guarda a string como se já
         // fosse UTC e o horário salvo fica 3h adiantado em relação ao escolhido.
         data_hora: `${dataISO}T${horario}:00-03:00`,

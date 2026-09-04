@@ -24,6 +24,7 @@ export type Database = {
           cliente_nome_avulso: string | null
           cliente_telefone_avulso: string | null
           created_at: string
+          criado_por_barbeiro: boolean
           data_hora: string
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           google_event_id: string | null
@@ -46,6 +47,7 @@ export type Database = {
           cliente_nome_avulso?: string | null
           cliente_telefone_avulso?: string | null
           created_at?: string
+          criado_por_barbeiro?: boolean
           data_hora: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
@@ -70,6 +72,7 @@ export type Database = {
           cliente_nome_avulso?: string | null
           cliente_telefone_avulso?: string | null
           created_at?: string
+          criado_por_barbeiro?: boolean
           data_hora?: string
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]

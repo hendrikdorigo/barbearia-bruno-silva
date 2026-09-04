@@ -16,6 +16,11 @@ export function ehClienteAvulso(a: any): boolean {
   return !a?.cliente_id;
 }
 
+/** Se o agendamento foi criado manualmente pelo barbeiro (em vez do cliente ter marcado pelo site). */
+export function criadoPeloBarbeiro(a: any): boolean {
+  return Boolean(a?.criado_por_barbeiro);
+}
+
 /** Quantas vezes esse cliente já deu no-show (0 se avulso ou sem histórico). */
 export function qtdNoShowAgendamento(a: any): number {
   return a?.clientes?.qtd_no_show ?? 0;
