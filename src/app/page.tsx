@@ -125,7 +125,7 @@ export default async function HomePage() {
       </section>
 
       {/* SERVIÇOS */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <RazorDivider className="mb-14" />
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">
           Tabela de preços

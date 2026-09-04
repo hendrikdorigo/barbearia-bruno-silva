@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import ImageCropDialog from "@/components/ImageCropDialog";
+import ImageCropper from "@/components/ImageCropper";
 import { cn } from "@/lib/utils";
 
 type Servico = {
@@ -54,7 +54,7 @@ export default function ServicosEditor({
   );
   const [trocandoImagemId, setTrocandoImagemId] = useState<string | null>(null);
   const inputsImagem = useRef<Record<string, HTMLInputElement | null>>({});
-  const [recorteAberto, setRecorteAberto] = useState<{ servicoId: string; src: string } | null>(null);
+  const [recorteAberto, setRecorteAberto] = useState<{ servicoId: string; file: File } | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const router = useRouter();
@@ -79,10 +79,6 @@ export default function ServicosEditor({
     setTrocandoImagemId(null);
   }
 
-  function fecharRecorte() {
-    if (recorteAberto) URL.revokeObjectURL(recorteAberto.src);
-    setRecorteAberto(null);
-  }
 
   async function salvar() {
     setSalvando(true);
@@ -155,7 +151,7 @@ export default function ServicosEditor({
                   className="hidden"
                   onChange={(e) => {
                     const arquivo = e.target.files?.[0];
-                    if (arquivo) setRecorteAberto({ servicoId: s.id, src: URL.createObjectURL(arquivo) });
+                    if (arquivo) setRecorteAberto({ servicoId: s.id, file: arquivo });
                     e.target.value = "";
                   }}
                 />
@@ -251,19 +247,18 @@ export default function ServicosEditor({
         {salvando ? "Salvando..." : "Salvar serviços"}
       </Button>
 
-      <ImageCropDialog
-        open={!!recorteAberto}
-        imageSrc={recorteAberto?.src ?? null}
-        nomeArquivo="servico"
-        aspect={4 / 3}
-        salvando={!!recorteAberto && trocandoImagemId === recorteAberto.servicoId}
-        onCancel={fecharRecorte}
-        onConfirm={async (arquivo) => {
-          if (!recorteAberto) return;
-          await trocarImagem(recorteAberto.servicoId, arquivo);
-          fecharRecorte();
-        }}
-      />
+      {recorteAberto && (
+        <ImageCropper
+          file={recorteAberto.file}
+          aspecto={4 / 3}
+          salvando={trocandoImagemId === recorteAberto.servicoId}
+          onCancel={() => setRecorteAberto(null)}
+          onCrop={async (arquivo) => {
+            await trocarImagem(recorteAberto.servicoId, arquivo);
+            setRecorteAberto(null);
+          }}
+        />
+      )}
     </div>
   );
 }

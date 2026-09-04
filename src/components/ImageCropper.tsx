@@ -25,11 +25,14 @@ type Offset = { x: number; y: number };
 export default function ImageCropper({
   file,
   aspecto = 4 / 5,
+  salvando = false,
   onCancel,
   onCrop,
 }: {
   file: File;
   aspecto?: number;
+  /** Trava os botões enquanto o upload do recorte acontece. */
+  salvando?: boolean;
   onCancel: () => void;
   onCrop: (arquivo: File) => void;
 }) {
@@ -165,13 +168,13 @@ export default function ImageCropper({
         )}
 
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" disabled={salvando} onClick={onCancel}>
             <XIcon data-icon="inline-start" />
             Cancelar
           </Button>
-          <Button type="button" onClick={confirmar}>
+          <Button type="button" disabled={salvando} onClick={confirmar}>
             <CheckIcon data-icon="inline-start" />
-            Aplicar corte
+            {salvando ? "Salvando..." : "Aplicar corte"}
           </Button>
         </div>
       </DialogContent>

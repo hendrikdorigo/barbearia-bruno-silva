@@ -61,6 +61,20 @@ export default function Navbar() {
 
   useEffect(() => {
     let active = true;
+    // Canal do realtime fica guardado aqui pra ser desinscrito na limpeza -
+    // sem isso, cada troca de rota abriria um canal novo e o contador
+    // receberia o mesmo evento varias vezes.
+    let canal: ReturnType<typeof supabase.channel> | null = null;
+
+    async function contarNaoLidas(profileId: string) {
+      const { count } = await supabase
+        .from("notificacoes")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", profileId)
+        .eq("lida", false);
+      if (active) setNotifCount(count ?? 0);
+    }
+
     async function load() {
       const {
         data: { user },
@@ -76,18 +90,27 @@ export default function Navbar() {
         .single();
       if (active) setProfile(data);
 
-      const { count } = await supabase
-        .from("notificacoes")
-        .select("id", { count: "exact", head: true })
-        .eq("profile_id", user.id)
-        .eq("lida", false);
-      if (active) setNotifCount(count ?? 0);
+      await contarNaoLidas(user.id);
+
+      // Notificacao nova (ou marcada como lida) atualiza o contador na hora,
+      // sem precisar recarregar/trocar de pagina.
+      if (!active) return;
+      canal = supabase
+        .channel(`notificacoes-navbar-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notificacoes", filter: `profile_id=eq.${user.id}` },
+          () => contarNaoLidas(user.id)
+        )
+        .subscribe();
     }
+
     load();
     const { data: sub } = supabase.auth.onAuthStateChange(() => load());
     return () => {
       active = false;
       sub.subscription.unsubscribe();
+      if (canal) supabase.removeChannel(canal);
     };
   }, [pathname, supabase]);
 
@@ -141,7 +164,9 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
           {NAV_LINKS.map((link) => {
-            const active = pathname === link.href;
+            // startsWith pra destacar o item tambem nas subrotas (ex: em
+            // /barbeiros/joao o item "Barbeiros" continua marcado).
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
