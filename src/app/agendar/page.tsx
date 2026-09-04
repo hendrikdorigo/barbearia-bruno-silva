@@ -3,14 +3,16 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeftIcon, ClockIcon, ScissorsIcon, PackageIcon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { FormaPagamento } from "@/lib/constants";
 import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
 import { aplicarAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import SeletorFormaPagamento from "@/components/agendar/SeletorFormaPagamento";
 import AvisoAtraso from "@/components/agendar/AvisoAtraso";
-import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
+import { valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
+import { usePacoteUsavel } from "@/lib/use-pacote-usavel";
+import SeletorPacote from "@/components/agendar/SeletorPacote";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -79,7 +81,6 @@ function AgendarConteudo() {
   const [ajustesAtivos, setAjustesAtivos] = useState<any[]>([]);
   const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
   const [pacotes, setPacotes] = useState<PacoteCliente[]>([]);
-  const [usarPacote, setUsarPacote] = useState(false);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("dinheiro");
   const [erro, setErro] = useState<string | null>(null);
   const [avisoProdutos, setAvisoProdutos] = useState<string | null>(null);
@@ -245,15 +246,7 @@ function AgendarConteudo() {
   }
 
   const precoFinal = barbeiroSelecionado ? precoComAjuste(barbeiroSelecionado) : 0;
-  const pacoteUsavel = useMemo(
-    () => pacotes.find((p) => pacoteUsavelNaData(p, data)) ?? null,
-    [pacotes, data]
-  );
-
-  useEffect(() => {
-    setUsarPacote(Boolean(pacoteUsavel));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pacoteUsavel?.id]);
+  const { pacoteUsavel, usarPacote, setUsarPacote } = usePacoteUsavel(pacotes, data);
 
   const precoFinalComPagamento =
     usarPacote && pacoteUsavel
@@ -553,28 +546,7 @@ function AgendarConteudo() {
           </p>
 
           {pacoteUsavel && (
-            <div className="mt-6 rounded-xl border border-gold/50 bg-gold/10 p-4">
-              <label className="flex items-start justify-between gap-3">
-                <span className="flex items-start gap-2">
-                  <PackageIcon className="mt-0.5 size-4 shrink-0 text-gold" />
-                  <span>
-                    <span className="block font-semibold text-foreground">
-                      Usar o pacote {pacoteUsavel.nome}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {pacoteUsavel.visitas_usadas} de {pacoteUsavel.qtd_visitas_incluidas} visitas usadas · R${" "}
-                      {valorPorVisita(pacoteUsavel).toFixed(2).replace(".", ",")} nesse agendamento
-                    </span>
-                  </span>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={usarPacote}
-                  onChange={(e) => setUsarPacote(e.target.checked)}
-                  className="mt-1 size-4 accent-gold"
-                />
-              </label>
-            </div>
+            <SeletorPacote pacote={pacoteUsavel} usar={usarPacote} onChange={setUsarPacote} />
           )}
 
           {!(usarPacote && pacoteUsavel) && (
