@@ -21,12 +21,18 @@ export default async function AdminBarbeirosPage() {
     .select("*, profiles(nome, telefone)")
     .order("created_at");
 
+  const { data: agendamentosBarbeiros } = await supabase.from("agendamentos").select("barbeiro_id");
+  const barbeirosComHistorico = new Set((agendamentosBarbeiros ?? []).map((a) => a.barbeiro_id));
+
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="font-display text-5xl tracking-wide text-foreground">
         Gerenciar barbeiros
       </h1>
-      <GestaoBarbeiros barbeiros={(barbeiros ?? []) as any[]} />
+      <GestaoBarbeiros
+        barbeiros={(barbeiros ?? []) as any[]}
+        barbeirosComHistorico={[...barbeirosComHistorico]}
+      />
     </div>
   );
 }
