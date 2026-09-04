@@ -5,6 +5,7 @@ import { StarIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import FeedbackForm from "@/components/FeedbackForm";
 import PostCard from "@/components/PostCard";
+import PortfolioGaleria from "@/components/PortfolioGaleria";
 import { buscarNomesClientes } from "@/lib/nomes-clientes";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -166,18 +167,7 @@ export default async function BarbeiroPage({
             <h2 className="font-display text-2xl tracking-wide text-foreground">
               Portfólio
             </h2>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {itensPortfolio.map((item) => (
-                <div key={item.id} className="flex flex-col gap-1.5">
-                  <div className="relative h-32 overflow-hidden rounded-xl border border-border">
-                    <Image src={item.url} alt={item.legenda ?? ""} fill className="object-cover" />
-                  </div>
-                  {item.legenda && (
-                    <p className="text-xs text-muted-foreground">{item.legenda}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <PortfolioGaleria itens={itensPortfolio} />
           </div>
         )}
 
