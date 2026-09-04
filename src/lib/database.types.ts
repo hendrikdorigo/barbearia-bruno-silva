@@ -971,6 +971,41 @@ export type Database = {
         }
         Relationships: []
       }
+      notas_avulso: {
+        Row: {
+          autor_id: string
+          created_at: string
+          id: string
+          imagem_url: string | null
+          telefone: string
+          texto: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          telefone: string
+          texto: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          telefone?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_avulso_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notificacoes: {
         Row: {
           created_at: string

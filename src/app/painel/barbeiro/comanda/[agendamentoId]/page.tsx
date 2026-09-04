@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ComandaView from "@/components/ComandaView";
 import FichaCliente from "@/components/FichaCliente";
+import FichaAvulso from "@/components/FichaAvulso";
 
 export default async function ComandaBarbeiroPage({
   params,
@@ -19,7 +20,7 @@ export default async function ComandaBarbeiroPage({
     supabase
       .from("comandas")
       .select(
-        "*, clientes(profile_id, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso)"
+        "*, clientes(profile_id, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_telefone_avulso)"
       )
       .eq("agendamento_id", agendamentoId)
       .eq("barbeiro_id", user.id)
@@ -30,8 +31,9 @@ export default async function ComandaBarbeiroPage({
   if (!comanda) notFound();
 
   const clienteId = (comanda as any).cliente_id as string | null;
+  const telefoneAvulso = (comanda as any).agendamentos?.cliente_telefone_avulso as string | null;
 
-  const [{ data: itens }, { data: notas }, { data: pacotes }, { data: fiados }] = await Promise.all([
+  const [{ data: itens }, { data: notas }, { data: pacotes }, { data: fiados }, { data: notasAvulso }, { count: noShowAvulso }] = await Promise.all([
     supabase
       .from("comanda_itens")
       .select("id, produto_id, quantidade, preco_unitario, produtos(nome)")
@@ -60,6 +62,21 @@ export default async function ComandaBarbeiroPage({
           .eq("cliente_id", clienteId)
           .eq("status", "fiado")
       : Promise.resolve({ data: [] }),
+    telefoneAvulso
+      ? supabase
+          .from("notas_avulso")
+          .select("id, texto, imagem_url, created_at, autor_id, profiles(nome)")
+          .eq("telefone", telefoneAvulso)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    telefoneAvulso
+      ? supabase
+          .from("agendamentos")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_telefone_avulso", telefoneAvulso)
+          .eq("barbeiro_id", user.id)
+          .eq("status", "no_show")
+      : Promise.resolve({ count: 0 }),
   ]);
 
   return (
@@ -90,6 +107,14 @@ export default async function ComandaBarbeiroPage({
             (s, f: any) => s + Number(f.valor_servico) + Number(f.valor_produtos),
             0
           )}
+        />
+      )}
+      {!clienteId && telefoneAvulso && (
+        <FichaAvulso
+          telefone={telefoneAvulso}
+          notasIniciais={(notasAvulso ?? []) as any}
+          qtdNoShow={noShowAvulso ?? 0}
+          autorId={user.id}
         />
       )}
     </div>
