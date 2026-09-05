@@ -10,21 +10,25 @@ export default async function ServicosBarbeiroPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: barbeiro }, { data: profile }, { data: servicos }, { data: barbeiroServicos }] =
-    await Promise.all([
-      supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
-      supabase.from("profiles").select("role").eq("id", user.id).single(),
-      supabase
-        .from("servicos")
-        .select("id, nome, preco, duracao_minutos, imagem_url")
-        .eq("ativo", true)
-        .order("preco"),
-      supabase.from("barbeiro_servicos").select("servico_id, ativo, preco_personalizado").eq("barbeiro_id", user.id),
-    ]);
+  const [{ data: barbeiro }, { data: profile }] = await Promise.all([
+    supabase.from("barbeiros").select("profile_id").eq("profile_id", user.id).single(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+  ]);
 
   if (!barbeiro) redirect("/");
 
   const isAdmin = profile?.role === "admin";
+
+  // Admin vê também os serviços desativados (pra poder reativar); barbeiro comum só
+  // vê os ativos, já que só está escolhendo o que oferece.
+  const consultaServicos = supabase
+    .from("servicos")
+    .select("id, nome, preco, duracao_minutos, imagem_url, ativo")
+    .order("preco");
+  const [{ data: servicos }, { data: barbeiroServicos }] = await Promise.all([
+    isAdmin ? consultaServicos : consultaServicos.eq("ativo", true),
+    supabase.from("barbeiro_servicos").select("servico_id, ativo, preco_personalizado").eq("barbeiro_id", user.id),
+  ]);
 
   const { data: ajustes } = isAdmin
     ? await supabase
@@ -62,7 +66,7 @@ export default async function ServicosBarbeiroPage() {
           </p>
           <AjustesPrecoEditor
             barbeiroId={user.id}
-            servicos={servicos ?? []}
+            servicos={(servicos ?? []).filter((s) => s.ativo)}
             ajustesIniciais={ajustes ?? []}
           />
         </>
