@@ -38,7 +38,7 @@ export default function ProdutoPicker({
                   <div
                     key={p.id}
                     className={cn(
-                      "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors",
+                      "flex min-w-0 items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors",
                       qtd > 0 ? "border-gold bg-gold/5" : "border-border bg-ink-soft"
                     )}
                   >
