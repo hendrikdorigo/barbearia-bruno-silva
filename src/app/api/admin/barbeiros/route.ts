@@ -72,6 +72,21 @@ export async function POST(request: NextRequest) {
     especialidades: especialidades ?? [],
   });
 
+  // Já nasce oferecendo todos os serviços ativos no preço padrão - sem isso
+  // o barbeiro fica cadastrado mas invisível pra clientes agendarem, até
+  // alguém lembrar de ir em "Meus serviços" ligar um por um.
+  const { data: servicosAtivos } = await admin.from("servicos").select("id").eq("ativo", true);
+  if (servicosAtivos && servicosAtivos.length > 0) {
+    await admin.from("barbeiro_servicos").insert(
+      servicosAtivos.map((s) => ({
+        barbeiro_id: novoId,
+        servico_id: s.id,
+        ativo: true,
+        preco_personalizado: null,
+      }))
+    );
+  }
+
   return NextResponse.json({ success: true, id: novoId });
 }
 
