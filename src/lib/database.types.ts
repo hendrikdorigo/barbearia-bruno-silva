@@ -1488,6 +1488,51 @@ export type Database = {
         }
         Relationships: []
       }
+      repasses_pagamentos: {
+        Row: {
+          barbeiro_id: string
+          created_at: string
+          criado_por: string
+          id: string
+          imagem_url: string | null
+          observacao: string | null
+          valor: number
+        }
+        Insert: {
+          barbeiro_id: string
+          created_at?: string
+          criado_por: string
+          id?: string
+          imagem_url?: string | null
+          observacao?: string | null
+          valor: number
+        }
+        Update: {
+          barbeiro_id?: string
+          created_at?: string
+          criado_por?: string
+          id?: string
+          imagem_url?: string | null
+          observacao?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repasses_pagamentos_barbeiro_id_fkey"
+            columns: ["barbeiro_id"]
+            isOneToOne: false
+            referencedRelation: "barbeiros"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "repasses_pagamentos_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servico_ajustes: {
         Row: {
           ativo: boolean

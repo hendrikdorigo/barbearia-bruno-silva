@@ -16,13 +16,19 @@ export default async function RepassesPage() {
     .single();
   if (profile?.role !== "admin") redirect("/");
 
-  const { data: agendamentos } = await supabase
-    .from("agendamentos")
-    .select(
-      "*, barbeiros(profile_id, is_dono, comissao_percentual, profiles(nome)), clientes(profiles(nome)), servicos(nome)"
-    )
-    .in("status", ["confirmado", "concluido"])
-    .order("data_hora", { ascending: false });
+  const [{ data: agendamentos }, { data: pagamentos }] = await Promise.all([
+    supabase
+      .from("agendamentos")
+      .select(
+        "*, barbeiros(profile_id, is_dono, comissao_percentual, profiles(nome)), clientes(profiles(nome)), servicos(nome)"
+      )
+      .in("status", ["confirmado", "concluido"])
+      .order("data_hora", { ascending: false }),
+    supabase
+      .from("repasses_pagamentos")
+      .select("*, profiles!repasses_pagamentos_criado_por_fkey(nome)")
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -33,10 +39,14 @@ export default async function RepassesPage() {
         Como os pagamentos caem todos na sua conta, aqui está quanto você
         precisa repassar a cada barbeiro parceiro pelos atendimentos que ele
         fez. O percentual de cada um pode ser ajustado em &quot;Gerenciar
-        barbeiros&quot;. Clique num barbeiro pra ver o histórico detalhado.
+        barbeiros&quot;. Clique num barbeiro pra ver o histórico detalhado e
+        registrar um pagamento.
       </p>
 
-      <RepassesPainel agendamentos={(agendamentos ?? []) as any[]} />
+      <RepassesPainel
+        agendamentos={(agendamentos ?? []) as any[]}
+        pagamentosIniciais={(pagamentos ?? []) as any[]}
+      />
     </div>
   );
 }
