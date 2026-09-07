@@ -16,14 +16,16 @@ export default async function ComandaBarbeiroPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Sem filtro por barbeiro_id aqui de propósito: a RLS já restringe um
+  // barbeiro comum às próprias comandas, mas deixa o admin (Bruno) ver a
+  // comanda de qualquer barbeiro a partir do painel de agendamentos.
   const [{ data: comanda }, { data: produtos }] = await Promise.all([
     supabase
       .from("comandas")
       .select(
-        "*, clientes(profile_id, cpf, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_cpf_avulso)"
+        "*, clientes(profile_id, cpf, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_cpf_avulso), barbeiros(profiles(nome))"
       )
       .eq("agendamento_id", agendamentoId)
-      .eq("barbeiro_id", user.id)
       .maybeSingle(),
     supabase.from("produtos").select("id, nome, preco, categoria").eq("ativo", true).order("categoria"),
   ]);
@@ -62,8 +64,8 @@ export default async function ComandaBarbeiroPage({
           .eq("ativo", true)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
-    // Só enxerga fiados dos atendimentos feitos por este barbeiro (RLS) -
-    // é um indicativo, o admin tem a visão completa no painel dele.
+    // Fiados que a RLS deixa este usuário enxergar (barbeiro comum só vê os
+    // seus próprios atendimentos; admin vê de todos os barbeiros).
     clienteId
       ? supabase
           .from("comandas")
@@ -83,7 +85,7 @@ export default async function ComandaBarbeiroPage({
           .from("agendamentos")
           .select("id", { count: "exact", head: true })
           .eq("cliente_cpf_avulso", cpfAvulso)
-          .eq("barbeiro_id", user.id)
+          .eq("barbeiro_id", (comanda as any)?.barbeiro_id)
           .eq("status", "no_show")
       : Promise.resolve({ count: 0 }),
     // Cliente cadastrado que já tinha vindo como avulso antes (mesmo CPF):
@@ -105,6 +107,9 @@ export default async function ComandaBarbeiroPage({
       </h1>
       <p className="mt-2 text-muted-foreground">
         Adicione itens da loja e feche a conta quando o atendimento acabar.
+        {(comanda as any).barbeiro_id !== user.id && (comanda as any).barbeiros?.profiles?.nome && (
+          <> Atendido por {(comanda as any).barbeiros.profiles.nome}.</>
+        )}
       </p>
       <ComandaView
         comanda={comanda as any}

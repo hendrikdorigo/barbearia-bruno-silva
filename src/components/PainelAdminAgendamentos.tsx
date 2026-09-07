@@ -343,7 +343,7 @@ export default function PainelAdminAgendamentos({
           </SheetHeader>
           <div className="px-4 pb-4">
             {agendamentoAberto && (
-              <AgendamentoDetalhe agendamento={agendamentoAberto} mostrarLinkComanda={false} />
+              <AgendamentoDetalhe agendamento={agendamentoAberto} />
             )}
           </div>
         </SheetContent>
