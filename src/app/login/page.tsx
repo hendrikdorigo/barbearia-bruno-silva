@@ -143,13 +143,23 @@ function LoginBarbeiro() {
     e.preventDefault();
     setLoading(true);
     setErro(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
     if (error) {
+      setLoading(false);
       setErro("E-mail ou senha inválidos.");
       return;
     }
-    router.push("/");
+    // Vai direto pro painel - sem isso, quem logava aqui caía na home e
+    // precisava achar sozinho o link "Meu painel" no menu. Bruno (admin)
+    // também loga por essa aba, então respeita o role real em vez de
+    // mandar todo mundo pro painel de barbeiro.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+    setLoading(false);
+    router.push(profile?.role === "admin" ? "/painel/admin" : "/painel/barbeiro");
     router.refresh();
   }
 
