@@ -29,7 +29,11 @@ export default function GestaoBarbeiros({
   const [comissoes, setComissoes] = useState<Record<string, number>>(
     Object.fromEntries(barbeiros.map((b) => [b.profile_id, b.comissao_percentual]))
   );
+  const [comissoesProdutos, setComissoesProdutos] = useState<Record<string, number>>(
+    Object.fromEntries(barbeiros.map((b) => [b.profile_id, b.comissao_produtos_percentual ?? 0]))
+  );
   const [salvandoComissao, setSalvandoComissao] = useState<string | null>(null);
+  const [salvandoComissaoProdutos, setSalvandoComissaoProdutos] = useState<string | null>(null);
   const [editando, setEditando] = useState<any | null>(null);
   const [excluindo, setExcluindo] = useState<string | null>(null);
   const router = useRouter();
@@ -84,6 +88,22 @@ export default function GestaoBarbeiros({
     if (!resp.ok) {
       const json = await resp.json().catch(() => ({}));
       toast.error(json.error ?? "Erro ao salvar comissão.");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function salvarComissaoProdutos(profile_id: string) {
+    setSalvandoComissaoProdutos(profile_id);
+    const resp = await fetch("/api/admin/barbeiros", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_id, comissao_produtos_percentual: comissoesProdutos[profile_id] }),
+    });
+    setSalvandoComissaoProdutos(null);
+    if (!resp.ok) {
+      const json = await resp.json().catch(() => ({}));
+      toast.error(json.error ?? "Erro ao salvar comissão de produtos.");
       return;
     }
     router.refresh();
@@ -164,20 +184,37 @@ export default function GestaoBarbeiros({
             </div>
             <div className="flex items-center gap-3">
               {!b.is_dono && (
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={comissoes[b.profile_id] ?? 50}
-                    onChange={(e) =>
-                      setComissoes((prev) => ({ ...prev, [b.profile_id]: Number(e.target.value) }))
-                    }
-                    onBlur={() => salvarComissao(b.profile_id)}
-                    disabled={salvandoComissao === b.profile_id}
-                    className="h-9 w-20 bg-background text-right"
-                  />
-                  <span className="text-xs text-muted-foreground">% comissão</span>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={comissoes[b.profile_id] ?? 50}
+                      onChange={(e) =>
+                        setComissoes((prev) => ({ ...prev, [b.profile_id]: Number(e.target.value) }))
+                      }
+                      onBlur={() => salvarComissao(b.profile_id)}
+                      disabled={salvandoComissao === b.profile_id}
+                      className="h-9 w-20 bg-background text-right"
+                    />
+                    <span className="text-xs text-muted-foreground">% fica com a casa (serviços)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={comissoesProdutos[b.profile_id] ?? 0}
+                      onChange={(e) =>
+                        setComissoesProdutos((prev) => ({ ...prev, [b.profile_id]: Number(e.target.value) }))
+                      }
+                      onBlur={() => salvarComissaoProdutos(b.profile_id)}
+                      disabled={salvandoComissaoProdutos === b.profile_id}
+                      className="h-9 w-20 bg-background text-right"
+                    />
+                    <span className="text-xs text-muted-foreground">% pro barbeiro (produtos)</span>
+                  </div>
                 </div>
               )}
               <button

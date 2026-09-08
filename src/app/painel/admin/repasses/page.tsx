@@ -20,7 +20,7 @@ export default async function RepassesPage() {
     supabase
       .from("agendamentos")
       .select(
-        "*, barbeiros(profile_id, is_dono, comissao_percentual, profiles(nome)), clientes(profiles(nome)), servicos(nome)"
+        "*, barbeiros(profile_id, is_dono, comissao_percentual, comissao_produtos_percentual, profiles(nome)), clientes(profiles(nome)), servicos(nome), comandas(id, valor_produtos, valor_repasse_produtos)"
       )
       .in("status", ["confirmado", "concluido"])
       .order("data_hora", { ascending: false }),
@@ -43,7 +43,8 @@ export default async function RepassesPage() {
       <p className="mt-2 text-muted-foreground">
         Como os pagamentos caem todos na sua conta, aqui está quanto você
         precisa repassar a cada barbeiro parceiro pelos atendimentos que ele
-        fez. O percentual de cada um pode ser ajustado em &quot;Gerenciar
+        fez, já somando a comissão de produtos vendidos por ele. Os
+        percentuais (serviço e produtos) podem ser ajustados em &quot;Gerenciar
         barbeiros&quot;. Clique num barbeiro pra ver o histórico detalhado e
         registrar um pagamento.
       </p>

@@ -57,22 +57,33 @@ export default function RepassesPainel({
 
   // Como o pagamento cai sempre na conta do Bruno, o que importa aqui é o
   // complemento de valor_repasse_bruno: quanto o Bruno precisa repassar
-  // (pagar) para cada barbeiro parceiro pelos atendimentos que ele fez.
+  // (pagar) para cada barbeiro parceiro pelos atendimentos que ele fez -
+  // somando também a comissão de produtos vendidos por ele naquela comanda
+  // (valor_repasse_produtos, já calculado no banco a partir da comissão de
+  // produtos de cada barbeiro).
   const porBarbeiro = useMemo(() => {
-    type Linha = { nome: string; percentual: number; totalComissao: number; itens: any[] };
+    type Linha = {
+      nome: string;
+      percentual: number;
+      percentualProdutos: number;
+      totalComissao: number;
+      itens: any[];
+    };
     const mapa = new Map<string, Linha>();
     for (const a of agendamentos) {
       const barbeiro = a.barbeiros;
       if (!barbeiro || barbeiro.is_dono) continue;
-      const comissao = Number(a.valor_servico) - Number(a.valor_repasse_bruno);
+      const comissaoServico = Number(a.valor_servico) - Number(a.valor_repasse_bruno);
+      const comissaoProdutos = Number(a.comandas?.valor_repasse_produtos ?? 0);
       const atual: Linha = mapa.get(a.barbeiro_id) ?? {
         nome: barbeiro.profiles?.nome ?? "—",
         percentual: barbeiro.comissao_percentual,
+        percentualProdutos: barbeiro.comissao_produtos_percentual ?? 0,
         totalComissao: 0,
         itens: [],
       };
-      atual.totalComissao += comissao;
-      atual.itens.push({ ...a, comissao });
+      atual.totalComissao += comissaoServico + comissaoProdutos;
+      atual.itens.push({ ...a, comissaoServico, comissaoProdutos });
       mapa.set(a.barbeiro_id, atual);
     }
     return mapa;
@@ -142,6 +153,7 @@ export default function RepassesPainel({
               </p>
               <p className="text-xs text-muted-foreground">
                 {v.itens.length} atendimento(s) · {v.percentual}% de comissão
+                {v.percentualProdutos > 0 && ` · ${v.percentualProdutos}% em produtos`}
                 {v.pago > 0 && ` · já pago R$ ${v.pago.toFixed(2).replace(".", ",")}`}
               </p>
             </div>
@@ -201,7 +213,9 @@ export default function RepassesPainel({
                     <TableHead>Serviço</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Serviço (R$)</TableHead>
-                    <TableHead className="text-right">Comissão</TableHead>
+                    <TableHead className="text-right">Comissão serviço</TableHead>
+                    <TableHead className="text-right">Produtos (R$)</TableHead>
+                    <TableHead className="text-right">Comissão produtos</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -228,7 +242,15 @@ export default function RepassesPainel({
                         R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")}
                       </TableCell>
                       <TableCell className="text-right font-mono font-semibold text-gold-gradient">
-                        R$ {a.comissao.toFixed(2).replace(".", ",")}
+                        R$ {a.comissaoServico.toFixed(2).replace(".", ",")}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-muted-foreground">
+                        {Number(a.comandas?.valor_produtos ?? 0) > 0
+                          ? `R$ ${Number(a.comandas.valor_produtos).toFixed(2).replace(".", ",")}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-semibold text-gold-gradient">
+                        {a.comissaoProdutos > 0 ? `R$ ${a.comissaoProdutos.toFixed(2).replace(".", ",")}` : "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Link
@@ -242,7 +264,7 @@ export default function RepassesPainel({
                   ))}
                   {(!barbeiroAberto || barbeiroAberto.itens.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="py-6 text-center text-muted-foreground">
                         Nenhum atendimento encontrado.
                       </TableCell>
                     </TableRow>

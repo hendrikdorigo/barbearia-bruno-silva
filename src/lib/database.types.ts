@@ -382,6 +382,7 @@ export type Database = {
           banner_url: string | null
           bio: string | null
           comissao_percentual: number
+          comissao_produtos_percentual: number
           created_at: string
           especialidades: string[]
           google_calendar_connected: boolean
@@ -395,6 +396,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           comissao_percentual?: number
+          comissao_produtos_percentual?: number
           created_at?: string
           especialidades?: string[]
           google_calendar_connected?: boolean
@@ -408,6 +410,7 @@ export type Database = {
           banner_url?: string | null
           bio?: string | null
           comissao_percentual?: number
+          comissao_produtos_percentual?: number
           created_at?: string
           especialidades?: string[]
           google_calendar_connected?: boolean
@@ -582,6 +585,7 @@ export type Database = {
           updated_at: string
           valor_debito_no_show: number
           valor_produtos: number
+          valor_repasse_produtos: number
           valor_servico: number
         }
         Insert: {
@@ -601,6 +605,7 @@ export type Database = {
           updated_at?: string
           valor_debito_no_show?: number
           valor_produtos?: number
+          valor_repasse_produtos?: number
           valor_servico?: number
         }
         Update: {
@@ -620,6 +625,7 @@ export type Database = {
           updated_at?: string
           valor_debito_no_show?: number
           valor_produtos?: number
+          valor_repasse_produtos?: number
           valor_servico?: number
         }
         Relationships: [

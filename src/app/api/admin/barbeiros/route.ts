@@ -116,7 +116,8 @@ export async function PATCH(request: NextRequest) {
   if (!serviceKey) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY não configurada" }, { status: 500 });
   }
-  const { profile_id, ativo, comissao_percentual, nome, telefone, bio, especialidades } = await request.json();
+  const { profile_id, ativo, comissao_percentual, comissao_produtos_percentual, nome, telefone, bio, especialidades } =
+    await request.json();
   if (!profile_id) {
     return NextResponse.json({ error: "profile_id é obrigatório" }, { status: 400 });
   }
@@ -125,6 +126,17 @@ export async function PATCH(request: NextRequest) {
     (typeof comissao_percentual !== "number" || comissao_percentual < 0 || comissao_percentual > 100)
   ) {
     return NextResponse.json({ error: "Comissão precisa ser um número entre 0 e 100." }, { status: 400 });
+  }
+  if (
+    comissao_produtos_percentual !== undefined &&
+    (typeof comissao_produtos_percentual !== "number" ||
+      comissao_produtos_percentual < 0 ||
+      comissao_produtos_percentual > 100)
+  ) {
+    return NextResponse.json(
+      { error: "Comissão de produtos precisa ser um número entre 0 e 100." },
+      { status: 400 }
+    );
   }
   if (nome !== undefined && !nome.trim()) {
     return NextResponse.json({ error: "Nome não pode ficar em branco." }, { status: 400 });
@@ -142,11 +154,14 @@ export async function PATCH(request: NextRequest) {
   const update: {
     ativo?: boolean;
     comissao_percentual?: number;
+    comissao_produtos_percentual?: number;
     bio?: string | null;
     especialidades?: string[];
   } = {};
   if (ativo !== undefined) update.ativo = ativo;
   if (comissao_percentual !== undefined) update.comissao_percentual = comissao_percentual;
+  if (comissao_produtos_percentual !== undefined)
+    update.comissao_produtos_percentual = comissao_produtos_percentual;
   if (bio !== undefined) update.bio = bio || null;
   if (especialidades !== undefined) update.especialidades = especialidades;
   if (Object.keys(update).length > 0) {
