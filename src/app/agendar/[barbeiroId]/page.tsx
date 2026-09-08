@@ -403,25 +403,25 @@ export default function AgendarPage() {
                 setServicoSelecionado(s);
                 setPasso("horario");
               }}
-              className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
+              className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
             >
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background sm:size-20">
                   {s.imagem_url ? (
                     <Image src={s.imagem_url} alt="" fill sizes="80px" className="object-cover" />
                   ) : (
-                    <ScissorsIcon className="size-6 text-muted-foreground" />
+                    <ScissorsIcon className="size-5 text-muted-foreground sm:size-6" />
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-foreground">{s.nome}</p>
+                  <p className="line-clamp-2 font-semibold text-foreground">{s.nome}</p>
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <ClockIcon className="size-3.5" />
                     {s.duracao_minutos} min
                   </p>
                 </div>
               </div>
-              <p className="shrink-0 font-mono text-2xl font-medium text-gold-gradient">
+              <p className="shrink-0 font-mono text-lg font-medium text-gold-gradient sm:text-2xl">
                 R$ {Number(s.preco).toFixed(2).replace(".", ",")}
               </p>
             </button>
