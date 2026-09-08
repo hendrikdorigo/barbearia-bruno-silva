@@ -1633,6 +1633,10 @@ export type Database = {
         Args: { r: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
+      desfazer_no_show: {
+        Args: { p_agendamento_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       is_barbeiro_self: { Args: { p_barbeiro_id: string }; Returns: boolean }
       marcar_no_show: { Args: { p_agendamento_id: string }; Returns: undefined }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { AlertTriangleIcon, ShieldOffIcon } from "lucide-react";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/lib/cliente-agendamento";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useConfirmacao } from "@/components/ConfirmacaoProvider";
 import { cn } from "@/lib/utils";
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -43,6 +45,7 @@ export default function AgendamentoDetalhe({
   const [erro, setErro] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+  const confirmar = useConfirmacao();
 
   async function atualizarStatus(status: string) {
     setLoadingId(a.id);
@@ -71,6 +74,26 @@ export default function AgendamentoDetalhe({
       return;
     }
     fetch(`/api/agendamentos/${a.id}/notificar-no-show`, { method: "POST" }).catch(() => {});
+    router.refresh();
+  }
+
+  async function desfazerNoShow() {
+    const ok = await confirmar({
+      titulo: "Desfazer esse no-show?",
+      descricao:
+        "Volta o agendamento pra confirmado e tira 1 do contador de faltas do cliente, além do valor cobrado a mais na próxima visita.",
+      confirmar: "Desfazer",
+    });
+    if (!ok) return;
+    setLoadingId(a.id);
+    setErro(null);
+    const { error } = await supabase.rpc("desfazer_no_show", { p_agendamento_id: a.id });
+    setLoadingId(null);
+    if (error) {
+      toast.error("Não foi possível desfazer", { description: error.message });
+      return;
+    }
+    toast.success("No-show desfeito.");
     router.refresh();
   }
 
@@ -204,6 +227,17 @@ export default function AgendamentoDetalhe({
               Recusar agendamento
             </Button>
           </>
+        )}
+        {a.status === "no_show" && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={desfazerNoShow}
+            className="rounded-full border-gold/40 text-gold hover:bg-gold/10"
+          >
+            Desfazer no-show (cliquei errado)
+          </Button>
         )}
       </div>
       {erro && (
