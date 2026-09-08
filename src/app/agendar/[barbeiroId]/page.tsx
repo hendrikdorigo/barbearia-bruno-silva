@@ -5,7 +5,14 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeftIcon, ClockIcon, ScissorsIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, slotBloqueado, type FormaPagamento, type Servico } from "@/lib/constants";
+import {
+  ANTECEDENCIA_MINIMA_MINUTOS,
+  SLOT_STEP_MINUTES,
+  gerarSlots,
+  slotBloqueado,
+  type FormaPagamento,
+  type Servico,
+} from "@/lib/constants";
 import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
 import { aplicarAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import SeletorFormaPagamento from "@/components/agendar/SeletorFormaPagamento";
@@ -34,6 +41,11 @@ const PASSOS: { id: Passo; label: string }[] = [
 type Passo = "servico" | "horario" | "produtos" | "pagamento" | "confirmado";
 
 const ORDEM_PASSOS: Passo[] = ["servico", "horario", "produtos", "pagamento"];
+
+function horaParaMinutos(hhmm: string): number {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  return h * 60 + m;
+}
 
 export default function AgendarPage() {
   const { barbeiroId } = useParams<{ barbeiroId: string }>();
@@ -175,16 +187,26 @@ export default function AgendarPage() {
       const fim = `${data}T23:59:59`;
       const { data: agendamentos } = await supabase
         .from("agendamentos")
-        .select("data_hora")
+        .select("data_hora, servicos(duracao_minutos)")
         .eq("barbeiro_id", barbeiroId)
         .gte("data_hora", inicio)
         .lte("data_hora", fim)
         .in("status", ["pendente", "confirmado"]);
 
-      const ocupados = (agendamentos ?? []).map((a) =>
-        new Date(a.data_hora).toTimeString().slice(0, 5)
-      );
-      setHorariosOcupados(ocupados);
+      // Um serviço de 60min ocupa os dois slots de 30min seguintes ao início,
+      // não só o exato minuto em que começa — assim, mudar a duração de um
+      // serviço passa a refletir na agenda automaticamente.
+      const ocupadosSet = new Set<string>();
+      for (const a of agendamentos ?? []) {
+        const inicioMin = horaParaMinutos(new Date(a.data_hora).toTimeString().slice(0, 5));
+        const duracaoMinutos = (a as any).servicos?.duracao_minutos ?? SLOT_STEP_MINUTES;
+        for (let m = inicioMin; m < inicioMin + duracaoMinutos; m += SLOT_STEP_MINUTES) {
+          const h = Math.floor(m / 60) % 24;
+          const mm = m % 60;
+          ocupadosSet.add(`${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
+        }
+      }
+      setHorariosOcupados([...ocupadosSet]);
 
       const diaSemana = new Date(`${data}T00:00:00`).getDay();
 

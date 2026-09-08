@@ -1,7 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { ANTECEDENCIA_MINIMA_MINUTOS, gerarSlots, slotBloqueado } from "@/lib/constants";
+import { ANTECEDENCIA_MINIMA_MINUTOS, SLOT_STEP_MINUTES, gerarSlots, slotBloqueado } from "@/lib/constants";
 import { paraDataSP, paraHoraSP } from "@/lib/timezone-sp";
+
+function horaParaMinutos(hhmm: string): number {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Um slot está ocupado se cair dentro da duração real de algum agendamento
+ * existente (não só no minuto exato em que ele começa) — assim, um serviço
+ * de 60min bloqueia os dois slots seguintes de 30min, e mudar a duração de
+ * um serviço passa a refletir na agenda automaticamente.
+ */
+function slotDentroDeAgendamento(
+  slot: string,
+  agendamentos: { horaInicio: string; duracaoMinutos: number }[]
+): boolean {
+  const slotMin = horaParaMinutos(slot);
+  return agendamentos.some((a) => {
+    const inicio = horaParaMinutos(a.horaInicio);
+    const fim = inicio + (a.duracaoMinutos || SLOT_STEP_MINUTES);
+    return slotMin >= inicio && slotMin < fim;
+  });
+}
 
 export type JanelaDia = { atende: boolean; horaInicio: string; horaFim: string };
 
@@ -102,7 +125,7 @@ export async function calcularSlotsLivres(
   const [{ data: agendamentos }, { data: bloqueios }] = await Promise.all([
     supabase
       .from("agendamentos")
-      .select("data_hora")
+      .select("data_hora, servicos(duracao_minutos)")
       .eq("barbeiro_id", barbeiroId)
       .gte("data_hora", inicio)
       .lte("data_hora", fim)
@@ -114,7 +137,10 @@ export async function calcularSlotsLivres(
       .or(`dia_semana.eq.${diaSemana},data.eq.${data}`),
   ]);
 
-  const ocupados = (agendamentos ?? []).map((a) => new Date(a.data_hora).toTimeString().slice(0, 5));
+  const ocupados = (agendamentos ?? []).map((a) => ({
+    horaInicio: new Date(a.data_hora).toTimeString().slice(0, 5),
+    duracaoMinutos: (a as any).servicos?.duracao_minutos ?? SLOT_STEP_MINUTES,
+  }));
   const slots = gerarSlots(janela.horaInicio, janela.horaFim);
 
   // Sem tolerância de atraso: se o dia escolhido é hoje, horários muito em
@@ -126,7 +152,10 @@ export async function calcularSlotsLivres(
   const horaLimite = paraHoraSP(limite);
 
   return slots.filter(
-    (s) => (!ehHoje || s > horaLimite) && !ocupados.includes(s) && !slotBloqueado(s, bloqueios ?? [])
+    (s) =>
+      (!ehHoje || s > horaLimite) &&
+      !slotDentroDeAgendamento(s, ocupados) &&
+      !slotBloqueado(s, bloqueios ?? [])
   );
 }
 
