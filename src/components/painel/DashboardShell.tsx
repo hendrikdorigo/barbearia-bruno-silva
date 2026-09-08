@@ -19,6 +19,7 @@ import {
   PercentIcon,
   TagIcon,
   PackageIcon,
+  LineChartIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -62,6 +63,7 @@ const ADMIN_GROUPS = [
       { href: "/painel/admin/popups", label: "Pop-ups", icon: MegaphoneIcon },
       { href: "/painel/admin/repasses", label: "Repasses", icon: WalletIcon },
       { href: "/painel/admin/pagamentos", label: "Pagamentos", icon: PercentIcon },
+      { href: "/painel/admin/financas", label: "Finanças", icon: LineChartIcon },
     ],
   },
 ];
