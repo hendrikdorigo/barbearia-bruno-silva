@@ -17,7 +17,7 @@ const EXPLORE_LINKS = [
   { href: "/barbeiros", label: "Barbeiros" },
   { href: "/servicos", label: "Serviços" },
   { href: "/loja", label: "Loja" },
-  { href: "/comunidade", label: "Comunidade" },
+  { href: "/comunidade", label: "Nossa Página" },
 ];
 
 export default function Footer() {

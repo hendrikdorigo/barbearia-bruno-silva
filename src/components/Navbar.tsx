@@ -46,7 +46,7 @@ type Profile = {
 const NAV_LINKS = [
   { href: "/agendar", label: "Agendar" },
   { href: "/barbeiros", label: "Barbeiros" },
-  { href: "/comunidade", label: "Comunidade" },
+  { href: "/comunidade", label: "Nossa Página" },
   { href: "/servicos", label: "Serviços" },
   { href: "/loja", label: "Loja" },
 ];
