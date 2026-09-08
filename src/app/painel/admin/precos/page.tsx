@@ -23,7 +23,7 @@ export default async function PrecosAdminPage() {
     { data: ajustes },
     { data: fidelidadeConfigs },
   ] = await Promise.all([
-    supabase.from("barbeiros").select("profile_id, is_dono, profiles(nome)").eq("ativo", true),
+    supabase.from("barbeiros").select("profile_id, is_dono, profiles(nome)").eq("ativo", true).eq("oculto", false),
     supabase
       .from("servicos")
       .select("id, nome, preco, duracao_minutos, imagem_url")

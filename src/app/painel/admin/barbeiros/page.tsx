@@ -16,9 +16,13 @@ export default async function AdminBarbeirosPage() {
     .single();
   if (profile?.role !== "admin") redirect("/");
 
+  // oculto = conta de teste/dev - some daqui igual some do resto do site,
+  // nem o admin vê (diferente de "ativo", que é pra barbeiro real desligado
+  // cujo histórico o admin ainda quer enxergar).
   const { data: barbeiros } = await supabase
     .from("barbeiros")
     .select("*, profiles(nome, telefone)")
+    .eq("oculto", false)
     .order("created_at");
 
   const { data: agendamentosBarbeiros } = await supabase.from("agendamentos").select("barbeiro_id");

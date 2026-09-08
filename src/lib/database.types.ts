@@ -386,6 +386,7 @@ export type Database = {
           especialidades: string[]
           google_calendar_connected: boolean
           is_dono: boolean
+          oculto: boolean
           portfolio_imagens: string[]
           profile_id: string
         }
@@ -398,6 +399,7 @@ export type Database = {
           especialidades?: string[]
           google_calendar_connected?: boolean
           is_dono?: boolean
+          oculto?: boolean
           portfolio_imagens?: string[]
           profile_id: string
         }
@@ -410,6 +412,7 @@ export type Database = {
           especialidades?: string[]
           google_calendar_connected?: boolean
           is_dono?: boolean
+          oculto?: boolean
           portfolio_imagens?: string[]
           profile_id?: string
         }

@@ -31,16 +31,22 @@ export default async function PainelAdminPage({
 
   const consultaAgendamentos = supabase.from("agendamentos").select(SELECT_AGENDAMENTOS);
 
-  const [{ data: profile }, { data: agendamentos }, { data: barbeiros }] = await Promise.all([
-    supabase.from("profiles").select("role, nome").eq("id", user.id).single(),
-    (desde ? consultaAgendamentos.gte("data_hora", desde) : consultaAgendamentos).order(
-      "data_hora",
-      { ascending: false }
-    ),
-    supabase.from("barbeiros").select("profile_id, profiles(nome)").eq("ativo", true),
-  ]);
+  const [{ data: profile }, { data: agendamentosBrutos }, { data: barbeiros }, { data: barbeirosOcultos }] =
+    await Promise.all([
+      supabase.from("profiles").select("role, nome").eq("id", user.id).single(),
+      (desde ? consultaAgendamentos.gte("data_hora", desde) : consultaAgendamentos).order(
+        "data_hora",
+        { ascending: false }
+      ),
+      supabase.from("barbeiros").select("profile_id, profiles(nome)").eq("ativo", true),
+      supabase.from("barbeiros").select("profile_id").eq("oculto", true),
+    ]);
 
   if (profile?.role !== "admin") redirect("/");
+
+  // Conta de teste/dev fica de fora de qualquer estatística/listagem do admin.
+  const idsOcultos = new Set((barbeirosOcultos ?? []).map((b) => b.profile_id));
+  const agendamentos = (agendamentosBrutos ?? []).filter((a) => !idsOcultos.has(a.barbeiro_id));
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -51,7 +57,7 @@ export default async function PainelAdminPage({
       <div className="mt-10">
         <EstatisticasCards
           titulo="Barbearia inteira"
-          estatisticas={calcularEstatisticas(agendamentos ?? [])}
+          estatisticas={calcularEstatisticas(agendamentos)}
         />
       </div>
 
@@ -62,7 +68,7 @@ export default async function PainelAdminPage({
               key={b.profile_id}
               titulo={b.profiles?.nome}
               estatisticas={calcularEstatisticas(
-                (agendamentos ?? []).filter((a) => a.barbeiro_id === b.profile_id)
+                (agendamentos).filter((a) => a.barbeiro_id === b.profile_id)
               )}
             />
           ))}
@@ -74,7 +80,7 @@ export default async function PainelAdminPage({
         <FiltroPeriodo base="/painel/admin" dias={dias} />
       </div>
       <PainelAdminAgendamentos
-        agendamentos={agendamentos ?? []}
+        agendamentos={agendamentos}
         barbeiros={(barbeiros ?? []) as any[]}
       />
     </div>

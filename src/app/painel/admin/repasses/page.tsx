@@ -16,7 +16,7 @@ export default async function RepassesPage() {
     .single();
   if (profile?.role !== "admin") redirect("/");
 
-  const [{ data: agendamentos }, { data: pagamentos }] = await Promise.all([
+  const [{ data: agendamentosBrutos }, { data: pagamentos }, { data: barbeirosOcultos }] = await Promise.all([
     supabase
       .from("agendamentos")
       .select(
@@ -28,7 +28,12 @@ export default async function RepassesPage() {
       .from("repasses_pagamentos")
       .select("*, profiles!repasses_pagamentos_criado_por_fkey(nome)")
       .order("created_at", { ascending: false }),
+    supabase.from("barbeiros").select("profile_id").eq("oculto", true),
   ]);
+
+  // Conta de teste/dev fica de fora de qualquer relatório do admin.
+  const idsOcultos = new Set((barbeirosOcultos ?? []).map((b) => b.profile_id));
+  const agendamentos = (agendamentosBrutos ?? []).filter((a) => !idsOcultos.has(a.barbeiro_id));
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -44,7 +49,7 @@ export default async function RepassesPage() {
       </p>
 
       <RepassesPainel
-        agendamentos={(agendamentos ?? []) as any[]}
+        agendamentos={agendamentos as any[]}
         pagamentosIniciais={(pagamentos ?? []) as any[]}
       />
     </div>
