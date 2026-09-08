@@ -10,6 +10,7 @@ import { calcularSlotsLivresPorBarbeiro } from "@/lib/disponibilidade";
 import { aplicarAjusteFormaPagamento, type AjusteFormaPagamento } from "@/lib/ajustes-pagamento";
 import SeletorFormaPagamento from "@/components/agendar/SeletorFormaPagamento";
 import AvisoAtraso from "@/components/agendar/AvisoAtraso";
+import NomeServicoClamp from "@/components/agendar/NomeServicoClamp";
 import { valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { usePacoteUsavel } from "@/lib/use-pacote-usavel";
 import SeletorPacote from "@/components/agendar/SeletorPacote";
@@ -315,15 +316,26 @@ function AgendarConteudo() {
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">
           {servicos.map((s) => (
-            <button
+            <div
               key={s.id}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 setServicoSelecionado(s);
                 setBarbeiroSelecionado(null);
                 setHorarioSelecionado(null);
                 setPasso("horario");
               }}
-              className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setServicoSelecionado(s);
+                  setBarbeiroSelecionado(null);
+                  setHorarioSelecionado(null);
+                  setPasso("horario");
+                }
+              }}
+              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
             >
               <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background sm:size-20">
@@ -334,7 +346,7 @@ function AgendarConteudo() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="line-clamp-2 font-semibold text-foreground">{s.nome}</p>
+                  <NomeServicoClamp nome={s.nome} />
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <ClockIcon className="size-3.5" />
                     {s.duracao_minutos} min
@@ -344,7 +356,7 @@ function AgendarConteudo() {
               <p className="shrink-0 font-mono text-lg font-medium text-gold-gradient sm:text-2xl">
                 R$ {Number(s.preco).toFixed(2).replace(".", ",")}
               </p>
-            </button>
+            </div>
           ))}
         </div>
       )}

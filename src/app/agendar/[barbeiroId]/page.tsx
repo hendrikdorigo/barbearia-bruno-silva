@@ -25,6 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AgendamentoStepper from "@/components/AgendamentoStepper";
 import SeletorDataFaixa from "@/components/SeletorDataFaixa";
 import ProdutoPicker from "@/components/ProdutoPicker";
+import NomeServicoClamp from "@/components/agendar/NomeServicoClamp";
 import PerguntaFrequencia from "@/components/PerguntaFrequencia";
 import { type Produto, type Carrinho, itensCarrinho, totalCarrinho } from "@/lib/produtos-carrinho";
 import { useConfirmarAgendamento } from "@/lib/use-confirmar-agendamento";
@@ -397,13 +398,22 @@ export default function AgendarPage() {
       {passo === "servico" && (
         <div className="mt-8 grid gap-3">
           {servicos.map((s) => (
-            <button
+            <div
               key={s.id}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 setServicoSelecionado(s);
                 setPasso("horario");
               }}
-              className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setServicoSelecionado(s);
+                  setPasso("horario");
+                }
+              }}
+              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
             >
               <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background sm:size-20">
@@ -414,7 +424,7 @@ export default function AgendarPage() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="line-clamp-2 font-semibold text-foreground">{s.nome}</p>
+                  <NomeServicoClamp nome={s.nome} />
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <ClockIcon className="size-3.5" />
                     {s.duracao_minutos} min
@@ -424,7 +434,7 @@ export default function AgendarPage() {
               <p className="shrink-0 font-mono text-lg font-medium text-gold-gradient sm:text-2xl">
                 R$ {Number(s.preco).toFixed(2).replace(".", ",")}
               </p>
-            </button>
+            </div>
           ))}
         </div>
       )}
