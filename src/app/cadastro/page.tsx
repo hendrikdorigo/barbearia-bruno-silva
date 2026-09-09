@@ -53,6 +53,11 @@ export default function CadastroPage() {
       return;
     }
 
+    if (!telefone.trim()) {
+      setErro("Informe seu telefone.");
+      return;
+    }
+
     setLoading(true);
 
     const dataNascimento = `${anoNasc}-${mesNasc}-${diaNasc.padStart(2, "0")}`;
@@ -183,6 +188,17 @@ export default function CadastroPage() {
                   </Select>
                 </div>
               </Field>
+              <Field>
+                <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
+                <Input
+                  id="telefone"
+                  required
+                  inputMode="tel"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+              </Field>
 
               <Collapsible open={mostrarOpcionais} onOpenChange={setMostrarOpcionais}>
                 <CollapsibleTrigger
@@ -206,15 +222,6 @@ export default function CadastroPage() {
                         onChange={(e) => setEmailContato(e.target.value)}
                       />
                       <FieldDescription>Só um contato - não é usado para entrar.</FieldDescription>
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
-                      <Input
-                        id="telefone"
-                        placeholder="(00) 00000-0000"
-                        value={telefone}
-                        onChange={(e) => setTelefone(e.target.value)}
-                      />
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="foto">Foto</FieldLabel>

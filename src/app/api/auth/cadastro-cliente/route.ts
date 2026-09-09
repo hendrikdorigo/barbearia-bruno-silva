@@ -6,8 +6,8 @@ import { normalizarCPF, validarCPF } from "@/lib/cpf";
 import { emailSinteticoCPF, senhaDerivadaCPF } from "@/lib/auth-cliente";
 
 /**
- * Cadastro de cliente sem senha - só CPF, nome e data de nascimento são
- * obrigatórios (e-mail é só um contato opcional, não usado para login).
+ * Cadastro de cliente sem senha - CPF, nome, telefone e data de nascimento
+ * são obrigatórios (e-mail é só um contato opcional, não usado para login).
  * Cria a conta via Admin API (e-mail sintético + senha derivada do CPF,
  * ver lib/auth-cliente.ts) e já loga o cliente automaticamente.
  */
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
   const dataNascimento = body?.dataNascimento;
   const emailContato = body?.emailContato?.trim() || null;
 
-  if (!nome || !dataNascimento) {
-    return NextResponse.json({ error: "Preencha nome e data de nascimento." }, { status: 400 });
+  if (!nome || !dataNascimento || !telefone) {
+    return NextResponse.json({ error: "Preencha nome, telefone e data de nascimento." }, { status: 400 });
   }
   if (!validarCPF(cpfDigits)) {
     return NextResponse.json({ error: "CPF inválido." }, { status: 400 });
