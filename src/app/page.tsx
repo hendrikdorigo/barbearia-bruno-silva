@@ -24,9 +24,13 @@ export default async function HomePage() {
       .eq("ativo", true)
       .limit(3),
   ]);
-  // "Já sou cliente" pula o login pra quem já está logado e vai direto pro
-  // agendamento - só cai em /login quem realmente precisa entrar.
-  const hrefJaSouCliente = user ? "/agendar" : "/login";
+  // Logado, a hero troca "Primeiro atendimento" (que não faz mais sentido pra
+  // quem já é cliente) por "Agendar horário", e o 2º botão vira um atalho em
+  // destaque pra "Meus agendamentos" em vez de repetir o link de login.
+  const hrefPrimeiroBotao = user ? "/agendar" : "/cadastro";
+  const textoPrimeiroBotao = user ? "Agendar horário" : "Primeiro atendimento";
+  const hrefSegundoBotao = user ? "/painel/cliente" : "/login";
+  const textoSegundoBotao = user ? "Meus agendamentos" : "Já sou cliente";
 
   return (
     <div>
@@ -60,22 +64,22 @@ export default async function HomePage() {
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/cadastro"
+              href={hrefPrimeiroBotao}
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "rounded-full px-10 uppercase tracking-wider"
               )}
             >
-              Primeiro atendimento
+              {textoPrimeiroBotao}
             </Link>
             <Link
-              href={hrefJaSouCliente}
+              href={hrefSegundoBotao}
               className={cn(
                 buttonVariants({ size: "lg", variant: "outline" }),
                 "rounded-full px-10 uppercase tracking-wider"
               )}
             >
-              Já sou cliente
+              {textoSegundoBotao}
             </Link>
           </div>
         </div>
