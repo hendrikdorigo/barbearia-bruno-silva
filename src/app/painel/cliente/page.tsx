@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { pacoteVigente, textoDiasSemana, pacoteTemRateio, valorPorVisita } from "@/lib/pacotes-cliente";
+import { SP_TZ } from "@/lib/timezone-sp";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -123,7 +124,7 @@ export default async function PainelClientePage() {
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {new Date(a.data_hora).toLocaleString("pt-BR")}
+                {new Date(a.data_hora).toLocaleString("pt-BR", { timeZone: SP_TZ })}
               </p>
               <p className="mt-1 font-mono text-sm text-muted-foreground">
                 R$ {Number(a.valor_servico).toFixed(2).replace(".", ",")} ·{" "}
