@@ -113,7 +113,8 @@ export async function calcularJanelaDia(
 export async function calcularSlotsLivres(
   supabase: SupabaseClient<Database>,
   barbeiroId: string,
-  data: string
+  data: string,
+  opcoes?: { ignorarAntecedenciaMinima?: boolean }
 ): Promise<string[]> {
   const janela = await calcularJanelaDia(supabase, barbeiroId, data);
   if (!janela.atende) return [];
@@ -151,7 +152,16 @@ export async function calcularSlotsLivres(
   // Sem tolerância de atraso: se o dia escolhido é hoje, horários muito em
   // cima da hora (dentro da antecedência mínima) não podem mais ser
   // marcados (senão o cliente agendava pra já-já e o agendamento nascia
-  // praticamente atrasado).
+  // praticamente atrasado). Essa regra é só pro agendamento online - no
+  // agendamento manual do barbeiro/admin o cliente já está ali (ou já
+  // combinou por telefone), então não faz sentido os horários da hora
+  // seguinte irem sumindo da lista conforme o tempo passa.
+  if (opcoes?.ignorarAntecedenciaMinima) {
+    return slots.filter(
+      (s) => !slotDentroDeAgendamento(s, ocupados) && !slotBloqueado(s, bloqueios ?? [])
+    );
+  }
+
   const limite = new Date(Date.now() + ANTECEDENCIA_MINIMA_MINUTOS * 60 * 1000).toISOString();
   const ehHoje = data === paraDataSP(limite);
   const horaLimite = paraHoraSP(limite);

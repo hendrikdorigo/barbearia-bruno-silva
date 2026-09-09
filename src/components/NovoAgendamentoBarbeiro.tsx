@@ -87,7 +87,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     if (!open) return;
     setHorario(null);
     setBuscandoHorarios(true);
-    calcularSlotsLivres(supabase, barbeiroId, data).then((slots) => {
+    calcularSlotsLivres(supabase, barbeiroId, data, { ignorarAntecedenciaMinima: true }).then((slots) => {
       setHorarios(slots);
       setBuscandoHorarios(false);
     });
@@ -236,7 +236,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
     while (true) {
       cursor = somaDias(cursor, frequenciaDias);
       if (cursor > repetirAte) break;
-      const livres = await calcularSlotsLivres(supabase, barbeiroId, cursor);
+      const livres = await calcularSlotsLivres(supabase, barbeiroId, cursor, { ignorarAntecedenciaMinima: true });
       if (livres.includes(horario)) {
         const { error: erroRepeticao } = await criarAgendamento(servico, cursor, valor, null);
         if (erroRepeticao) pulados++;
