@@ -1690,6 +1690,13 @@ export type Database = {
         Args: { p_agendamento_id: string }
         Returns: undefined
       }
+      horarios_ocupados_barbeiro: {
+        Args: { p_barbeiro_id: string; p_fim: string; p_inicio: string }
+        Returns: {
+          data_hora: string
+          duracao_minutos: number
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_barbeiro_self: { Args: { p_barbeiro_id: string }; Returns: boolean }
       marcar_no_show: { Args: { p_agendamento_id: string }; Returns: undefined }

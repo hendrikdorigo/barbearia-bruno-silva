@@ -6,6 +6,7 @@ import { PlusIcon, PackageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calcularSlotsLivres } from "@/lib/disponibilidade";
 import { somaDias } from "@/lib/timezone-sp";
+import { mensagemErroAgendamento } from "@/lib/erros-agendamento";
 import { FORMAS_PAGAMENTO } from "@/lib/constants";
 import { pacoteUsavelNaData, valorPorVisita, type PacoteCliente } from "@/lib/pacotes-cliente";
 import { Button } from "@/components/ui/button";
@@ -215,10 +216,7 @@ export default function NovoAgendamentoBarbeiro({ barbeiroId }: { barbeiroId: st
 
     if (error) {
       setEnviando(false);
-      setErro(
-        error.message ||
-          "Não foi possível reservar. Talvez esse horário já tenha sido ocupado - escolha outro."
-      );
+      setErro(mensagemErroAgendamento(error));
       return;
     }
 

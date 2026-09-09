@@ -122,14 +122,19 @@ export async function calcularSlotsLivres(
   const inicio = `${data}T00:00:00`;
   const fim = `${data}T23:59:59`;
 
+  // Via RPC (não select direto): não existe (nem deveria existir) uma RLS
+  // que deixe qualquer visitante ler a tabela agendamentos inteira - só o
+  // próprio cliente/barbeiro dono da linha ou o admin. Sem isso, quem não
+  // era dono de nenhuma linha via 0 agendamentos aqui e todo horário
+  // aparecia livre pra sempre, mesmo já ocupado por outro cliente (causa
+  // real dos "marcaram no mesmo horário"). A função devolve só horário e
+  // duração, sem nome/telefone/valor de ninguém.
   const [{ data: agendamentos }, { data: bloqueios }] = await Promise.all([
-    supabase
-      .from("agendamentos")
-      .select("data_hora, servicos(duracao_minutos)")
-      .eq("barbeiro_id", barbeiroId)
-      .gte("data_hora", inicio)
-      .lte("data_hora", fim)
-      .in("status", ["pendente", "confirmado"]),
+    supabase.rpc("horarios_ocupados_barbeiro", {
+      p_barbeiro_id: barbeiroId,
+      p_inicio: inicio,
+      p_fim: fim,
+    }),
     supabase
       .from("barbeiro_bloqueios")
       .select("hora_inicio, hora_fim, dia_semana, data")
@@ -139,7 +144,7 @@ export async function calcularSlotsLivres(
 
   const ocupados = (agendamentos ?? []).map((a) => ({
     horaInicio: new Date(a.data_hora).toTimeString().slice(0, 5),
-    duracaoMinutos: (a as any).servicos?.duracao_minutos ?? SLOT_STEP_MINUTES,
+    duracaoMinutos: a.duracao_minutos ?? SLOT_STEP_MINUTES,
   }));
   const slots = gerarSlots(janela.horaInicio, janela.horaFim);
 

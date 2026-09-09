@@ -72,6 +72,7 @@ export default function AgendarPage() {
   const [horaInicioDia, setHoraInicioDia] = useState("09:00");
   const [horaFimDia, setHoraFimDia] = useState("19:30");
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
+  const [refreshHorarios, setRefreshHorarios] = useState(0);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<Carrinho>({});
   const [ajustesFormaPagamento, setAjustesFormaPagamento] = useState<AjusteFormaPagamento[]>([]);
@@ -186,13 +187,18 @@ export default function AgendarPage() {
     async function carregarHorarios() {
       const inicio = `${data}T00:00:00`;
       const fim = `${data}T23:59:59`;
-      const { data: agendamentos } = await supabase
-        .from("agendamentos")
-        .select("data_hora, servicos(duracao_minutos)")
-        .eq("barbeiro_id", barbeiroId)
-        .gte("data_hora", inicio)
-        .lte("data_hora", fim)
-        .in("status", ["pendente", "confirmado"]);
+      // Via RPC, não select direto: não existe RLS que deixe qualquer
+      // visitante ler a tabela agendamentos inteira - só o próprio
+      // cliente/barbeiro dono da linha ou o admin. Sem isso, quem não
+      // era dono de nenhuma linha via 0 agendamentos aqui e todo horário
+      // aparecia livre pra sempre, mesmo já ocupado por outro cliente
+      // (causa real dos "marcaram no mesmo horário"). A função devolve só
+      // horário e duração, sem nome/telefone/valor de ninguém.
+      const { data: agendamentos } = await supabase.rpc("horarios_ocupados_barbeiro", {
+        p_barbeiro_id: barbeiroId,
+        p_inicio: inicio,
+        p_fim: fim,
+      });
 
       // Um serviço de 60min ocupa os dois slots de 30min seguintes ao início,
       // não só o exato minuto em que começa — assim, mudar a duração de um
@@ -200,7 +206,7 @@ export default function AgendarPage() {
       const ocupadosSet = new Set<string>();
       for (const a of agendamentos ?? []) {
         const inicioMin = horaParaMinutos(new Date(a.data_hora).toTimeString().slice(0, 5));
-        const duracaoMinutos = (a as any).servicos?.duracao_minutos ?? SLOT_STEP_MINUTES;
+        const duracaoMinutos = a.duracao_minutos ?? SLOT_STEP_MINUTES;
         for (let m = inicioMin; m < inicioMin + duracaoMinutos; m += SLOT_STEP_MINUTES) {
           const h = Math.floor(m / 60) % 24;
           const mm = m % 60;
@@ -269,7 +275,16 @@ export default function AgendarPage() {
       }
     }
     if (data) carregarHorarios();
-  }, [data, barbeiroId, supabase]);
+  }, [data, barbeiroId, supabase, refreshHorarios]);
+
+  // Reconsulta os horários livres periodicamente enquanto o cliente está
+  // decidindo - evita que a tela continue mostrando um horário como livre
+  // depois que já foi ocupado por outra pessoa (causa do erro "esse
+  // horário já foi reservado" quando dois clientes miram o mesmo horário).
+  useEffect(() => {
+    const intervalo = setInterval(() => setRefreshHorarios((n) => n + 1), 15000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   const slots = useMemo(
     () => (diaAtende ? gerarSlots(horaInicioDia, horaFimDia) : []),

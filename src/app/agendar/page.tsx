@@ -69,6 +69,7 @@ function AgendarConteudo() {
   const [slotsPorBarbeiro, setSlotsPorBarbeiro] = useState<Record<string, string[]>>({});
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
   const [barbeiroSelecionado, setBarbeiroSelecionado] = useState<Candidato | null>(null);
+  const [refreshHorarios, setRefreshHorarios] = useState(0);
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<Carrinho>({});
@@ -212,7 +213,16 @@ function AgendarConteudo() {
     }
     if (data && passo !== "servico") buscarHorarios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, candidatos]);
+  }, [data, candidatos, refreshHorarios]);
+
+  // Reconsulta os horários livres periodicamente enquanto o cliente está
+  // decidindo - evita mostrar como livre um horário que outro cliente
+  // acabou de ocupar (causa do erro "esse horário já foi reservado" quando
+  // dois clientes miram o mesmo horário).
+  useEffect(() => {
+    const intervalo = setInterval(() => setRefreshHorarios((n) => n + 1), 15000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   const slotsUniao = useMemo(() => {
     const conjunto = new Set<string>();

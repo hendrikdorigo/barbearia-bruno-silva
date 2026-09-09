@@ -4,6 +4,7 @@ import type { Database } from "@/lib/database.types";
 import { calcularSlotsLivres } from "@/lib/disponibilidade";
 import { sincronizarCriacaoEvento } from "@/lib/google-calendar-sync";
 import { notificarBarbeiroNovoAgendamento } from "@/lib/notificar-barbeiro";
+import { mensagemErroAgendamento } from "@/lib/erros-agendamento";
 
 /**
  * Confirma um pré-agendamento pelo token (sem login). Revalida se o
@@ -60,10 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .single();
 
   if (agendamentoError || !agendamento) {
-    return NextResponse.json(
-      { error: agendamentoError?.message ?? "Não foi possível criar o agendamento." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: mensagemErroAgendamento(agendamentoError) }, { status: 400 });
   }
 
   await supabase

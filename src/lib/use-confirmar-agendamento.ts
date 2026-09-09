@@ -3,6 +3,7 @@ import type { createClient } from "@/lib/supabase/client";
 import type { FormaPagamento, Servico } from "@/lib/constants";
 import type { PacoteCliente } from "@/lib/pacotes-cliente";
 import { salvarProdutosNaComanda, type Carrinho, type Produto } from "@/lib/produtos-carrinho";
+import { mensagemErroAgendamento } from "@/lib/erros-agendamento";
 
 /**
  * Cria o agendamento e salva os produtos escolhidos na comanda. Mesma lógica
@@ -79,10 +80,7 @@ export function useConfirmarAgendamento({
       .single();
 
     if (agendamentoError || !agendamento) {
-      setErro(
-        agendamentoError?.message ??
-          "Não foi possível criar o agendamento. Talvez esse horário já tenha sido reservado - volte e escolha outro."
-      );
+      setErro(mensagemErroAgendamento(agendamentoError));
       setEnviando(false);
       return;
     }
