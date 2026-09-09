@@ -1,6 +1,7 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { enviarMensagemWhatsapp } from "@/lib/whatsapp";
+import { SP_TZ } from "@/lib/timezone-sp";
 
 export type TipoNotificacaoCliente = "confirmado" | "cancelado" | "no_show";
 
@@ -40,6 +41,7 @@ export async function notificarClienteStatusAgendamento(
   const dataHora = new Date(agendamento.data_hora).toLocaleString("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: SP_TZ,
   });
 
   const mensagens: Record<TipoNotificacaoCliente, string> = {

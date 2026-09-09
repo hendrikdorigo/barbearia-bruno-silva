@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sincronizarCancelamentoEvento, sincronizarCriacaoEvento } from "@/lib/google-calendar-sync";
 import { notificarClienteStatusAgendamento } from "@/lib/notificar-cliente-whatsapp";
+import { notificarClienteAgendamentoRecusado } from "@/lib/notificar-cliente";
 
 /**
  * Muda o status de um agendamento. O evento no Google Calendar do barbeiro
@@ -83,6 +84,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await notificarClienteStatusAgendamento(id, status);
     } catch (e) {
       console.error("Erro ao notificar cliente por WhatsApp:", e);
+    }
+  }
+
+  // Sino de notificações in-app (funciona já hoje, sem depender do WhatsApp
+  // Business API ainda não configurado) - só quando é o barbeiro/admin
+  // recusando/cancelando o agendamento de outra pessoa.
+  if (ehBarbeiroOuAdmin && status === "cancelado") {
+    try {
+      await notificarClienteAgendamentoRecusado(supabase, id);
+    } catch (e) {
+      console.error("Erro ao notificar cliente (sino):", e);
     }
   }
 

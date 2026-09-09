@@ -1,5 +1,6 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import { SP_TZ } from "@/lib/timezone-sp";
 
 /**
  * Avisa o barbeiro (sino de notificações) que um cliente marcou um horário
@@ -26,6 +27,7 @@ export async function notificarBarbeiroNovoAgendamento(agendamentoId: string) {
   const dataHora = new Date(agendamento.data_hora).toLocaleString("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: SP_TZ,
   });
   const nomeCliente = (agendamento as any).clientes?.profiles?.nome ?? "Um cliente";
   const nomeServico = (agendamento as any).servicos?.nome ?? "um atendimento";

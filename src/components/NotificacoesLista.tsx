@@ -98,6 +98,18 @@ export default function NotificacoesLista({ notificacoes }: { notificacoes: any[
               Ver agenda
             </Link>
           )}
+
+          {n.tipo === "agendamento_recusado" && (
+            <Link
+              href="/agendar"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "mt-3 w-fit border-gold uppercase tracking-widest text-gold hover:bg-gold/10"
+              )}
+            >
+              Escolher outro horário
+            </Link>
+          )}
         </Card>
       ))}
     </div>
