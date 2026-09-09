@@ -58,7 +58,7 @@ export default async function PainelBarbeiroPage() {
 
       <div className="mt-10 flex items-center justify-between gap-3">
         <h2 className="font-display text-3xl text-foreground">Minha agenda</h2>
-        <NovoAgendamentoBarbeiro barbeiroId={user.id} />
+        {barbeiro?.is_dono && <NovoAgendamentoBarbeiro barbeiroId={user.id} />}
       </div>
       <AgendaCalendario
         agendamentos={agendamentos ?? []}
