@@ -956,6 +956,47 @@ export type Database = {
           },
         ]
       }
+      investimentos_prospeccao: {
+        Row: {
+          created_at: string
+          criado_por: string
+          custo_estimado: number | null
+          id: string
+          nome: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          custo_estimado?: number | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          custo_estimado?: number | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investimentos_prospeccao_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lembretes_whatsapp: {
         Row: {
           agendado_para: string
@@ -1579,6 +1620,44 @@ export type Database = {
           },
           {
             foreignKeyName: "repasses_pagamentos_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retiradas_socio: {
+        Row: {
+          created_at: string
+          criado_por: string
+          data: string
+          id: string
+          observacao: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          data: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retiradas_socio_criado_por_fkey"
             columns: ["criado_por"]
             isOneToOne: false
             referencedRelation: "profiles"

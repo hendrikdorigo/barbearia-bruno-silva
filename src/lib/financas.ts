@@ -59,6 +59,7 @@ export type ResumoFinanceiro = {
   faturamento: number;
   comissoes: number;
   despesas: number;
+  salario: number;
   lucro: number;
 };
 
@@ -67,11 +68,14 @@ export type ResumoFinanceiro = {
  * (serviço + produtos + eventual débito de no-show cobrado junto).
  * Comissões: o quanto do faturamento vira repasse pros barbeiros parceiros
  * (não conta o Bruno/dono, que fica com 100% do próprio atendimento).
- * Lucro: faturamento - comissões - despesas cadastradas no mês.
+ * Salário: quanto o próprio Bruno já retirou de pró-labore no mês.
+ * Lucro: faturamento - comissões - despesas - salário retirado no mês
+ * (o que sobra de fato dentro do caixa da barbearia).
  */
 export function calcularResumoFinanceiro(
   agendamentos: AgendamentoFinanceiro[],
-  despesasDoMes: { valor: number }[]
+  despesasDoMes: { valor: number }[],
+  retiradasDoMes: { valor: number }[] = []
 ): ResumoFinanceiro {
   let faturamento = 0;
   let comissoes = 0;
@@ -86,5 +90,6 @@ export function calcularResumoFinanceiro(
     }
   }
   const despesas = despesasDoMes.reduce((acc, d) => acc + Number(d.valor), 0);
-  return { faturamento, comissoes, despesas, lucro: faturamento - comissoes - despesas };
+  const salario = retiradasDoMes.reduce((acc, r) => acc + Number(r.valor), 0);
+  return { faturamento, comissoes, despesas, salario, lucro: faturamento - comissoes - despesas - salario };
 }

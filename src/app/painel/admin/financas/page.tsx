@@ -27,6 +27,8 @@ export default async function FinancasPage({
     { data: agendamentosBrutos },
     { data: barbeirosOcultos },
     { data: extremos },
+    { data: retiradas },
+    { data: investimentos },
   ] = await Promise.all([
     supabase
       .from("despesas")
@@ -48,21 +50,30 @@ export default async function FinancasPage({
       .select("data_hora")
       .order("data_hora", { ascending: true })
       .limit(1),
+    supabase
+      .from("retiradas_socio")
+      .select("*, profiles!retiradas_socio_criado_por_fkey(nome)")
+      .gte("data", `${mes}-01`)
+      .lt("data", fimISO.slice(0, 10))
+      .order("data", { ascending: false }),
+    supabase
+      .from("investimentos_prospeccao")
+      .select("*, profiles!investimentos_prospeccao_criado_por_fkey(nome)")
+      .order("created_at", { ascending: false }),
   ]);
 
   const idsOcultos = new Set((barbeirosOcultos ?? []).map((b) => b.profile_id));
   const agendamentos = (agendamentosBrutos ?? []).filter((a) => !idsOcultos.has(a.barbeiro_id));
 
-  const { data: despesaMaisAntiga } = await supabase
-    .from("despesas")
-    .select("data")
-    .order("data", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: despesaMaisAntiga }, { data: retiradaMaisAntiga }] = await Promise.all([
+    supabase.from("despesas").select("data").order("data", { ascending: true }).limit(1).maybeSingle(),
+    supabase.from("retiradas_socio").select("data").order("data", { ascending: true }).limit(1).maybeSingle(),
+  ]);
 
   const mesMaisAntigoAgendamento = extremos?.[0]?.data_hora ? extremos[0].data_hora.slice(0, 7) : mesAtual;
   const mesMaisAntigoDespesa = despesaMaisAntiga?.data ? despesaMaisAntiga.data.slice(0, 7) : mesAtual;
-  const maisAntigo = mesMaisAntigoAgendamento < mesMaisAntigoDespesa ? mesMaisAntigoAgendamento : mesMaisAntigoDespesa;
+  const mesMaisAntigoRetirada = retiradaMaisAntiga?.data ? retiradaMaisAntiga.data.slice(0, 7) : mesAtual;
+  const maisAntigo = [mesMaisAntigoAgendamento, mesMaisAntigoDespesa, mesMaisAntigoRetirada].sort()[0];
 
   const meses = listaMeses(maisAntigo, mesAtual);
   // Garante que o mês escolhido pela URL sempre apareça na lista, mesmo que
@@ -74,7 +85,8 @@ export default async function FinancasPage({
       <h1 className="font-display text-5xl tracking-wide text-foreground">Finanças</h1>
       <p className="mt-2 text-muted-foreground">
         Lance as despesas da barbearia e acompanhe o lucro do mês (faturamento dos
-        atendimentos, menos comissões dos barbeiros parceiros, menos despesas).
+        atendimentos, menos comissões dos barbeiros parceiros, menos despesas e
+        seu próprio salário retirado).
       </p>
 
       <FinancasPainel
@@ -82,6 +94,8 @@ export default async function FinancasPage({
         meses={meses}
         agendamentos={agendamentos as any[]}
         despesasIniciais={(despesas ?? []) as any[]}
+        retiradasIniciais={(retiradas ?? []) as any[]}
+        investimentosIniciais={(investimentos ?? []) as any[]}
       />
     </div>
   );
