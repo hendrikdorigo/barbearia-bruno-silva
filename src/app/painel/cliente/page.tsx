@@ -41,7 +41,10 @@ export default async function PainelClientePage() {
       .from("agendamentos")
       .select("*, barbeiros(profile_id, profiles(nome)), servicos(nome, preco)")
       .eq("cliente_id", user.id)
-      .order("data_hora", { ascending: false }),
+      // Por criado_em (não pela data do horário marcado): senão um agendamento
+      // de teste cancelado pra uma data futura ficava acima de um agendamento
+      // de verdade recém-criado pra hoje, só por causa da data agendada.
+      .order("created_at", { ascending: false }),
     supabase.from("profiles").select("nome, avatar_url, notif_whatsapp_comunidade").eq("id", user.id).single(),
     supabase
       .from("pacotes_cliente")
