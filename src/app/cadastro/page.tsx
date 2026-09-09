@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronDownIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatarCPF, normalizarCPF, validarCPF } from "@/lib/cpf";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -29,6 +32,7 @@ export default function CadastroPage() {
   const [anoNasc, setAnoNasc] = useState("");
   const [telefone, setTelefone] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
+  const [mostrarOpcionais, setMostrarOpcionais] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -87,7 +91,7 @@ export default function CadastroPage() {
     setLoading(false);
 
     if (json.autoLogin) {
-      router.push("/");
+      router.push("/agendar");
       router.refresh();
     } else {
       router.push("/login");
@@ -139,18 +143,6 @@ export default function CadastroPage() {
                 <FieldDescription>É com o CPF que você entra na sua conta, sem senha.</FieldDescription>
               </Field>
               <Field>
-                <FieldLabel htmlFor="email">E-mail (opcional)</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="voce@email.com"
-                  value={emailContato}
-                  onChange={(e) => setEmailContato(e.target.value)}
-                />
-                <FieldDescription>Só um contato - não é usado para entrar.</FieldDescription>
-              </Field>
-              <Field>
                 <FieldLabel>Data de nascimento</FieldLabel>
                 <div className="grid grid-cols-3 gap-2">
                   <Select value={diaNasc} onValueChange={(v) => setDiaNasc(v ?? "")}>
@@ -191,25 +183,52 @@ export default function CadastroPage() {
                   </Select>
                 </div>
               </Field>
-              <Field>
-                <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
-                <Input
-                  id="telefone"
-                  placeholder="(00) 00000-0000"
-                  value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="foto">Foto</FieldLabel>
-                <Input
-                  id="foto"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-                />
-                <FieldDescription>Opcional — usada no seu perfil.</FieldDescription>
-              </Field>
+
+              <Collapsible open={mostrarOpcionais} onOpenChange={setMostrarOpcionais}>
+                <CollapsibleTrigger
+                  className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-gold"
+                >
+                  <span>Mais informações (opcional)</span>
+                  <ChevronDownIcon
+                    className={cn("size-4 text-muted-foreground transition-transform", mostrarOpcionais && "rotate-180")}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-200 ease-out">
+                  <FieldGroup className="pt-4">
+                    <Field>
+                      <FieldLabel htmlFor="email">E-mail</FieldLabel>
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="voce@email.com"
+                        value={emailContato}
+                        onChange={(e) => setEmailContato(e.target.value)}
+                      />
+                      <FieldDescription>Só um contato - não é usado para entrar.</FieldDescription>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="telefone">Telefone (WhatsApp)</FieldLabel>
+                      <Input
+                        id="telefone"
+                        placeholder="(00) 00000-0000"
+                        value={telefone}
+                        onChange={(e) => setTelefone(e.target.value)}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="foto">Foto</FieldLabel>
+                      <Input
+                        id="foto"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
+                      />
+                      <FieldDescription>Usada no seu perfil.</FieldDescription>
+                    </Field>
+                  </FieldGroup>
+                </CollapsibleContent>
+              </Collapsible>
 
               {erro && (
                 <Field data-invalid>

@@ -101,7 +101,7 @@ function LoginCliente() {
       setErro(json?.error ?? "Não foi possível entrar.");
       return;
     }
-    router.push("/");
+    router.push("/agendar");
     router.refresh();
   }
 
