@@ -9,7 +9,14 @@ import { cn } from "@/lib/utils";
 
 export default async function HomePage() {
   const supabase = await createClient();
-  const [{ data: servicos }, { data: barbeiros }] = await Promise.all([
+  const [
+    {
+      data: { user },
+    },
+    { data: servicos },
+    { data: barbeiros },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
     supabase.from("servicos").select("*").eq("ativo", true).order("preco"),
     supabase
       .from("barbeiros")
@@ -17,6 +24,9 @@ export default async function HomePage() {
       .eq("ativo", true)
       .limit(3),
   ]);
+  // "Já sou cliente" pula o login pra quem já está logado e vai direto pro
+  // agendamento - só cai em /login quem realmente precisa entrar.
+  const hrefJaSouCliente = user ? "/agendar" : "/login";
 
   return (
     <div>
@@ -48,15 +58,26 @@ export default async function HomePage() {
           <p className="mt-5 max-w-md text-lg text-muted-foreground">
             Escolha o dia, o horário e deixe o resto com a gente.
           </p>
-          <Link
-            href="/agendar"
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "mt-9 rounded-full px-10 uppercase tracking-wider"
-            )}
-          >
-            Agendar horário
-          </Link>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/cadastro"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "rounded-full px-10 uppercase tracking-wider"
+              )}
+            >
+              Primeiro atendimento
+            </Link>
+            <Link
+              href={hrefJaSouCliente}
+              className={cn(
+                buttonVariants({ size: "lg", variant: "outline" }),
+                "rounded-full px-10 uppercase tracking-wider"
+              )}
+            >
+              Já sou cliente
+            </Link>
+          </div>
         </div>
       </section>
 
