@@ -27,16 +27,16 @@ import { cn } from "@/lib/utils";
 
 const PASSOS = [
   { id: "servico", label: "Serviço" },
-  { id: "horario", label: "Data e horário" },
   { id: "barbeiro", label: "Barbeiro" },
+  { id: "horario", label: "Data e horário" },
   { id: "produtos", label: "Produtos" },
   { id: "pagamento", label: "Pagamento" },
 ];
 
 type Candidato = { id: string; nome: string; avatarUrl: string | null; preco: number };
-type Passo = "servico" | "horario" | "barbeiro" | "produtos" | "pagamento" | "confirmado";
+type Passo = "servico" | "barbeiro" | "horario" | "produtos" | "pagamento" | "confirmado";
 
-const ORDEM_PASSOS: Passo[] = ["servico", "horario", "barbeiro", "produtos", "pagamento"];
+const ORDEM_PASSOS: Passo[] = ["servico", "barbeiro", "horario", "produtos", "pagamento"];
 
 export default function AgendarGeralPage() {
   return (
@@ -125,7 +125,7 @@ function AgendarConteudo() {
         const preSelecionado = lista.find((s: any) => s.id === servicoPreSelecionadoId);
         if (preSelecionado) {
           setServicoSelecionado(preSelecionado);
-          setPasso("horario");
+          setPasso("barbeiro");
         }
       }
 
@@ -177,30 +177,23 @@ function AgendarConteudo() {
     buscarCandidatos();
   }, [servicoSelecionado, supabase]);
 
-  // Ao escolher a data: calcula, em paralelo, os horários livres de cada
-  // candidato e junta num único conjunto (união) para o passo "Horário".
+  // Ao escolher o barbeiro e a data: calcula os horários livres só desse
+  // barbeiro para o passo "Data e horário".
   useEffect(() => {
     async function buscarHorarios() {
-      if (candidatos.length === 0) {
+      if (!barbeiroSelecionado) {
         setSlotsPorBarbeiro({});
         return;
       }
       setBuscandoHorarios(true);
-      const porBarbeiro = await calcularSlotsLivresPorBarbeiro(
-        supabase,
-        candidatos.map((c) => c.id),
-        data
-      );
+      const porBarbeiro = await calcularSlotsLivresPorBarbeiro(supabase, [barbeiroSelecionado.id], data);
       setSlotsPorBarbeiro(porBarbeiro);
 
       const diaSemana = new Date(`${data}T00:00:00`).getDay();
       const { data: ajustes } = await supabase
         .from("servico_ajustes")
         .select("*")
-        .in(
-          "barbeiro_id",
-          candidatos.map((c) => c.id)
-        )
+        .eq("barbeiro_id", barbeiroSelecionado.id)
         .eq("ativo", true);
       const aplicaveis = (ajustes ?? []).filter((a: any) => {
         const porData = (!a.data_inicio || a.data_inicio <= data) && (!a.data_fim || a.data_fim >= data);
@@ -211,9 +204,9 @@ function AgendarConteudo() {
 
       setBuscandoHorarios(false);
     }
-    if (data && passo !== "servico") buscarHorarios();
+    if (data && barbeiroSelecionado) buscarHorarios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, candidatos, refreshHorarios]);
+  }, [data, barbeiroSelecionado, refreshHorarios]);
 
   // Reconsulta os horários livres periodicamente enquanto o cliente está
   // decidindo - evita mostrar como livre um horário que outro cliente
@@ -224,16 +217,10 @@ function AgendarConteudo() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const slotsUniao = useMemo(() => {
-    const conjunto = new Set<string>();
-    Object.values(slotsPorBarbeiro).forEach((slots) => slots.forEach((s) => conjunto.add(s)));
-    return Array.from(conjunto).sort();
-  }, [slotsPorBarbeiro]);
-
-  const barbeirosLivresNoHorario = useMemo(() => {
-    if (!horarioSelecionado) return [];
-    return candidatos.filter((c) => (slotsPorBarbeiro[c.id] ?? []).includes(horarioSelecionado));
-  }, [horarioSelecionado, candidatos, slotsPorBarbeiro]);
+  const slotsBarbeiro = useMemo(() => {
+    if (!barbeiroSelecionado) return [];
+    return slotsPorBarbeiro[barbeiroSelecionado.id] ?? [];
+  }, [barbeiroSelecionado, slotsPorBarbeiro]);
 
   function precoComAjuste(candidato: Candidato) {
     let preco = Number(candidato.preco);
@@ -304,8 +291,8 @@ function AgendarConteudo() {
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-gold">Agendar horário</p>
       <h1 className="mt-2 font-display text-4xl tracking-wide text-foreground">
         {passo === "servico" && "Escolha o serviço"}
-        {passo === "horario" && "Escolha o dia e horário"}
         {passo === "barbeiro" && "Escolha o barbeiro"}
+        {passo === "horario" && "Escolha o dia e horário"}
         {passo === "produtos" && "Quer levar algo da loja?"}
         {passo === "pagamento" && "Forma de pagamento"}
         {passo === "confirmado" && "Agendamento confirmado!"}
@@ -334,7 +321,7 @@ function AgendarConteudo() {
                 setServicoSelecionado(s);
                 setBarbeiroSelecionado(null);
                 setHorarioSelecionado(null);
-                setPasso("horario");
+                setPasso("barbeiro");
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -342,7 +329,7 @@ function AgendarConteudo() {
                   setServicoSelecionado(s);
                   setBarbeiroSelecionado(null);
                   setHorarioSelecionado(null);
-                  setPasso("horario");
+                  setPasso("barbeiro");
                 }
               }}
               className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold sm:gap-4"
@@ -371,33 +358,76 @@ function AgendarConteudo() {
         </div>
       )}
 
+      {passo === "barbeiro" && (
+        <div className="mt-8">
+          {buscandoCandidatos ? (
+            <p className="text-sm text-muted-foreground">Carregando barbeiros...</p>
+          ) : (
+            <div className="grid gap-3">
+              {candidatos.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setBarbeiroSelecionado(c);
+                    setHorarioSelecionado(null);
+                    setPasso("horario");
+                  }}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-10">
+                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt="" />}
+                      <AvatarFallback className="bg-gold-gradient font-display text-ink">
+                        {c.nome.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold text-foreground">{c.nome}</p>
+                  </div>
+                  <p className="font-mono text-xl font-medium text-gold-gradient">
+                    R$ {Number(c.preco).toFixed(2).replace(".", ",")}
+                  </p>
+                </button>
+              ))}
+              {candidatos.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum barbeiro disponível para esse serviço no momento.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {passo === "horario" && (
         <div className="mt-8">
-          <label className="text-xs uppercase tracking-widest text-muted-foreground">Data</label>
+          <p className="text-sm text-muted-foreground">
+            {servicoSelecionado?.nome} com {barbeiroSelecionado?.nome}
+          </p>
+
+          <label className="mt-6 block text-xs uppercase tracking-widest text-muted-foreground">Data</label>
           <div className="mt-3">
             <SeletorDataFaixa
               value={data}
               onChange={(novaData) => {
                 setData(novaData);
                 setHorarioSelecionado(null);
-                setBarbeiroSelecionado(null);
               }}
             />
           </div>
 
           <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
-            Horários com pelo menos um barbeiro livre nesse dia
+            Horários livres com {barbeiroSelecionado?.nome}
           </p>
           {buscandoHorarios ? (
             <p className="mt-4 text-sm text-muted-foreground">Verificando disponibilidade...</p>
           ) : (
             <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {slotsUniao.map((s) => (
+              {slotsBarbeiro.map((s) => (
                 <button
                   key={s}
                   onClick={() => {
                     setHorarioSelecionado(s);
-                    setPasso("barbeiro");
+                    setPasso("produtos");
                   }}
                   className={`rounded-lg border px-2 py-2 text-sm ${
                     horarioSelecionado === s
@@ -408,9 +438,10 @@ function AgendarConteudo() {
                   {s}
                 </button>
               ))}
-              {slotsUniao.length === 0 && (
+              {slotsBarbeiro.length === 0 && (
                 <p className="col-span-full text-sm text-muted-foreground">
-                  Nenhum barbeiro está livre nesse dia. Escolha outra data.
+                  {barbeiroSelecionado?.nome} não tem horário livre nesse dia. Escolha outra data ou
+                  volte e escolha outro barbeiro.
                 </p>
               )}
             </div>
@@ -426,44 +457,6 @@ function AgendarConteudo() {
               cancelado.
             </AlertDescription>
           </Alert>
-        </div>
-      )}
-
-      {passo === "barbeiro" && (
-        <div className="mt-8">
-          <p className="text-sm text-muted-foreground">
-            {servicoSelecionado?.nome} · {data} às {horarioSelecionado}
-          </p>
-          <div className="mt-4 grid gap-3">
-            {barbeirosLivresNoHorario.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setBarbeiroSelecionado(c);
-                  setPasso("produtos");
-                }}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-ink-soft px-5 py-4 text-left transition-colors hover:border-gold"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
-                    {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt="" />}
-                    <AvatarFallback className="bg-gold-gradient font-display text-ink">
-                      {c.nome.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="font-semibold text-foreground">{c.nome}</p>
-                </div>
-                <p className="font-mono text-xl font-medium text-gold-gradient">
-                  R$ {precoComAjuste(c).toFixed(2).replace(".", ",")}
-                </p>
-              </button>
-            ))}
-            {barbeirosLivresNoHorario.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Esse horário não está mais disponível. Volte e escolha outro.
-              </p>
-            )}
-          </div>
         </div>
       )}
 
