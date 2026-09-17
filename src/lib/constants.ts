@@ -9,17 +9,23 @@ export const TOLERANCIA_ATRASO_MINUTOS = 0;
 // antecedência mínima a partir de agora pra um horário aparecer disponível.
 export const ANTECEDENCIA_MINIMA_MINUTOS = 60;
 
-/** Gera os horarios de 30 em 30 min entre 09:00 e 19:30 (inclusive) — janela padrão global */
+/** Gera os horarios de 30 em 30 min entre 09:00 e 19:30 (sem incluir o fim) — janela padrão global */
 export function gerarSlotsDia(): string[] {
   return gerarSlots(SLOT_START, SLOT_END);
 }
 
-/** Gera slots de 30 em 30 min entre um início e fim customizados (ex: horário próprio do barbeiro) */
+/**
+ * Gera slots de 30 em 30 min entre um início e fim customizados (ex: horário
+ * próprio do barbeiro). O horário de fim NÃO entra como um horário
+ * marcável - "09:00 até 19:00" é o expediente, não um horário de início
+ * válido, senão um cliente conseguia marcar horário exatamente no limite
+ * que o barbeiro configurou (e o atendimento ia passar do horário).
+ */
 export function gerarSlots(inicio: string, fim: string): string[] {
   const slots: string[] = [];
   let [h, m] = inicio.slice(0, 5).split(":").map(Number);
   const [endH, endM] = fim.slice(0, 5).split(":").map(Number);
-  while (h < endH || (h === endH && m <= endM)) {
+  while (h < endH || (h === endH && m < endM)) {
     slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
     m += SLOT_STEP_MINUTES;
     if (m >= 60) {
