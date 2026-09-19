@@ -78,6 +78,10 @@ export default function ComandaView({
     itens.reduce((s, i) => s + i.quantidade * Number(i.preco_unitario), 0);
   const podeAdicionar = status === "aberta" || status === "aguardando_pagamento";
   const podePagar = status === "aguardando_pagamento" || status === "fiado";
+  // O barbeiro/admin pode corrigir a comanda (valor, produtos) mesmo depois
+  // de fechada - fechar só confirma o pagamento, não devia travar um erro de
+  // digitação pro resto da vida. O cliente continua só acompanhando.
+  const podeEditarBarbeiro = papel === "barbeiro";
 
   async function salvarValorServico() {
     const novoValor = Number(valorEditado);
@@ -186,7 +190,7 @@ export default function ComandaView({
           ) : (
             <span className="flex items-center gap-1.5">
               R$ {valorServico.toFixed(2).replace(".", ",")}
-              {podeAdicionar && papel === "barbeiro" && (
+              {podeEditarBarbeiro && (
                 <button
                   onClick={() => {
                     setValorEditado(String(valorServico));
@@ -214,7 +218,7 @@ export default function ComandaView({
             </span>
             <div className="flex items-center gap-2">
               <span>R$ {(i.quantidade * Number(i.preco_unitario)).toFixed(2).replace(".", ",")}</span>
-              {podeAdicionar && (
+              {(podeAdicionar || podeEditarBarbeiro) && (
                 <button
                   onClick={() => removerItem(i.id)}
                   aria-label="Remover item"
@@ -233,7 +237,7 @@ export default function ComandaView({
         </div>
       </div>
 
-      {podeAdicionar && produtos.length > 0 && (
+      {(podeAdicionar || podeEditarBarbeiro) && produtos.length > 0 && (
         <div className="mt-6">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Adicionar da loja
@@ -327,7 +331,9 @@ export default function ComandaView({
       {status === "fechada" && (
         <Alert className="mt-6 border-gold/30 bg-gold/10">
           <AlertDescription className="text-gold">
-            Comanda fechada. Obrigado pela preferência!
+            {papel === "barbeiro"
+              ? "Comanda fechada. Se precisar corrigir o valor ou os produtos, é só editar acima."
+              : "Comanda fechada. Obrigado pela preferência!"}
           </AlertDescription>
         </Alert>
       )}
