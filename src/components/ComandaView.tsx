@@ -32,6 +32,10 @@ type Comanda = {
   valor_debito_no_show: number;
   forma_pagamento: string | null;
   pago_antecipado: boolean;
+  agendamentos?: {
+    data_hora: string;
+    servicos: { nome: string; duracao_minutos: number } | null;
+  } | null;
 };
 
 type Produto = { id: string; nome: string; preco: number; categoria: string | null };
@@ -164,9 +168,22 @@ export default function ComandaView({
         <Badge variant="outline">{STATUS_LABEL[status]}</Badge>
       </div>
 
+      {comanda.agendamentos && (
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {new Date(comanda.agendamentos.data_hora).toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          {comanda.agendamentos.servicos && ` · ${comanda.agendamentos.servicos.duracao_minutos} min`}
+        </p>
+      )}
+
       <div className="mt-4 space-y-2 font-mono text-sm">
         <div className="flex items-center justify-between text-muted-foreground">
-          <span>Serviço</span>
+          <span>{comanda.agendamentos?.servicos?.nome ?? "Serviço"}</span>
           {editandoValor ? (
             <span className="flex items-center gap-1.5">
               <Input

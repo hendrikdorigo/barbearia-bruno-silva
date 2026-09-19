@@ -23,7 +23,7 @@ export default async function ComandaBarbeiroPage({
     supabase
       .from("comandas")
       .select(
-        "*, clientes(profile_id, cpf, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_cpf_avulso), barbeiros(profiles(nome))"
+        "*, clientes(profile_id, cpf, qtd_no_show, bloqueado, motivo_bloqueio, profiles(nome)), agendamentos(cliente_nome_avulso, cliente_cpf_avulso, data_hora, servicos(nome, duracao_minutos)), barbeiros(profiles(nome))"
       )
       .eq("agendamento_id", agendamentoId)
       .maybeSingle(),

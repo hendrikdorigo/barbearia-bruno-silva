@@ -17,7 +17,7 @@ export default async function ComandaClientePage({
   const [{ data: comanda }, { data: produtos }] = await Promise.all([
     supabase
       .from("comandas")
-      .select("*")
+      .select("*, agendamentos(data_hora, servicos(nome, duracao_minutos))")
       .eq("agendamento_id", agendamentoId)
       .eq("cliente_id", user.id)
       .maybeSingle(),
